@@ -11,10 +11,28 @@ import { getFirebaseErrorMessage } from '../utilities/firebase-errors';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [MatFormFieldModule, MatInputModule, MatButtonModule, ReactiveFormsModule, RouterLink],
+  imports: [
+    MatFormFieldModule, 
+    MatInputModule, 
+    MatButtonModule, 
+    ReactiveFormsModule, 
+    RouterLink
+  ],
   template:`
     <div class="card mat-elevation-z5">
       <h1>Login</h1>
+
+      <div class="center">
+        <img
+          class="google-sign-in"
+          src="/assets/web_light_rd_SI@1x.png" 
+          role="button" 
+          (click)="googleSignIn()" 
+        />
+      </div>
+
+      <div class="separator">-- OR --</div>
+
       <form [formGroup]="loginForm" (ngSubmit)="login()">
         <mat-form-field>
           <mat-label>Email address</mat-label>
@@ -36,23 +54,46 @@ import { getFirebaseErrorMessage } from '../utilities/firebase-errors';
 
         <div class="center margin-top button-section">
           <button type="submit" mat-raised-button color="primary">Login</button>
-          <span>or</span>
-          <a class="button" routerLink="/sign-up">Sign up!</a>
+        </div>
+
+        <div class="login-footer">
+          <a class="sign-up-link" routerLink="/sign-up">Create Account</a>
+          <a (click)="forgotPassword()">Forget password?</a>
         </div>
       </form>
     </div>
   `,
   styles: [`
-    .button-section {
+    .login-footer {
       display: flex;
-      gap: 8px;
+      justify-content: space-between;
+      margin-top: 32px;      
+
+      .sign-up-link {
+        font-size: 1rem;
+      }
+
+      a {
+        cursor: pointer;
+        text-decoration: underline;
+      }
+    }
+
+    .google-sign-in {
+      cursor: pointer;
+    }
+
+    .separator {
+      margin-top: 16px;
+      margin-bottom: 16px;
+      text-align: center;
     }
   `]
 })
 export class LoginComponent {
   authService = inject(AuthService);
   router = inject(Router);
-  notificationServive = inject(NotificationService);
+  notificationService = inject(NotificationService);
 
   formBuilder = inject(FormBuilder);
 
@@ -68,16 +109,47 @@ export class LoginComponent {
       return;
     }
 
-    this.notificationServive.showLoading();
+    this.notificationService.showLoading();
 
     try {
       await this.authService.login(email, password);
 
       this.router.navigate(["/home"]);
     } catch (error: any) {
-      this.notificationServive.error(getFirebaseErrorMessage(error));
+      this.notificationService.error(getFirebaseErrorMessage(error));
     } finally {
-      this.notificationServive.hideLoading();
+      this.notificationService.hideLoading();
+    }
+  }
+  
+  async googleSignIn() {
+    this.notificationService.showLoading();
+    try {
+      await this.authService.googleSignIn();
+      this.router.navigate(['/home']);
+    } catch (error: any) {
+      this.notificationService.error(getFirebaseErrorMessage(error));
+    } finally {
+      this.notificationService.hideLoading();
+    }
+  }
+  
+  async forgotPassword() {
+    const { email } = this.loginForm.value;
+    if(!email) {
+      this.notificationService.error("Please enter a valid email address.");
+      return;
+    }
+
+    this.notificationService.showLoading();
+    try {
+      await this.authService.passwordReset(email);
+      this.notificationService.error("Password reset email has been sent. Please check your inbox.");
+    }
+    catch (err: any) {
+      this.notificationService.error(getFirebaseErrorMessage(err));
+    } finally {
+      this.notificationService.hideLoading();
     }
   }
 }
