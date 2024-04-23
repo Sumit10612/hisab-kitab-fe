@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": "dist/hisab-kitab-fe",
+    "public": "dist/hisab-kitab-fe/browser",
     "ignore": [
       "firebase.json",
       "**/.*",
