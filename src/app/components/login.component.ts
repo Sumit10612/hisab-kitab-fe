@@ -16,12 +16,9 @@ import { getFirebaseErrorMessage } from '../utilities/firebase-errors';
     MatInputModule, 
     MatButtonModule, 
     ReactiveFormsModule, 
-    RouterLink
+    RouterLink,
   ],
   template:`
-    <div class="card mat-elevation-z5">
-      <h1>Login</h1>
-
       <div class="center">
         <img
           class="google-sign-in"
@@ -61,7 +58,6 @@ import { getFirebaseErrorMessage } from '../utilities/firebase-errors';
           <a (click)="forgotPassword()">Forget password?</a>
         </div>
       </form>
-    </div>
   `,
   styles: [`
     .login-footer {

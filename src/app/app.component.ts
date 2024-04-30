@@ -1,11 +1,9 @@
 import { Component, inject } from '@angular/core';
-import { Router, RouterOutlet } from '@angular/router';
+import { RouterLink, RouterOutlet } from '@angular/router';
 
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatMenuModule } from '@angular/material/menu';
 
 import { AuthService } from './services/auth.service';
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { NotificationService } from './services/notification.service';
@@ -15,43 +13,34 @@ import { NotificationService } from './services/notification.service';
   standalone: true,
   imports: [
     RouterOutlet, 
-    MatToolbarModule, 
-    MatMenuModule, 
-    MatButtonModule, 
+    MatToolbarModule,
     MatIconModule,
-    MatProgressSpinner
+    MatProgressSpinner,
+    RouterLink
   ],
   template: `
     <mat-toolbar color="primary">Hisab Kitab
 
-    @if(currentUser()) {
-      <button mat-button [mat-menu-trigger-for]="userMenu">
-        {{ currentUser()?.displayName }}
-        <mat-icon>expand_more</mat-icon>
-      </button>
+    @if(authService.currentUser()) {
+      <a routerLink="/profile">
+      <img
+          width="30" 
+          height="30"
+          src="/assets/image-placeholder.png"
+        />
+      </a>
     }
-
-    <mat-menu #userMenu="matMenu">
-      <button mat-menu-item (click)="logout()">
-        <mat-icon>logout</mat-icon>
-        Logout
-      </button>
-    </mat-menu>
     </mat-toolbar>
 
-    <div class="container">
+    <div class="card">
       <router-outlet></router-outlet>
     </div>
 
-    @if(loading()) {
+    @if(notificationService.loading()) {
       <mat-progress-spinner mode="indeterminate" diameter="50"></mat-progress-spinner>
     }
   `,
   styles: [`
-    .container {
-      padding: 24px;
-    }
-
     mat-toolbar {
       justify-content: space-between;
     }
@@ -62,20 +51,19 @@ import { NotificationService } from './services/notification.service';
       left: 50%;
       transform: translate(-50%, -50%);
     }
+
+    a {
+        cursor: pointer;
+      }
+    
+      img {
+        border-radius: 100%;
+        object-fit: cover;
+        object-position: center;
+      }
   `]
 })
-export class AppComponent { 
-
-  authService = inject(AuthService);
-  router = inject(Router);
-  notificationService = inject(NotificationService);
-
-  currentUser = this.authService.currentUser;
-  loading = this.notificationService.loading;
-
-  async logout() {
-    await this.authService.logout();
-
-    this.router.navigate(["/login"]);
-  }
+export class AppComponent {
+  protected readonly authService = inject(AuthService);
+  protected readonly notificationService = inject(NotificationService);
 }

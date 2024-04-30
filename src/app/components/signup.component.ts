@@ -26,8 +26,6 @@ export function passwordsMatchValidator(): ValidatorFn {
   standalone: true,
   imports: [MatFormFieldModule, MatInputModule, MatButtonModule, ReactiveFormsModule],
   template: `
-    <div class="card mat-elevation-z5">
-      <h1>Sign Up</h1>
       <form [formGroup]="signUpForm" (ngSubmit)="submit()">
         <mat-form-field>
           <mat-label>Name</mat-label>
@@ -71,7 +69,6 @@ export function passwordsMatchValidator(): ValidatorFn {
           <button type="submit" mat-raised-button color="primary">Sign Up!</button>
         </div>
       </form>
-    </div>
   `,
   styles: []
 })
