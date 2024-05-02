@@ -7,6 +7,8 @@ import { AuthService } from '../services/auth.service';
 import { Router, RouterLink } from '@angular/router';
 import { NotificationService } from '../services/notification.service';
 import { getFirebaseErrorMessage } from '../utilities/firebase-errors';
+import { MatDividerModule } from '@angular/material/divider';
+import { UserService } from '../services/user.service';
 
 @Component({
   selector: 'app-login',
@@ -17,20 +19,22 @@ import { getFirebaseErrorMessage } from '../utilities/firebase-errors';
     MatButtonModule, 
     ReactiveFormsModule, 
     RouterLink,
+    MatDividerModule
   ],
   template:`
-      <div class="center">
+      <div class="section">
         <img
           class="google-sign-in"
-          src="/assets/web_light_rd_SI@1x.png" 
+          src="/assets/google-sign-in.png"
+          width="70%"
           role="button" 
           (click)="googleSignIn()" 
         />
       </div>
 
-      <div class="separator">-- OR --</div>
+      <mat-divider></mat-divider>
 
-      <form [formGroup]="loginForm" (ngSubmit)="login()">
+      <form class="section" [formGroup]="loginForm" (ngSubmit)="login()">
         <mat-form-field>
           <mat-label>Email address</mat-label>
           <input matInput formControlName="email" />
@@ -53,43 +57,39 @@ import { getFirebaseErrorMessage } from '../utilities/firebase-errors';
           <button type="submit" mat-raised-button color="primary">Login</button>
         </div>
 
-        <div class="login-footer">
-          <a class="sign-up-link" routerLink="/sign-up">Create Account</a>
+        <div class="section-footer">
+          <a routerLink="/sign-up">Create Account</a>
           <a (click)="forgotPassword()">Forget password?</a>
         </div>
       </form>
   `,
   styles: [`
-    .login-footer {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 32px;      
+    .section {
+      margin: 16px 0;
+      text-align: center;
 
-      .sign-up-link {
-        font-size: 1rem;
-      }
+      &-footer {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 16px;
 
-      a {
-        cursor: pointer;
-        text-decoration: underline;
+        a {
+          cursor: pointer;
+          text-decoration: underline;
+        }
       }
     }
 
     .google-sign-in {
       cursor: pointer;
     }
-
-    .separator {
-      margin-top: 16px;
-      margin-bottom: 16px;
-      text-align: center;
-    }
   `]
 })
 export class LoginComponent {
-  authService = inject(AuthService);
-  router = inject(Router);
-  notificationService = inject(NotificationService);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly notificationService = inject(NotificationService);
+  private readonly userService = inject(UserService);
 
   formBuilder = inject(FormBuilder);
 
@@ -119,9 +119,13 @@ export class LoginComponent {
   }
   
   async googleSignIn() {
-    this.notificationService.showLoading();
     try {
-      await this.authService.googleSignIn();
+      this.notificationService.showLoading();
+      const newUser = await this.authService.googleSignIn();
+      if(newUser) {
+        await this.userService.addUser(newUser);
+      }
+
       this.router.navigate(['/home']);
     } catch (error: any) {
       this.notificationService.error(getFirebaseErrorMessage(error));

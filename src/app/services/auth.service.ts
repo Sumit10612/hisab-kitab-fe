@@ -1,17 +1,18 @@
 import { Injectable, inject } from '@angular/core';
 import { 
   Auth, 
-  GoogleAuthProvider, 
-  User, 
+  GoogleAuthProvider,
   UserCredential, 
   authState, 
   createUserWithEmailAndPassword, 
+  getAdditionalUserInfo, 
   sendPasswordResetEmail, 
   signInWithEmailAndPassword, 
   signInWithPopup, 
   signOut, 
   updateProfile
 } from '@angular/fire/auth';
+import { User } from '../models/user.model';
 
 @Injectable({
   providedIn: 'root'
@@ -27,8 +28,21 @@ export class AuthService {
     return signInWithEmailAndPassword(this.firebaseAuth, email, password);
   }
 
-  googleSignIn(): Promise<UserCredential> {
-    return signInWithPopup(this.firebaseAuth, this.googleProvider)
+  async googleSignIn(): Promise<User | null> {
+    const userCredential = await signInWithPopup(this.firebaseAuth, this.googleProvider);
+    const info = getAdditionalUserInfo(userCredential);
+
+    if(!info?.isNewUser) {
+      return Promise.resolve(null);
+    }
+
+    const { user: { displayName, uid, email } } = userCredential;
+
+    return Promise.resolve({
+      uid: uid,
+      name: displayName ?? '',
+      email: email ?? ''
+    });
   }
 
   logout(): Promise<void> {
@@ -41,9 +55,5 @@ export class AuthService {
 
   passwordReset(email: string): Promise<void> {
     return sendPasswordResetEmail(this.firebaseAuth, email);
-  }
-
-  setDisplayName(user: User, name?: string | null) {
-    return updateProfile(user, { displayName: name });
   }
 }

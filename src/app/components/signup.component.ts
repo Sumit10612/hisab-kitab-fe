@@ -1,5 +1,12 @@
 import { Component, inject } from '@angular/core';
-import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { 
+  AbstractControl, 
+  NonNullableFormBuilder, 
+  ReactiveFormsModule, 
+  ValidationErrors, 
+  ValidatorFn, 
+  Validators 
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -79,7 +86,7 @@ export class SignupComponent {
   private readonly notificationService = inject(NotificationService);
   private readonly router = inject(Router);
   
-  formBuilder = inject(FormBuilder);
+  formBuilder = inject(NonNullableFormBuilder);
 
   signUpForm = this.formBuilder.group({
     name: ['', [Validators.required]],

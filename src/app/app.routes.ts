@@ -6,6 +6,7 @@ import { LoginComponent } from './components/login.component';
 import { HomeComponent } from './components/home/home.component';
 import { SignupComponent } from './components/signup.component';
 import { ProfileComponent } from './components/profile.component';
+import { EditProfileComponent } from './components/edit-profile.component';
 
 const redirectUnauthorizedToLogin = () => redirectUnauthorizedTo(["/login"]);
 const redirectLoggedInToHome = () => redirectLoggedInTo(["/home"]);
@@ -35,6 +36,11 @@ export const routes: Routes = [
     {
         path: "profile",
         component: ProfileComponent,
+        ...canActivate(redirectUnauthorizedToLogin)
+    },
+    {
+        path: "edit-profile",
+        component: EditProfileComponent,
         ...canActivate(redirectUnauthorizedToLogin)
     }
 ];
