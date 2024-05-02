@@ -12,7 +12,6 @@ import {
   signOut, 
   updateProfile
 } from '@angular/fire/auth';
-import { toSignal } from '@angular/core/rxjs-interop';
 
 @Injectable({
   providedIn: 'root'
@@ -20,8 +19,9 @@ import { toSignal } from '@angular/core/rxjs-interop';
 export class AuthService {
   firebaseAuth = inject(Auth);
 
-  currentUser = toSignal(authState(this.firebaseAuth));
   private googleProvider = new GoogleAuthProvider();
+
+  currentUser$ = authState(this.firebaseAuth);
 
   login(email: string, password: string): Promise<UserCredential> {
     return signInWithEmailAndPassword(this.firebaseAuth, email, password);

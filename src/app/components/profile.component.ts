@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, effect, inject } from '@angular/core';
 import { AuthService } from '../services/auth.service';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -7,6 +7,10 @@ import { MatIcon } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatDividerModule } from '@angular/material/divider';
 import { ThemeService } from '../services/theme.service';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { UserService } from '../services/user.service';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-profile',
@@ -16,46 +20,42 @@ import { ThemeService } from '../services/theme.service';
     MatFormFieldModule,
     MatSlideToggleModule,
     MatIcon,
-    MatDividerModule
+    MatDividerModule,
+    MatInputModule,
+    MatButtonToggleModule,
+    ReactiveFormsModule
   ],
   template: `
-    <div class="text-center">
-      <div class="profile-image">
-        <img
-          width="120" 
-          height="120"
-          class="margin-top mat-elavation-z1"
-          src="/assets/image-placeholder.png"
-        />
-        <button mat-mini-fab>
-          <mat-icon>edit</mat-icon>
-        </button>
+    <div class="profile-section">
+      <img
+          width="100" 
+          height="100"
+          class="mat-elavation-z1"
+          src="/assets/image-placeholder.png" 
+      />
+
+      <div class="profile-section-info margin-top">
+        <span>{{userService.currentUser()?.name}}</span>
+        <span>{{userService.currentUser()?.email}}</span>
+        
+        <a>edit</a>
       </div>
+    </div>
 
-      <h1>{{authService.currentUser()?.displayName}}</h1>
+    <mat-divider></mat-divider>
 
-      <mat-divider></mat-divider>
-
-      <div class="row">
-        <mat-slide-toggle labelPosition="before" (click)="toggelTheme()">Dark mode:</mat-slide-toggle>
-        @if (themeService.theme() === "light") {
-          <mat-icon>brightness_5</mat-icon>
-        } @else {
-          <mat-icon>bedtime</mat-icon>
-        }
-      </div>
+    <div class="margin-top">
+      <mat-slide-toggle labelPosition="before" (click)="toggelTheme()">Dark mode</mat-slide-toggle>
+    </div>
       
-      <div class="margin-top">
-        <button mat-raised-button color="primary" (click)="logout()">Logout</button>
-      </div>
+    <div class="margin-top text-center">
+      <button mat-raised-button color="primary" (click)="logout()">Logout</button>
     </div>
   `,
   styles: [
     `
-      .profile-image {
-        position: relative;
-        width: 120px;
-        margin: auto;
+      .profile-section {
+        display: block;
 
         > img {
           border-radius: 100%;
@@ -63,26 +63,37 @@ import { ThemeService } from '../services/theme.service';
           object-position: center;
         }
 
-        > button {
-          position: absolute;
-          bottom: 10px;
-          right: 0;
-        }
-      }
+        &-info {
+          float: right;
+          display: flex;
+          flex-direction: column;
 
-      .row {
-        display: flex;
-        gap: 8px;
-        margin-top: 16px;
+          > a {
+            justify-content: center;
+          }
+        }
       }
     `
   ]
 })
 export class ProfileComponent {
   private router = inject(Router);
-
+  private readonly formBuilder = inject(FormBuilder);
+  
+  protected readonly userService = inject(UserService);
   protected readonly authService = inject(AuthService);
   protected readonly themeService = inject(ThemeService);
+
+  protected readonly form = this.formBuilder.group({
+    uid: [''],
+    name: this.formBuilder.control({ value: '', disabled: true })
+  });
+
+  constructor() {
+    effect(() => {
+      this.form.patchValue({ ...this.userService.currentUser() })
+    });
+  }
 
   async logout() {
     await this.authService.logout();

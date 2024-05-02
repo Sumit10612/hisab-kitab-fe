@@ -7,6 +7,7 @@ import { AuthService } from '../services/auth.service';
 import { NotificationService } from '../services/notification.service';
 import { getFirebaseErrorMessage } from '../utilities/firebase-errors';
 import { Router } from '@angular/router';
+import { UserService } from '../services/user.service';
 
 export function passwordsMatchValidator(): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
@@ -73,10 +74,12 @@ export function passwordsMatchValidator(): ValidatorFn {
   styles: []
 })
 export class SignupComponent {
+  private readonly authService = inject(AuthService);
+  private readonly userService = inject(UserService);
+  private readonly notificationService = inject(NotificationService);
+  private readonly router = inject(Router);
+  
   formBuilder = inject(FormBuilder);
-  authService = inject(AuthService);
-  notificationService = inject(NotificationService);
-  router = inject(Router);
 
   signUpForm = this.formBuilder.group({
     name: ['', [Validators.required]],
@@ -94,9 +97,9 @@ export class SignupComponent {
 
     try {
       this.notificationService.showLoading();
-      const { user } = await this.authService.signUp(email, password);
+      const { user: { uid } } = await this.authService.signUp(email, password);
 
-      await this.authService.setDisplayName(user, name);
+      await this.userService.addUser({ uid, email, name });
 
       this.router.navigate(["/home"]);
     } catch (err: any) {

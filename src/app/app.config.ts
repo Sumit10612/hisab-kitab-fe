@@ -10,6 +10,8 @@ import { provideAuth, getAuth } from '@angular/fire/auth';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { provideServiceWorker } from '@angular/service-worker';
 
+import { getFirestore, provideFirestore } from '@angular/fire/firestore';
+
 const firebaseConfig = {
   apiKey: "AIzaSyAMBjtKAO5RZXUggmiljSbKh_EQdzoPUBs",
   authDomain: "hisab-kitab-d6b5d.firebaseapp.com",
@@ -25,7 +27,8 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     importProvidersFrom([
         provideFirebaseApp(() => initializeApp(firebaseConfig)),
-        provideAuth(() => getAuth())
+        provideAuth(() => getAuth()),
+        provideFirestore(() => getFirestore())
     ]),
     MatSnackBarModule,
     provideServiceWorker('ngsw-worker.js', {
