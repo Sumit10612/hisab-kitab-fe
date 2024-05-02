@@ -7,11 +7,14 @@ import { AuthService } from './services/auth.service';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { NotificationService } from './services/notification.service';
+import { ThemeService } from './services/theme.service';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [
+    CommonModule,
     RouterOutlet, 
     MatToolbarModule,
     MatIconModule,
@@ -19,28 +22,34 @@ import { NotificationService } from './services/notification.service';
     RouterLink
   ],
   template: `
-    <mat-toolbar color="primary">Hisab Kitab
+    <div class="content" [ngClass]="themeService.theme()">
+      <mat-toolbar color="primary">Hisab Kitab
 
-    @if(authService.currentUser()) {
-      <a routerLink="/profile">
-      <img
-          width="30" 
-          height="30"
-          src="/assets/image-placeholder.png"
-        />
-      </a>
-    }
-    </mat-toolbar>
+      @if(authService.currentUser()) {
+        <a routerLink="/profile">
+        <img
+            width="30" 
+            height="30"
+            src="/assets/image-placeholder.png"
+          />
+        </a>
+      }
+      </mat-toolbar>
 
-    <div class="card">
-      <router-outlet></router-outlet>
+      <div class="card">
+        <router-outlet></router-outlet>
+      </div>
+
+      @if(notificationService.loading()) {
+        <mat-progress-spinner mode="indeterminate" diameter="50"></mat-progress-spinner>
+      }
     </div>
-
-    @if(notificationService.loading()) {
-      <mat-progress-spinner mode="indeterminate" diameter="50"></mat-progress-spinner>
-    }
   `,
   styles: [`
+    .content {
+      min-height: 100vh;
+    }
+
     mat-toolbar {
       justify-content: space-between;
     }
@@ -66,4 +75,5 @@ import { NotificationService } from './services/notification.service';
 export class AppComponent {
   protected readonly authService = inject(AuthService);
   protected readonly notificationService = inject(NotificationService);
+  protected readonly themeService = inject(ThemeService);
 }
