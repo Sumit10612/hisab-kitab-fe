@@ -6,7 +6,6 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { NotificationService } from './services/notification.service';
-import { ThemeService } from './services/theme.service';
 import { CommonModule } from '@angular/common';
 import { UserService } from './services/user.service';
 
@@ -22,7 +21,7 @@ import { UserService } from './services/user.service';
     RouterLink
   ],
   template: `
-    <div class="content" [ngClass]="themeService.theme()">
+    <div class="content" [ngClass]="userService.currentUser()?.preferences?.theme ?? 'light'">
       <mat-toolbar color="primary">Hisab Kitab
 
       @if(userService.currentUser()) {
@@ -76,5 +75,4 @@ import { UserService } from './services/user.service';
 export class AppComponent {
   protected readonly userService = inject(UserService);
   protected readonly notificationService = inject(NotificationService);
-  protected readonly themeService = inject(ThemeService);
 }
