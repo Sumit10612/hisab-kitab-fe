@@ -9,6 +9,7 @@ import { NotificationService } from './services/notification.service';
 import { CommonModule } from '@angular/common';
 import { UserService } from './services/user.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { SwUpdate } from '@angular/service-worker';
 
 @Component({
   selector: 'app-root',
@@ -65,13 +66,30 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 })
 export class AppComponent implements OnInit {
   private readonly snackBar = inject(MatSnackBar);
+  private readonly swUpdate = inject(SwUpdate);
 
   protected readonly userService = inject(UserService);
   protected readonly notificationService = inject(NotificationService);
 
   ngOnInit() {
+    // Checking service worker based update
+    if(this.swUpdate.isEnabled) {
+      this.swUpdate.checkForUpdate();
+      this.swUpdate.versionUpdates.subscribe(update => {
+        if(update.type === "VERSION_READY") {
+          const sb = this.snackBar.open("New version of an app is available", "Install now", { duration: 50000 });
+          sb.onAction().subscribe(() => {
+            location.reload();
+          })
+        }
+      });
+    }
+
+    // Prompting for installation
     if(window.matchMedia("display-mode: browser").matches) {
-      if (!("standalone" in navigator)) {
+      if ("standalone" in navigator) {
+        this.snackBar.open("You can install this app, use Share > Add to home screeen", "", { duration: 5000 });        
+      } else {
         window.addEventListener("beforeinstallprompt", event => {
           event.preventDefault();
           const sb = this.snackBar.open("You can install this app", "Install", { duration: 5000 });
@@ -79,8 +97,6 @@ export class AppComponent implements OnInit {
             (event as any).prompt();
           });
         });
-      } else {
-        this.snackBar.open("You can install this app, use Share > Add to home screeen", "", { duration: 5000 });
       }
     }
   }
