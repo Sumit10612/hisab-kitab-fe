@@ -1,4 +1,4 @@
-import { Component, effect, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { AuthService } from '../services/auth.service';
 import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -24,7 +24,8 @@ import { UserService } from '../services/user.service';
           width="80" 
           height="80"
           class="mat-elavation-z1"
-          src="/assets/image-placeholder.png" 
+          src="/assets/image-placeholder.png"
+          alt="placeholder"
       />
 
       <div class="profile-section-info">

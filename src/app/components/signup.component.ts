@@ -109,7 +109,7 @@ export class SignupComponent {
       await this.userService.addUser({ uid, email, name });
 
       this.router.navigate(["/home"]);
-    } catch (err: any) {
+    } catch (err) {
       this.notificationService.error(getFirebaseErrorMessage(err));
     } finally {
       this.notificationService.hideLoading();

@@ -67,7 +67,7 @@ export class EditProfileComponent {
       await this.userService.updateUser({ uid, ...data });
 
       this.router.navigate(["/profile"]);
-    } catch (err: any) {
+    } catch (err) {
       this.notificationService.error(getFirebaseErrorMessage(err));
     } finally {
       this.notificationService.hideLoading();

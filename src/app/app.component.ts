@@ -31,6 +31,7 @@ import { UserService } from './services/user.service';
             width="30" 
             height="30"
             src="/assets/image-placeholder.png"
+            alt="placeholder"
           />
         </a>
       }

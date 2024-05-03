@@ -9,8 +9,7 @@ import {
   sendPasswordResetEmail, 
   signInWithEmailAndPassword, 
   signInWithPopup, 
-  signOut, 
-  updateProfile
+  signOut
 } from '@angular/fire/auth';
 import { User } from '../models/user.model';
 
