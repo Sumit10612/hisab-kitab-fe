@@ -29,7 +29,7 @@ import { UserService } from './services/user.service';
         <img
             width="30" 
             height="30"
-            src="/assets/image-placeholder.png"
+            src="/assets/images/user-placeholder.png"
             alt="placeholder"
           />
         </a>
@@ -63,12 +63,6 @@ import { UserService } from './services/user.service';
 
     a {
         cursor: pointer;
-      }
-    
-      img {
-        border-radius: 100%;
-        object-fit: cover;
-        object-position: center;
       }
   `]
 })

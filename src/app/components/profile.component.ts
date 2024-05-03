@@ -23,7 +23,7 @@ import { getFirebaseErrorMessage } from '../utilities/firebase-errors';
           width="80" 
           height="80"
           class="mat-elavation-z1"
-          src="/assets/image-placeholder.png"
+          src="/assets/images/user-placeholder.png"
           alt="placeholder"
       />
 
@@ -57,12 +57,6 @@ import { getFirebaseErrorMessage } from '../utilities/firebase-errors';
     `
       .profile-section {
         display: block;
-
-        > img {
-          border-radius: 100%;
-          object-fit: cover;
-          object-position: center;
-        }
 
         &-info {
           float: right;
