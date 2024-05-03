@@ -1,9 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
-
-import { MatToolbarModule } from '@angular/material/toolbar';
-
-import { MatIconModule } from '@angular/material/icon';
+import { RouterOutlet } from '@angular/router';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { NotificationService } from './services/notification.service';
 import { CommonModule } from '@angular/common';
@@ -17,27 +13,10 @@ import { SwUpdate } from '@angular/service-worker';
   imports: [
     CommonModule,
     RouterOutlet, 
-    MatToolbarModule,
-    MatIconModule,
-    MatProgressSpinner,
-    RouterLink
+    MatProgressSpinner
   ],
   template: `
-    <div class="content" [ngClass]="userService.currentUser()?.preferences?.theme ?? 'light'">
-      <mat-toolbar color="primary">Hisab Kitab
-
-      @if(userService.currentUser()) {
-        <a routerLink="/profile">
-        <img
-            width="30" 
-            height="30"
-            src="/assets/images/user-placeholder.png"
-            alt="placeholder"
-          />
-        </a>
-      }
-      </mat-toolbar>
-
+    <div class="container" [ngClass]="userService.currentUser()?.preferences?.theme ?? 'light'">
       <div class="card">
         <router-outlet></router-outlet>
       </div>
@@ -48,12 +27,8 @@ import { SwUpdate } from '@angular/service-worker';
     </div>
   `,
   styles: [`
-    .content {
+    .container {
       min-height: 100vh;
-    }
-
-    mat-toolbar {
-      justify-content: space-between;
     }
 
     mat-progress-spinner {

@@ -1,3 +1,14 @@
+.header-section {
+    display: flex;
+    justify-content: space-between;
+
+    > a {
+        > img {
+            border-radius: 100%;
+        }
+    }
+}
+
 .addGroup {
     position: fixed;
     right: 20px;
