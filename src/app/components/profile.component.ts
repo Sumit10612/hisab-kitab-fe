@@ -28,9 +28,11 @@ import { MatIconModule } from '@angular/material/icon';
       </a>
 
       <h2>Profile</h2>
+
+      
     </div>
 
-    <div class="profile-section">
+    <div class="profile-section">  
       <img
           width="80" 
           height="80"
@@ -39,14 +41,12 @@ import { MatIconModule } from '@angular/material/icon';
           alt="placeholder"
       />
 
-      <div class="profile-section-info">
-        <span>{{userService.currentUser()?.name}}</span>
-        <span>{{userService.currentUser()?.email}}</span>
-        
-        <a role="button" mat-icon-button routerLink="/edit-profile">
-          <mat-icon>edit</mat-icon>
-        </a>
-      </div>
+      <span>{{userService.currentUser()?.name}}</span>
+      <span>{{userService.currentUser()?.email}}</span>
+
+      <a role="button" mat-mini-fab color="secondary" routerLink="/edit-profile">
+        <mat-icon>edit</mat-icon>
+      </a>
     </div>
 
     <mat-divider></mat-divider>
@@ -67,24 +67,25 @@ import { MatIconModule } from '@angular/material/icon';
       <button mat-raised-button color="primary" (click)="logout()">Logout</button>
     </div>
   `,
-  styles: [
-    `
-      .profile-section {
-        display: flex;
-        justify-content: space-between;
-        margin: 16px;
+  styles: [`
+    .profile-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
 
-        &-info {
-          display: flex;
-          flex-direction: column;
-        }
+      > img {
+        margin-bottom: 8px;
       }
 
-      .preferences-section {
-        margin: 16px;
+      > a {
+        margin: 0 0 8px auto;
       }
-    `
-  ]
+    }
+
+    .preferences-section {
+      margin: 16px;
+    }
+  `]
 })
 export class ProfileComponent {
   private router = inject(Router);
