@@ -7,6 +7,7 @@ import { UserService } from '../services/user.service';
 import { MatRadioChange, MatRadioModule } from '@angular/material/radio';
 import { NotificationService } from '../services/notification.service';
 import { getFirebaseErrorMessage } from '../utilities/firebase-errors';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-profile',
@@ -14,10 +15,21 @@ import { getFirebaseErrorMessage } from '../utilities/firebase-errors';
   imports: [
     MatButtonModule,
     MatDividerModule,
+    MatIconModule,
     RouterLink,
     MatRadioModule
   ],
   template: `
+    <div class="nav-section">
+      <a role="button"
+        mat-icon-button 
+        routerLink="/home">
+        <mat-icon>arrow_back_ios</mat-icon>
+      </a>
+
+      <h2>Profile</h2>
+    </div>
+
     <div class="profile-section">
       <img
           width="80" 
@@ -31,7 +43,9 @@ import { getFirebaseErrorMessage } from '../utilities/firebase-errors';
         <span>{{userService.currentUser()?.name}}</span>
         <span>{{userService.currentUser()?.email}}</span>
         
-        <a routerLink="/edit-profile">edit</a>
+        <a role="button" mat-icon-button routerLink="/edit-profile">
+          <mat-icon>edit</mat-icon>
+        </a>
       </div>
     </div>
 
@@ -56,17 +70,13 @@ import { getFirebaseErrorMessage } from '../utilities/firebase-errors';
   styles: [
     `
       .profile-section {
-        display: block;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 16px;
 
         &-info {
-          float: right;
           display: flex;
           flex-direction: column;
-          margin-top: 16px;
-
-          > a {
-            justify-content: center;
-          }
         }
       }
 

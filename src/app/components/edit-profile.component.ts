@@ -6,7 +6,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { NotificationService } from '../services/notification.service';
 import { getFirebaseErrorMessage } from '../utilities/firebase-errors';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-edit-profile',
@@ -15,9 +16,20 @@ import { Router } from '@angular/router';
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
-    MatButtonModule
+    MatButtonModule,
+    MatIconModule,
+    RouterLink
   ],
   template: `
+    <div class="nav-section">
+      <a role="button"
+        mat-icon-button 
+        routerLink="/profile">
+        <mat-icon>arrow_back_ios</mat-icon>
+      </a>
+
+      <h2>Edit Profile</h2>
+    </div>
     <form [formGroup]="form" (ngSubmit)="update()">
       <mat-form-field>
         <mat-label>Name</mat-label>
