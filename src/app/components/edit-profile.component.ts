@@ -8,6 +8,7 @@ import { NotificationService } from '../services/notification.service';
 import { getFirebaseErrorMessage } from '../utilities/firebase-errors';
 import { Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { MatCardModule } from '@angular/material/card';
 
 @Component({
   selector: 'app-edit-profile',
@@ -18,6 +19,7 @@ import { MatIconModule } from '@angular/material/icon';
     MatInputModule,
     MatButtonModule,
     MatIconModule,
+    MatCardModule,
     RouterLink
   ],
   template: `
@@ -38,6 +40,19 @@ import { MatIconModule } from '@angular/material/icon';
           <input matInput [formControl]="form.controls.name" />
         </mat-form-field>
 
+        <div class="image-container">
+          @for (item of imageUrls; track item) {
+            <img
+              width="50"
+              height="50"
+              [class.selected]="selectedIndex === $index"
+              class="mat-elevation-z1"
+              [src]="'/assets/avatars/avatar_' + ($index) + '.png'"
+              alt="placeholder"
+              (click)="selectImage($index)" />
+          }
+        </div>
+
         <div class="text-center">
           <button 
             type="submit" 
@@ -53,6 +68,25 @@ import { MatIconModule } from '@angular/material/icon';
   styles: [`
     .edit-profile-section {
       margin: 16px;
+
+      .image-container {
+        display: flex;
+        overflow-x: auto;
+        margin-bottom: 16px;
+        white-space: nowrap;
+
+        > img {
+          border-radius: 100%;
+          margin: 16px 0 16px 12px;
+          border-radius: 100%;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+
+        .selected {
+          transform: scale(1.4);
+        }
+      }
     }
   `]
 })
@@ -63,15 +97,31 @@ export class EditProfileComponent {
   
   protected readonly formBuilder = inject(NonNullableFormBuilder);
 
+  protected  imageUrls: string[] = [
+    "/assets/avatars/avatar_0.png",
+    "/assets/avatars/avatar_1.png",
+    "/assets/avatars/avatar_2.png",
+    "/assets/avatars/avatar_3.png",
+    "/assets/avatars/avatar_4.png",
+    "/assets/avatars/avatar_5.png",
+  ];
+  protected selectedIndex: number = 0;
   protected form = this.formBuilder.group({
     uid: [''],
-    name: ['']
+    name: [''],
+    photoUrl: [''],
   });
 
   constructor() {
     effect(() => {
       this.form.patchValue({ ...this.userService.currentUser() })
     });
+  }
+
+  selectImage(index: number) {
+    this.selectedIndex = index;
+    this.form.controls.photoUrl.setValue(this.imageUrls[index]);
+    this.form.markAsDirty();
   }
 
   async update() {

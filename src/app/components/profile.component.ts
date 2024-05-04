@@ -28,25 +28,25 @@ import { MatIconModule } from '@angular/material/icon';
       </a>
 
       <h2>Profile</h2>
-
-      
     </div>
 
-    <div class="profile-section">  
-      <img
-          width="80" 
-          height="80"
-          class="mat-elavation-z1"
-          src="/assets/images/user-placeholder.png"
-          alt="placeholder"
-      />
+    <div class="profile-section">
+      @if (userService.currentUser()) {
+        <img
+            width="80" 
+            height="80"
+            class="mat-elavation-z1"
+            [src]="(userService.currentUser()?.photoUrl) ?? '/assets/avatars/avatar_0.png'"
+            alt="placeholder"
+        />
 
-      <span>{{userService.currentUser()?.name}}</span>
-      <span>{{userService.currentUser()?.email}}</span>
+        <span>{{userService.currentUser()?.name}}</span>
+        <span>{{userService.currentUser()?.email}}</span>
 
-      <a role="button" mat-mini-fab color="secondary" routerLink="/edit-profile">
-        <mat-icon>edit</mat-icon>
-      </a>
+        <a role="button" mat-mini-fab color="secondary" routerLink="/edit-profile">
+          <mat-icon>edit</mat-icon>
+        </a>
+      }
     </div>
 
     <mat-divider></mat-divider>
@@ -55,6 +55,7 @@ import { MatIconModule } from '@angular/material/icon';
       <span>Theme</span>
       <mat-radio-group
         name="themeSelector"
+        color="warn"
         [value]="userService.currentUser()?.preferences?.theme ?? 'light'"
         (change)="onThemeChange($event)"
         >

@@ -24,7 +24,7 @@ import { MatDividerModule } from '@angular/material/divider';
           width="55" 
           height="55"
           class="mat-elevation-z10"
-          src="/assets/images/user-placeholder.png"
+          [src]="(userService.currentUser()?.photoUrl) ?? '/assets/avatars/avatar_0.png'"
           alt="placeholder" 
         />
       </a>
@@ -47,11 +47,11 @@ import { MatDividerModule } from '@angular/material/divider';
         <mat-divider></mat-divider>
         <div class="overview-widget-content">
           <div>
-            <span style="color: red;">5512</span>
+            <span style="color: red; font-weight: 700;">5512</span>
             <span>you owe</span>
           </div>
           <div>
-            <span style="color: green;">5512</span>
+            <span style="color: green; font-weight: 700;">5512</span>
             <span>you are owed</span>
           </div>
         </div>
@@ -59,9 +59,16 @@ import { MatDividerModule } from '@angular/material/divider';
     </mat-card>
   </div>
 
-  <a class="addGroup" mat-fab>
-      <mat-icon>add</mat-icon>
-  </a>
+  <div class="groups_widget">
+    <span>Groups</span>
+    <mat-card>
+      <mat-card-content>
+        <a role="button" mat-mini-fab color="secondary">
+          <mat-icon>group_add</mat-icon>
+        </a>
+      </mat-card-content>
+    </mat-card>
+  </div>
   `,
   styles: [`
     .header-section {
@@ -74,11 +81,12 @@ import { MatDividerModule } from '@angular/material/divider';
     }
 
     .overview-widget {
-      margin: 16px 0;
+      margin: 16px 0 24px 0;
       border-radius: 32px;
       
       .mat-mdc-card {
         border-radius: 32px;
+        padding: 0 16px;
       }
 
       &-header {
@@ -99,14 +107,14 @@ import { MatDividerModule } from '@angular/material/divider';
       }
     }
 
-    .mat-icon {
-      vertical-align: middle;
+    .groups_widget {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
     }
 
-    .addGroup {
-      position: fixed;
-      right: 20px;
-      bottom: 20px;
+    .mat-icon {
+      vertical-align: middle;
     }
   `]
 })
