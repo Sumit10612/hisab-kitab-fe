@@ -72,7 +72,7 @@ import { MatIconModule } from '@angular/material/icon';
       .profile-section {
         display: flex;
         justify-content: space-between;
-        margin-bottom: 16px;
+        margin: 16px;
 
         &-info {
           display: flex;
@@ -81,7 +81,7 @@ import { MatIconModule } from '@angular/material/icon';
       }
 
       .preferences-section {
-        margin: 16px 0;
+        margin: 16px;
       }
     `
   ]

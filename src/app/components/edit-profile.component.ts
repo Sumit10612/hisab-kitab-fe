@@ -30,24 +30,31 @@ import { MatIconModule } from '@angular/material/icon';
 
       <h2>Edit Profile</h2>
     </div>
-    <form [formGroup]="form" (ngSubmit)="update()">
-      <mat-form-field>
-        <mat-label>Name</mat-label>
-        <input matInput [formControl]="form.controls.name" />
-      </mat-form-field>
 
-      <div class="text-center margin-top">
-        <button 
-          type="submit" 
-          mat-raised-button 
-          color="primary"
-          [disabled]="!form.dirty">
-          Update
-        </button>
-      </div>
-    </form>
+    <div class="edit-profile-section">
+      <form [formGroup]="form" (ngSubmit)="update()">
+        <mat-form-field>
+          <mat-label>Name</mat-label>
+          <input matInput [formControl]="form.controls.name" />
+        </mat-form-field>
+
+        <div class="text-center">
+          <button 
+            type="submit" 
+            mat-raised-button 
+            color="primary"
+            [disabled]="!form.dirty">
+            Update
+          </button>
+        </div>
+      </form>
+    </div>
   `,
-  styles: []
+  styles: [`
+    .edit-profile-section {
+      margin: 16px;
+    }
+  `]
 })
 export class EditProfileComponent {
   private readonly userService = inject(UserService);

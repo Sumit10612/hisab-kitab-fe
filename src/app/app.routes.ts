@@ -3,7 +3,7 @@ import { Routes } from '@angular/router';
 import { canActivate, redirectLoggedInTo, redirectUnauthorizedTo } from '@angular/fire/auth-guard';
 
 import { LoginComponent } from './components/login.component';
-import { HomeComponent } from './components/home/home.component';
+import { HomeComponent } from './components/home.component';
 import { SignupComponent } from './components/signup.component';
 import { ProfileComponent } from './components/profile.component';
 import { EditProfileComponent } from './components/edit-profile.component';
