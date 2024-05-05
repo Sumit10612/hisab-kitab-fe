@@ -4,6 +4,7 @@ export interface User {
     email?: string;
     photoUrl?: string;
     preferences?: UserPreferences;
+    groups?: string[];
 }
 
 export interface UserPreferences {

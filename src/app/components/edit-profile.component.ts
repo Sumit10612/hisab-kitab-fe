@@ -8,7 +8,6 @@ import { NotificationService } from '../services/notification.service';
 import { getFirebaseErrorMessage } from '../utilities/firebase-errors';
 import { Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { MatCardModule } from '@angular/material/card';
 
 @Component({
   selector: 'app-edit-profile',
@@ -19,7 +18,6 @@ import { MatCardModule } from '@angular/material/card';
     MatInputModule,
     MatButtonModule,
     MatIconModule,
-    MatCardModule,
     RouterLink
   ],
   template: `
@@ -47,7 +45,7 @@ import { MatCardModule } from '@angular/material/card';
               height="50"
               [class.selected]="selectedIndex === $index"
               class="mat-elevation-z1"
-              [src]="'/assets/avatars/avatar_' + ($index) + '.png'"
+              [src]="item"
               alt="placeholder"
               (click)="selectImage($index)" />
           }
@@ -105,7 +103,7 @@ export class EditProfileComponent {
     "/assets/avatars/avatar_4.png",
     "/assets/avatars/avatar_5.png",
   ];
-  protected selectedIndex: number = 0;
+  protected selectedIndex: number | undefined;
   protected form = this.formBuilder.group({
     uid: [''],
     name: [''],

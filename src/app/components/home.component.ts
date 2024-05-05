@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { UserService } from '../services/user.service';
 import { MatDividerModule } from '@angular/material/divider';
+import { GroupService } from '../services/group.service';
 
 @Component({
   selector: 'app-home',
@@ -59,13 +60,24 @@ import { MatDividerModule } from '@angular/material/divider';
     </mat-card>
   </div>
 
-  <div class="groups_widget">
+  <div class="groups-widget">
     <span>Groups</span>
     <mat-card>
       <mat-card-content>
-        <a role="button" mat-mini-fab color="secondary">
-          <mat-icon>group_add</mat-icon>
-        </a>
+        <div class="groups-widget-button">
+          <a role="button" mat-fab color="warn" routerLink="/create-group">
+            <mat-icon>group_add</mat-icon>
+          </a>
+          <span>Create new</span>
+        </div>
+        @for (item of groupService.myGroups(); track item) {
+          <div class="groups-widget-button">
+            <a role="button" mat-fab color="" routerLink="/create-group">
+              <mat-icon>{{item.icon}}</mat-icon>
+            </a>
+            <span>{{item.name}}</span>
+          </div>
+        }
       </mat-card-content>
     </mat-card>
   </div>
@@ -107,10 +119,16 @@ import { MatDividerModule } from '@angular/material/divider';
       }
     }
 
-    .groups_widget {
+    .groups-widget {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: auto;
+
+      &-button {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+      }
     }
 
     .mat-icon {
@@ -120,5 +138,5 @@ import { MatDividerModule } from '@angular/material/divider';
 })
 export class HomeComponent {
   protected readonly userService = inject(UserService);
-
+  protected readonly groupService = inject(GroupService);
 }

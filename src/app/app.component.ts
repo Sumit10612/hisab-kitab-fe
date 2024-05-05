@@ -10,11 +10,7 @@ import { SwUpdate } from '@angular/service-worker';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterOutlet, 
-    MatProgressSpinner
-  ],
+  imports: [CommonModule, RouterOutlet, MatProgressSpinner],
   template: `
     <div class="container" [ngClass]="userService.currentUser()?.preferences?.theme ?? 'light'">
       <div class="card">

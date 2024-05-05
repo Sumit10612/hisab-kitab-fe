@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Firestore } from '@angular/fire/firestore';
-import { User, UserPreferences } from '../models/user.model';
+import { User } from '../models/user.model';
 import { doc, setDoc, updateDoc } from 'firebase/firestore';
 import { AuthService } from './auth.service';
 import { Observable, of, switchMap } from 'rxjs';
@@ -14,7 +14,7 @@ export class UserService {
   firestore = inject(Firestore);
   authService = inject(AuthService);
 
-  private user$ = this.authService.currentUser$.pipe(
+  user$ = this.authService.currentUser$.pipe(
     switchMap((user) => {
       if(!user) {
         return of(null);
