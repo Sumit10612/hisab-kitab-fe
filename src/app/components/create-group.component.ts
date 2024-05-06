@@ -46,7 +46,9 @@ import { UserService } from '../services/user.service';
                 [class.selected]="selectedIndex === $index"
                 color=""
                 (click)="selectImage($index)">
-                <mat-icon>{{item.icon}}</mat-icon>                
+                <mat-icon [color]="(selectedIndex === $index)? 'warn' : ''">
+                  {{item.icon}}
+                </mat-icon>                
               </button>
               <span>{{item.name}}</span>
             </div>           

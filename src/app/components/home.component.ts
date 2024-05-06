@@ -1,22 +1,23 @@
 import { Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-
-import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { UserService } from '../services/user.service';
 import { MatDividerModule } from '@angular/material/divider';
 import { GroupService } from '../services/group.service';
+import { GroupWidgetComponent } from './widgets/group-widget.component';
+import { OverviewWidgetComponent } from './widgets/overview-widget.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
   imports: [
-    MatCardModule, 
     MatButtonModule, 
     MatIconModule,
     MatDividerModule,
-    RouterLink
+    RouterLink,
+    GroupWidgetComponent,
+    OverviewWidgetComponent
   ],
   template: `
     <div class="header-section">
@@ -35,100 +36,52 @@ import { GroupService } from '../services/group.service';
       </button>
   </div>
 
-  <div class="overview-widget mat-elevation-z20">
-    <mat-card>
-      <mat-card-content>
-        <div class="overview-widget-header">
-          <h3>Total Balance</h3>
-          <h2>
-            <mat-icon>currency_rupee</mat-icon>
-            <span>10012</span>
-          </h2>
-        </div>
-        <mat-divider></mat-divider>
-        <div class="overview-widget-content">
-          <div>
-            <span style="color: red; font-weight: 700;">5512</span>
-            <span>you owe</span>
-          </div>
-          <div>
-            <span style="color: green; font-weight: 700;">5512</span>
-            <span>you are owed</span>
-          </div>
-        </div>
-      </mat-card-content>
-    </mat-card>
+  <div class="overview-widget-container">
+    <overview-widget></overview-widget>
   </div>
 
-  <div class="groups-widget">
-    <span>Groups</span>
-    <mat-card>
-      <mat-card-content>
-        <div class="groups-widget-button">
-          <a role="button" mat-fab color="warn" routerLink="/create-group">
-            <mat-icon>group_add</mat-icon>
-          </a>
-          <span>Create new</span>
-        </div>
-        @for (item of groupService.myGroups(); track item) {
-          <div class="groups-widget-button">
-            <a role="button" mat-fab color="" routerLink="/create-group">
-              <mat-icon>{{item.icon}}</mat-icon>
-            </a>
-            <span>{{item.name}}</span>
-          </div>
-        }
-      </mat-card-content>
-    </mat-card>
+  <span>Groups</span>
+  <div class="group-widget-container">
+    @for (item of groupService.myGroups(); track item) {
+      <group-widget [data]="item"></group-widget>
+    }
+  </div>
+
+  <div class="create-group-button">
+    <a mat-fab routerLink="/create-group" color="warn">
+      <mat-icon>group_add</mat-icon>
+    </a>
   </div>
   `,
   styles: [`
     .header-section {
       display: flex;
       justify-content: space-between;
+      height: 10vh;
 
       > a > img {
         border-radius: 100%;
       }
     }
-
-    .overview-widget {
-      margin: 16px 0 24px 0;
-      border-radius: 32px;
-      
-      .mat-mdc-card {
-        border-radius: 32px;
-        padding: 0 16px;
-      }
-
-      &-header {
-        display: flex;
-        justify-content: space-between;
-      }
-
-      &-content {
-        margin-top: 16px;
-        display: flex;
-        justify-content: space-between;
-
-        > div {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-        }
-      }
+    
+    .overview-widget-container {
+      height: 20vh;
     }
 
-    .groups-widget {
+    .group-widget-container {
+      height: 60vh;
+      margin: 8px 0;
+
       display: flex;
       flex-direction: column;
-      gap: auto;
+      overflow-y: auto;
+      gap: 8px;
+    }
 
-      &-button {
-        display: inline-flex;
-        flex-direction: column;
-        align-items: center;
-      }
+    .create-group-button {
+        position: absolute;
+        right: 24px;
+        bottom: 24px;
     }
 
     .mat-icon {
