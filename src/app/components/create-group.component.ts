@@ -9,6 +9,8 @@ import { NotificationService } from '../services/notification.service';
 import { GroupService } from '../services/group.service';
 import { getFirebaseErrorMessage } from '../utilities/firebase-errors';
 import { UserService } from '../services/user.service';
+import { Image } from '../models/image.model';
+import { groupImages } from '../models/group.model';
 
 @Component({
   selector: 'app-create-group',
@@ -39,19 +41,18 @@ import { UserService } from '../services/user.service';
           <input matInput [formControl]="form.controls.name" />
         </mat-form-field>
 
-        <div class="icon-container">
-          @for (item of icons; track item) {
+        <div class="image-container">
+          @for (item of groupImages; track item) {
             <div>
-              <button type="button" mat-icon-button
+              <img
+                width="48"
+                height="48"
                 [class.selected]="selectedIndex === $index"
-                color=""
-                (click)="selectImage($index)">
-                <mat-icon [color]="(selectedIndex === $index)? 'warn' : ''">
-                  {{item.icon}}
-                </mat-icon>                
-              </button>
-              <span>{{item.name}}</span>
-            </div>           
+                [src]="item.src"
+                [alt]="item.alt"
+                (click)="selectImage($index)" />
+              <span>{{item.alt}}</span>
+            </div>      
           }
         </div>
 
@@ -71,28 +72,31 @@ import { UserService } from '../services/user.service';
     .create-group-section {
       margin: 16px;
 
-      .icon-container {
+      .image-container {
         display: flex;
         overflow-x: auto;
-        margin-bottom: 16px;
+        margin-bottom: 24px;
         white-space: nowrap;
 
         > div {
           display: flex;
           flex-direction: column;
           align-items: center;
-          margin: 16px;
-          transition: all 0.3s ease;
-          border-radius: 100%;
 
-          mat-icon {
-            transform: scale(1.2);
+          > img {
+            margin: 8px 8px 0 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
           }
-        }
 
-        .selected {
-          transform: scale(2);
-        }
+          > span {
+            margin-bottom: 8px;
+          }
+
+          .selected {
+            transform: scale(1.4);
+          }
+        }        
       }
     }
   `]
@@ -105,14 +109,7 @@ export class CreateGroupComponent {
   
   protected readonly formBuilder = inject(NonNullableFormBuilder);
 
-  protected  icons = [
-    { icon: "home", name: "Home" }, 
-    { icon: "sailing", name: "Vacation" },
-    { icon: "person", name: "Personal" },
-    { icon: "apartment", name: "Office" },
-    { icon: "sports_soccer", name: "Sports" },
-    { icon: "diversity_3", name: "Others" },
-  ];
+  protected  groupImages = groupImages;
   protected selectedIndex: number | undefined;
   protected form = this.formBuilder.group({
     name: ['', [Validators.required]],
@@ -125,16 +122,16 @@ export class CreateGroupComponent {
 
   async create() {
     const { name } = this.form.value;
-    if(!name || !this.selectedIndex) {
+    if(!name || this.selectedIndex == undefined) {
       return;
     }
 
     try {
       this.notification.showLoading()
-      const groupId = await this.groupService.createGroup(
+      const groupId = await this.groupService.createGroup({
         name, 
-        this.icons[this.selectedIndex].icon
-      );
+        imageUrl: this.groupImages[this.selectedIndex].alt
+      });
 
       const currentUser = this.usersService.currentUser();
       if(currentUser) {

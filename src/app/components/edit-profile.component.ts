@@ -9,6 +9,8 @@ import { getFirebaseErrorMessage } from '../utilities/firebase-errors';
 import { Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 
+import { avatars } from '../models/user.model';
+
 @Component({
   selector: 'app-edit-profile',
   standalone: true,
@@ -39,14 +41,13 @@ import { MatIconModule } from '@angular/material/icon';
         </mat-form-field>
 
         <div class="image-container">
-          @for (item of imageUrls; track item) {
+          @for (item of avatars; track item) {
             <img
               width="50"
               height="50"
               [class.selected]="selectedIndex === $index"
-              class="mat-elevation-z1"
-              [src]="item"
-              alt="placeholder"
+              [src]="item.src"
+              [alt]="item.alt"
               (click)="selectImage($index)" />
           }
         </div>
@@ -74,9 +75,7 @@ import { MatIconModule } from '@angular/material/icon';
         white-space: nowrap;
 
         > img {
-          border-radius: 100%;
           margin: 16px 0 16px 12px;
-          border-radius: 100%;
           cursor: pointer;
           transition: all 0.3s ease;
         }
@@ -91,18 +90,11 @@ import { MatIconModule } from '@angular/material/icon';
 export class EditProfileComponent {
   private readonly userService = inject(UserService);
   private readonly notificationService = inject(NotificationService);
-  private readonly router = inject(Router);
-  
+  private readonly router = inject(Router);  
   protected readonly formBuilder = inject(NonNullableFormBuilder);
 
-  protected  imageUrls: string[] = [
-    "/assets/avatars/avatar_0.png",
-    "/assets/avatars/avatar_1.png",
-    "/assets/avatars/avatar_2.png",
-    "/assets/avatars/avatar_3.png",
-    "/assets/avatars/avatar_4.png",
-    "/assets/avatars/avatar_5.png",
-  ];
+  protected avatars = avatars;
+
   protected selectedIndex: number | undefined;
   protected form = this.formBuilder.group({
     uid: [''],
@@ -118,7 +110,7 @@ export class EditProfileComponent {
 
   selectImage(index: number) {
     this.selectedIndex = index;
-    this.form.controls.photoUrl.setValue(this.imageUrls[index]);
+    this.form.controls.photoUrl.setValue(this.avatars[index].alt);
     this.form.markAsDirty();
   }
 

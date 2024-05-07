@@ -35,7 +35,6 @@ import { MatIconModule } from '@angular/material/icon';
   `,
   styles: [`
     .overview-widget {
-      margin: 16px 0 24px 0;
       border-radius: 32px;
       
       .mat-mdc-card {
@@ -58,6 +57,10 @@ import { MatIconModule } from '@angular/material/icon';
           flex-direction: column;
           align-items: center;
         }
+      }      
+
+      .mat-icon {
+        vertical-align: middle;
       }
     }
   `]

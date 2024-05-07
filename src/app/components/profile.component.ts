@@ -8,6 +8,7 @@ import { MatRadioChange, MatRadioModule } from '@angular/material/radio';
 import { NotificationService } from '../services/notification.service';
 import { getFirebaseErrorMessage } from '../utilities/firebase-errors';
 import { MatIconModule } from '@angular/material/icon';
+import { getUserImage } from '../models/user.model';
 
 @Component({
   selector: 'app-profile',
@@ -36,8 +37,8 @@ import { MatIconModule } from '@angular/material/icon';
             width="80" 
             height="80"
             class="mat-elavation-z1"
-            [src]="(userService.currentUser()?.photoUrl) ?? '/assets/avatars/avatar_0.png'"
-            alt="placeholder"
+            [src]="getUserImage(userService.currentUser()?.photoUrl).src"
+            [alt]="getUserImage(userService.currentUser()?.photoUrl).alt"
         />
 
         <span>{{userService.currentUser()?.name}}</span>
@@ -94,6 +95,8 @@ export class ProfileComponent {
   private readonly notificationService = inject(NotificationService);
   
   protected readonly userService = inject(UserService);
+
+  protected getUserImage = getUserImage;
 
   async logout() {
     await this.authService.logout();

@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { Group } from '../../models/group.model';
+import { Group, getGroupImage } from '../../models/group.model';
 import { RouterLink } from '@angular/router';
 
 @Component({
@@ -11,12 +11,18 @@ import { RouterLink } from '@angular/router';
   template: `
   <mat-card routerLink="/create-group">
     <mat-card-content>
-      <div class="icon-container">
-        <mat-icon>{{data?.icon}}</mat-icon>
-      </div>
+      <img
+        width="66"
+        height="66"
+        [src]="getGroupImage(data?.imageUrl).src"
+        [alt]="getGroupImage(data?.imageUrl).alt" />
+
       <div class="details-container">
         <div class="group-name">{{data?.name}}</div>
-        <span>Total balance</span>
+        <span>Total balance
+          <mat-icon>currency_rupee</mat-icon>
+          --
+        </span>
       </div>
     </mat-card-content>
   </mat-card>
@@ -25,28 +31,27 @@ import { RouterLink } from '@angular/router';
     .mat-mdc-card-content {
       display: flex;
       align-items: center;
-    }
-
-    .icon-container {
-      flex: 20%;
-      text-align: center;
-
-      .mat-icon {
-        transform: scale(2);
-      }
+      padding: 0;
     }
 
     .details-container {
       flex: 80%;
-      padding-left: 16px;
+      padding: 8px 8px 0 16px;
 
       .group-name {
-        font-size: 18px;
-        margin-bottom: 8px;
+        font-size: 16px;
+        font-weight: 500;
       }
+    }
+
+    .mat-icon {
+      vertical-align: middle;
+      transform: scale(0.6);
     }
   `]
 })
 export class GroupWidgetComponent {
+  protected getGroupImage = getGroupImage;
+
   @Input() data: Group | undefined;
 }

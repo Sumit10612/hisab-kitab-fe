@@ -7,6 +7,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { GroupService } from '../services/group.service';
 import { GroupWidgetComponent } from './widgets/group-widget.component';
 import { OverviewWidgetComponent } from './widgets/overview-widget.component';
+import { getUserImage } from '../models/user.model';
 
 @Component({
   selector: 'app-home',
@@ -26,8 +27,8 @@ import { OverviewWidgetComponent } from './widgets/overview-widget.component';
           width="55" 
           height="55"
           class="mat-elevation-z10"
-          [src]="(userService.currentUser()?.photoUrl) ?? '/assets/avatars/avatar_0.png'"
-          alt="placeholder" 
+          [src]="getUserImage(userService.currentUser()?.photoUrl).src"
+          [alt]="getUserImage(userService.currentUser()?.photoUrl).alt" 
         />
       </a>
 
@@ -83,13 +84,11 @@ import { OverviewWidgetComponent } from './widgets/overview-widget.component';
         right: 24px;
         bottom: 24px;
     }
-
-    .mat-icon {
-      vertical-align: middle;
-    }
   `]
 })
 export class HomeComponent {
   protected readonly userService = inject(UserService);
   protected readonly groupService = inject(GroupService);
+
+  protected getUserImage = getUserImage;
 }

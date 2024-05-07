@@ -5,7 +5,7 @@ import { Observable, from, map, of, switchMap } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 import { UserService } from './user.service';
-import { Group } from '../models/group.model';
+import { CreateGroup, Group } from '../models/group.model';
 
 @Injectable({
   providedIn: 'root'
@@ -33,11 +33,8 @@ export class GroupService {
   
   myGroups = toSignal(this.myGroups$);
 
-  async createGroup(name: string, icon: string): Promise<string> {
-    const docRef = await addDoc(collection(this.firestore, "groups"), { 
-      name, 
-      icon 
-    });
+  async createGroup(group: CreateGroup): Promise<string> {
+    const docRef = await addDoc(collection(this.firestore, "groups"), group);
     return Promise.resolve(docRef.id)
   }
 }
