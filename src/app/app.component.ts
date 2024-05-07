@@ -13,7 +13,7 @@ import { SwUpdate } from '@angular/service-worker';
   imports: [CommonModule, RouterOutlet, MatProgressSpinner],
   template: `
     <div class="container" [ngClass]="userService.currentUser()?.preferences?.theme ?? 'light'">
-      <div class="card">
+      <div class="content">
         <router-outlet></router-outlet>
       </div>
 
@@ -25,6 +25,12 @@ import { SwUpdate } from '@angular/service-worker';
   styles: [`
     .container {
       min-height: 100vh;
+
+      .content {
+        max-width: 500px;
+        margin: auto;
+        padding: 16px;
+      }
     }
 
     mat-progress-spinner {

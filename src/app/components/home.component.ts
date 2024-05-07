@@ -8,6 +8,7 @@ import { GroupService } from '../services/group.service';
 import { GroupWidgetComponent } from './widgets/group-widget.component';
 import { OverviewWidgetComponent } from './widgets/overview-widget.component';
 import { getUserImage } from '../models/user.model';
+import { MatCardModule } from '@angular/material/card';
 
 @Component({
   selector: 'app-home',
@@ -16,37 +17,46 @@ import { getUserImage } from '../models/user.model';
     MatButtonModule, 
     MatIconModule,
     MatDividerModule,
+    MatCardModule,
     RouterLink,
     GroupWidgetComponent,
     OverviewWidgetComponent
   ],
   template: `
-    <div class="header-section">
-      <a routerLink="/profile">
-        <img
-          width="55" 
-          height="55"
-          class="mat-elevation-z10"
-          [src]="getUserImage(userService.currentUser()?.photoUrl).src"
-          [alt]="getUserImage(userService.currentUser()?.photoUrl).alt" 
-        />
-      </a>
+    <div class="container">
+      <div class="header-section">
+        <a routerLink="/profile">
+          <img
+            width="55" 
+            height="55"
+            [src]="getUserImage(userService.currentUser()?.photoUrl).src"
+            [alt]="getUserImage(userService.currentUser()?.photoUrl).alt" 
+          />
+        </a>
 
-      <button mat-fab color="secondary">
-          <mat-icon>notifications</mat-icon>
-      </button>
-  </div>
+        <button mat-fab color="secondary">
+            <mat-icon>notifications</mat-icon>
+        </button>
+      </div>
 
-  <div class="overview-widget-container">
-    <overview-widget></overview-widget>
-  </div>
+      <div class="overview-widget-container">
+        <overview-widget></overview-widget>
+      </div>
+
+      <mat-card class="group-widget-container">
+        <mat-card-header>
+          <mat-card-title>Groups</mat-card-title>          
+        </mat-card-header>
+          <mat-card-content>
+            @for (item of groupService.myGroups(); track item) {
+              <group-widget [data]="item"></group-widget>
+            }
+          </mat-card-content>
+      </mat-card>
+    </div>
 
   <span>Groups</span>
-  <div class="group-widget-container">
-    @for (item of groupService.myGroups(); track item) {
-      <group-widget [data]="item"></group-widget>
-    }
-  </div>
+  
 
   <div class="create-group-button">
     <a mat-fab routerLink="/create-group" color="warn">
@@ -55,28 +65,36 @@ import { getUserImage } from '../models/user.model';
   </div>
   `,
   styles: [`
-    .header-section {
-      display: flex;
-      justify-content: space-between;
-      height: 10vh;
+    .container {
+      background-color: #964b04;
+      margin: -16px;
+      height: 100vh;
 
-      > a > img {
-        border-radius: 100%;
+      .header-section {
+        display: flex;
+        justify-content: space-between;
+        padding: 16px 16px 0 16px;
+        height: 10vh;
       }
-    }
-    
-    .overview-widget-container {
-      height: 20vh;
-    }
+
+      .overview-widget-container {
+        padding: 0 16px 16px 16px;
+        height: 20vh;
+      }
+    }    
 
     .group-widget-container {
-      height: 60vh;
-      margin: 8px 0;
+      height: 70vh;
+      border-radius: 32px 32px 0 0;
 
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-      gap: 8px;
+      .mat-mdc-card-content {
+        height: 60vh;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin: 8px 0;
+        overflow-y: auto;
+      }
     }
 
     .create-group-button {

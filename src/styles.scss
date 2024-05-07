@@ -3,18 +3,8 @@
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 
-.card {
-    display: block;
-    margin: auto;
-
-    padding: 24px;
-    border-radius: 16px;
-
-    max-width: 500px;
-
-    mat-form-field {
-        width: 100%;
-    }
+mat-form-field {
+    width: 100%;
 }
 
 .nav-section {
