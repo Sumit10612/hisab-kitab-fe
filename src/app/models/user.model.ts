@@ -14,11 +14,8 @@ export interface UserPreferences {
 }
 
 export const getUserImage = (alt?: string) => {
-    if(!alt) {
-        alt = "avatar_0";
-    }
-    
-    return avatars.filter(avatar => avatar.alt === alt)[0];
+    const img = avatars.filter(avatar => avatar.alt === alt);
+    return img[0] ?? avatars[0];
 };
 
 export const avatars: Image[] = [

@@ -31,12 +31,12 @@ import { RouterLink } from '@angular/router';
     .mat-mdc-card-content {
       display: flex;
       align-items: center;
-      padding: 0;
+      padding: 8px;
     }
 
     .details-container {
       flex: 80%;
-      padding: 8px 8px 0 16px;
+      margin-left: 24px;
 
       .group-name {
         font-size: 16px;
