@@ -53,38 +53,34 @@ import { MatCardModule } from '@angular/material/card';
             }
           </mat-card-content>
       </mat-card>
+    </div>  
+
+    <div class="create-group-button">
+      <a mat-fab routerLink="/create-group" color="warn">
+        <mat-icon>group_add</mat-icon>
+      </a>
     </div>
-
-  <span>Groups</span>
-  
-
-  <div class="create-group-button">
-    <a mat-fab routerLink="/create-group" color="warn">
-      <mat-icon>group_add</mat-icon>
-    </a>
-  </div>
   `,
   styles: [`
     .container {
       background-color: #964b04;
       margin: -16px;
-      height: 100vh;
 
       .header-section {
         display: flex;
         justify-content: space-between;
         padding: 16px 16px 0 16px;
-        height: 10vh;
+        height: 72px;
       }
 
       .overview-widget-container {
         padding: 0 16px 16px 16px;
-        height: 20vh;
+        height: 146px;
       }
     }    
 
     .group-widget-container {
-      height: 70vh;
+      height: calc(100vh - 250px);
       border-radius: 32px 32px 0 0;
 
       .mat-mdc-card-content {
