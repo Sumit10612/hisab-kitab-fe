@@ -11,6 +11,7 @@ import { UserService } from "../services/user.service";
 import { getFirebaseErrorMessage } from "../utilities/firebase-errors";
 
 import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
+import { LayoutComponent } from "./shared/layout.component";
 
 @Component({
 	selector: "app-edit-profile",
@@ -20,41 +21,45 @@ import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
 		MatFormFieldModule,
 		MatInputModule,
 		MatButtonModule,
-		PageNavHeaderComponent
+		PageNavHeaderComponent,
+    LayoutComponent
 	],
 	template: `
-    <app-page-nav-header backRoute="/profile" title="Edit Profile"></app-page-nav-header>
+    <app-layout>
+      <div section="header">
+        <app-page-nav-header backRoute="/profile" title="Edit Profile"></app-page-nav-header>
 
-    <div class="edit-profile-section">
-      <form [formGroup]="form" (ngSubmit)="update()">
-        <mat-form-field>
-          <mat-label>Name</mat-label>
-          <input matInput [formControl]="form.controls.name" />
-        </mat-form-field>
+        <div class="edit-profile-section">
+          <form [formGroup]="form">
+            <mat-form-field>
+              <mat-label>Name</mat-label>
+              <input matInput [formControl]="form.controls.name" />
+            </mat-form-field>
 
-        <div class="image-container">
-          @for (item of avatars; track item) {
-            <img
-              width="50"
-              height="50"
-              [class.selected]="selectedIndex === $index"
-              [src]="item.src"
-              [alt]="item.alt"
-              (click)="selectImage($index)" />
-          }
+            <div class="image-container">
+              @for (item of avatars; track item) {
+                <img
+                  width="50"
+                  height="50"
+                  [class.selected]="selectedIndex === $index"
+                  [src]="item.src"
+                  [alt]="item.alt"
+                  (click)="selectImage($index)" />
+              }
+            </div>        
+          </form>
         </div>
-
-        <div class="text-center">
-          <button 
-            type="submit" 
-            mat-raised-button 
-            color="primary"
-            [disabled]="!form.dirty">
-            Update
-          </button>
-        </div>
-      </form>
-    </div>
+      </div>
+      <div section="detail" class="text-center margin-top">
+        <button 
+          (click)="update()"
+          mat-raised-button 
+          color="primary"
+          [disabled]="!form.dirty || !(selectedIndex === 0 ? 1 : selectedIndex)">
+          Update
+        </button>
+      </div>
+    </app-layout>
   `,
 	styles: [`
     .edit-profile-section {
@@ -103,7 +108,6 @@ export class EditProfileComponent {
 	selectImage(index: number) {
 		this.selectedIndex = index;
 		this.form.controls.photoUrl.setValue(this.avatars[index].alt);
-		this.form.markAsDirty();
 	}
 
 	async update() {

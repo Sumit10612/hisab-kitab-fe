@@ -13,8 +13,8 @@ import { UserService } from "./services/user.service";
 	standalone: true,
 	imports: [CommonModule, RouterOutlet, MatProgressSpinner],
 	template: `
-    <div class="container" [ngClass]="userService.currentUser()?.preferences?.theme ?? 'light'">
-      <div class="content">
+    <div [ngClass]="userService.currentUser()?.preferences?.theme ?? 'light'">
+      <div class="container">
         <router-outlet></router-outlet>
       </div>
 
@@ -25,20 +25,16 @@ import { UserService } from "./services/user.service";
   `,
 	styles: [`
     .container {
-      min-height: 100vh;
-
-      .content {
-        max-width: 500px;
-        margin: auto;
-        padding: 16px;
-      }
-    }
+		min-height: 100vh;
+		max-width: 500px;
+		margin: auto;
+	}
 
     mat-progress-spinner {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
     }
   `]
 })

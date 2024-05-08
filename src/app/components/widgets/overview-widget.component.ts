@@ -48,7 +48,7 @@ import { MatIconModule } from "@angular/material/icon";
       }
 
       &-content {
-        margin-top: 16px;
+        margin-top: 8px;
         display: flex;
         justify-content: space-between;
 

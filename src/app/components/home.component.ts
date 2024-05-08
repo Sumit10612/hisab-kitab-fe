@@ -11,6 +11,7 @@ import { UserService } from "../services/user.service";
 
 import { GroupWidgetComponent } from "./widgets/group-widget.component";
 import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
+import { LayoutComponent } from "./shared/layout.component";
 
 @Component({
 	selector: "app-home",
@@ -22,30 +23,32 @@ import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
 		MatCardModule,
 		RouterLink,
 		GroupWidgetComponent,
-		OverviewWidgetComponent
+		OverviewWidgetComponent,
+    LayoutComponent
 	],
 	template: `
-    <div class="container">
-      <div class="header-section">
-        <a routerLink="/profile">
-          <img
-            width="55" 
-            height="55"
-            [src]="getUserImage(userService.currentUser()?.photoUrl).src"
-            [alt]="getUserImage(userService.currentUser()?.photoUrl).alt" 
-          />
-        </a>
+    <app-layout>
+      <div section="header" class="header-section">
+        <div class="profile-section">
+          <a routerLink="/profile">
+            <img
+              width="55" 
+              height="55"
+              [src]="getUserImage(userService.currentUser()?.photoUrl).src"
+              [alt]="getUserImage(userService.currentUser()?.photoUrl).alt" 
+            />
+          </a>
 
-        <button mat-fab color="secondary">
-            <mat-icon>notifications</mat-icon>
-        </button>
+          <button mat-fab color="secondary">
+              <mat-icon>notifications</mat-icon>
+          </button>
+        </div>
+
+        <div class="overview-widget-container">
+          <app-overview-widget></app-overview-widget>
+        </div>
       </div>
-
-      <div class="overview-widget-container">
-        <app-overview-widget></app-overview-widget>
-      </div>
-
-      <mat-card class="group-widget-container">
+      <div section="detail" class="group-widget-container">
         <mat-card-header>
           <mat-card-title>Groups</mat-card-title>          
         </mat-card-header>
@@ -54,8 +57,8 @@ import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
               <app-group-widget [data]="item"></app-group-widget>
             }
           </mat-card-content>
-      </mat-card>
-    </div>  
+        </div>
+    </app-layout>
 
     <div class="create-group-button">
       <a mat-fab routerLink="/create-group" color="warn">
@@ -64,29 +67,22 @@ import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
     </div>
   `,
 	styles: [`
-    .container {
-      background-color: #964b04;
-      margin: -16px;
-
-      .header-section {
+    .header-section {
+      .profile-section {
         display: flex;
         justify-content: space-between;
-        padding: 16px 16px 0 16px;
         height: 72px;
       }
 
       .overview-widget-container {
-        padding: 0 16px 16px 16px;
         height: 146px;
       }
-    }    
+    }   
 
     .group-widget-container {
-      height: calc(100vh - 250px);
-      border-radius: 32px 32px 0 0;
 
-      .mat-mdc-card-content {
-        height: 60vh;
+      .mat-mdc-card-content {        
+        height: calc(100vh - 332px);
         display: flex;
         flex-direction: column;
         gap: 8px;

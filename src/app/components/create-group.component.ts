@@ -12,6 +12,7 @@ import { UserService } from "../services/user.service";
 import { getFirebaseErrorMessage } from "../utilities/firebase-errors";
 
 import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
+import { LayoutComponent } from "./shared/layout.component";
 
 @Component({
 	selector: "app-create-group",
@@ -21,44 +22,48 @@ import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
 		MatFormFieldModule,
 		MatInputModule,
 		MatButtonModule,
-		PageNavHeaderComponent
+		PageNavHeaderComponent,
+    LayoutComponent
 	],
 	template: `
-    <app-page-nav-header backRoute="/home" title="Create a group"></app-page-nav-header>
+    <app-layout>
+      <div section="header">
+        <app-page-nav-header backRoute="/home" title="Create a group"></app-page-nav-header>
 
-    <div class="create-group-section">
-      <form [formGroup]="form" (ngSubmit)="create()">
-        <mat-form-field>
-          <mat-label>Group Name</mat-label>
-          <input matInput [formControl]="form.controls.name" />
-        </mat-form-field>
+        <div class="create-group-section">
+          <form [formGroup]="form" (ngSubmit)="create()">
+            <mat-form-field>
+              <mat-label>Group Name</mat-label>
+              <input matInput [formControl]="form.controls.name" />
+            </mat-form-field>
 
-        <div class="image-container">
-          @for (item of groupImages; track item) {
-            <div>
-              <img
-                width="48"
-                height="48"
-                [class.selected]="selectedIndex === $index"
-                [src]="item.src"
-                [alt]="item.alt"
-                (click)="selectImage($index)" />
-              <span>{{item.alt}}</span>
-            </div>      
-          }
+            <div class="image-container">
+              @for (item of groupImages; track item) {
+                <div>
+                  <img
+                    width="48"
+                    height="48"
+                    [class.selected]="selectedIndex === $index"
+                    [src]="item.src"
+                    [alt]="item.alt"
+                    (click)="selectImage($index)" />
+                  <span>{{item.alt}}</span>
+                </div>      
+              }
+            </div>
+          </form>
         </div>
-
-        <div class="text-center">
-          <button 
-            type="submit" 
-            mat-raised-button 
-            color="primary"
-            [disabled]="!form.dirty || !(selectedIndex === 0 ? 1 : selectedIndex)">
-            Create
-          </button>
-        </div>
-      </form>
-    </div>
+      </div>
+      <div section="detail" class="center margin-top">
+        <button 
+          (click)="create()"
+          mat-raised-button 
+          color="primary"
+          [disabled]="!form.dirty || !(selectedIndex === 0 ? 1 : selectedIndex)">
+          Create
+        </button>
+      </div>
+    </app-layout>    
   `,
 	styles: [`
     .create-group-section {

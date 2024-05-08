@@ -47,13 +47,12 @@ export class GroupService {
 		})
 	);
 
-	private currentGroup$(groupId: string): Observable<Group> {
+	currentGroup$(groupId: string): Observable<Group> {
 		const ref = doc(this.firestore, "groups", groupId);
 		return docData(ref) as Observable<Group>;
 	}
   
 	myGroups = toSignal(this.myGroups$);
-	currentGroup = (groupId: string) => toSignal(this.currentGroup$(groupId));
 
 	async createGroup(group: CreateGroup): Promise<string> {
 		const docRef = await addDoc(collection(this.firestore, "groups"), group);
