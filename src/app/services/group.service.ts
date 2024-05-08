@@ -1,40 +1,62 @@
-import { Injectable, inject } from '@angular/core';
-import { Firestore } from '@angular/fire/firestore';
-import { addDoc, collection, documentId, getDocs, query, where } from 'firebase/firestore';
-import { Observable, from, map, of, switchMap } from 'rxjs';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { inject, Injectable } from "@angular/core";
+import { toSignal } from "@angular/core/rxjs-interop";
+import {
+	addDoc,
+	collection,
+	doc,
+	docData,
+	documentId,
+	Firestore,
+	getDocs,
+	query,
+	where
+} from "@angular/fire/firestore";
+import {
+	from,
+	map,
+	Observable,
+	of,
+	switchMap
+} from "rxjs";
 
-import { UserService } from './user.service';
-import { CreateGroup, Group } from '../models/group.model';
+import { CreateGroup, Group } from "../models/group.model";
+
+import { UserService } from "./user.service";
 
 @Injectable({
-  providedIn: 'root'
+	providedIn: "root"
 })
 export class GroupService {
-  private firestore = inject(Firestore);
-  private userService = inject(UserService);
+	private firestore = inject(Firestore);
+	private userService = inject(UserService);
 
-  private myGroups$: Observable<Group[]> = this.userService.user$.pipe(
-    switchMap((user) => {
-      if (!user || !user.groups || user.groups.length === 0) {
-        return of([]);
-      }
+	private myGroups$: Observable<Group[]> = this.userService.user$.pipe(
+		switchMap((user) => {
+			if (!user || !user.groups || user.groups.length === 0) {
+				return of([]);
+			}
       
-      const q = query(collection(this.firestore, "groups"), where(documentId(), "in", user.groups));
-      return from(getDocs(q)).pipe(
-        map(snapshot => {
-          const groups: Group[] = [];
-          snapshot.forEach((doc) =>  groups.push({ uid: doc.id, ...doc.data() } as Group));
-          return groups;
-        })
-      );
-    })
-  );
-  
-  myGroups = toSignal(this.myGroups$);
+			const q = query(collection(this.firestore, "groups"), where(documentId(), "in", user.groups));
+			return from(getDocs(q)).pipe(
+				map(snapshot => {
+					const groups: Group[] = [];
+					snapshot.forEach((doc) =>  groups.push({ uid: doc.id, ...doc.data() } as Group));
+					return groups;
+				})
+			);
+		})
+	);
 
-  async createGroup(group: CreateGroup): Promise<string> {
-    const docRef = await addDoc(collection(this.firestore, "groups"), group);
-    return Promise.resolve(docRef.id)
-  }
+	private currentGroup$(groupId: string): Observable<Group> {
+		const ref = doc(this.firestore, "groups", groupId);
+		return docData(ref) as Observable<Group>;
+	}
+  
+	myGroups = toSignal(this.myGroups$);
+	currentGroup = (groupId: string) => toSignal(this.currentGroup$(groupId));
+
+	async createGroup(group: CreateGroup): Promise<string> {
+		const docRef = await addDoc(collection(this.firestore, "groups"), group);
+		return Promise.resolve(docRef.id);
+	}
 }

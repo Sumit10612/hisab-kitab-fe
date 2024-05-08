@@ -1,28 +1,30 @@
-import { Component, inject } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { RouterLink } from '@angular/router';
-import { UserService } from '../services/user.service';
-import { MatDividerModule } from '@angular/material/divider';
-import { GroupService } from '../services/group.service';
-import { GroupWidgetComponent } from './widgets/group-widget.component';
-import { OverviewWidgetComponent } from './widgets/overview-widget.component';
-import { getUserImage } from '../models/user.model';
-import { MatCardModule } from '@angular/material/card';
+import { Component, inject } from "@angular/core";
+import { MatButtonModule } from "@angular/material/button";
+import { MatCardModule } from "@angular/material/card";
+import { MatDividerModule } from "@angular/material/divider";
+import { MatIconModule } from "@angular/material/icon";
+import { RouterLink } from "@angular/router";
+
+import { getUserImage } from "../models/user.model";
+import { GroupService } from "../services/group.service";
+import { UserService } from "../services/user.service";
+
+import { GroupWidgetComponent } from "./widgets/group-widget.component";
+import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
 
 @Component({
-  selector: 'app-home',
-  standalone: true,
-  imports: [
-    MatButtonModule, 
-    MatIconModule,
-    MatDividerModule,
-    MatCardModule,
-    RouterLink,
-    GroupWidgetComponent,
-    OverviewWidgetComponent
-  ],
-  template: `
+	selector: "app-home",
+	standalone: true,
+	imports: [
+		MatButtonModule, 
+		MatIconModule,
+		MatDividerModule,
+		MatCardModule,
+		RouterLink,
+		GroupWidgetComponent,
+		OverviewWidgetComponent
+	],
+	template: `
     <div class="container">
       <div class="header-section">
         <a routerLink="/profile">
@@ -40,7 +42,7 @@ import { MatCardModule } from '@angular/material/card';
       </div>
 
       <div class="overview-widget-container">
-        <overview-widget></overview-widget>
+        <app-overview-widget></app-overview-widget>
       </div>
 
       <mat-card class="group-widget-container">
@@ -49,7 +51,7 @@ import { MatCardModule } from '@angular/material/card';
         </mat-card-header>
           <mat-card-content>
             @for (item of groupService.myGroups(); track item) {
-              <group-widget [data]="item"></group-widget>
+              <app-group-widget [data]="item"></app-group-widget>
             }
           </mat-card-content>
       </mat-card>
@@ -61,7 +63,7 @@ import { MatCardModule } from '@angular/material/card';
       </a>
     </div>
   `,
-  styles: [`
+	styles: [`
     .container {
       background-color: #964b04;
       margin: -16px;
@@ -101,8 +103,8 @@ import { MatCardModule } from '@angular/material/card';
   `]
 })
 export class HomeComponent {
-  protected readonly userService = inject(UserService);
-  protected readonly groupService = inject(GroupService);
+	protected readonly userService = inject(UserService);
+	protected readonly groupService = inject(GroupService);
 
-  protected getUserImage = getUserImage;
+	protected getUserImage = getUserImage;
 }

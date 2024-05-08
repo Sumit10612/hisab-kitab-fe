@@ -1,38 +1,30 @@
-import { Component, inject } from '@angular/core';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { Router, RouterLink } from '@angular/router';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { NotificationService } from '../services/notification.service';
-import { GroupService } from '../services/group.service';
-import { getFirebaseErrorMessage } from '../utilities/firebase-errors';
-import { UserService } from '../services/user.service';
-import { Image } from '../models/image.model';
-import { groupImages } from '../models/group.model';
+import { Component, inject } from "@angular/core";
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
+import { MatButtonModule } from "@angular/material/button";
+import { MatFormFieldModule } from "@angular/material/form-field";
+import { MatInputModule } from "@angular/material/input";
+import { Router } from "@angular/router";
+
+import { groupImages } from "../models/group.model";
+import { GroupService } from "../services/group.service";
+import { NotificationService } from "../services/notification.service";
+import { UserService } from "../services/user.service";
+import { getFirebaseErrorMessage } from "../utilities/firebase-errors";
+
+import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
 
 @Component({
-  selector: 'app-create-group',
-  standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatIconModule,
-    RouterLink
-  ],
-  template: `
-    <div class="nav-section">
-      <a role="button"
-        mat-icon-button 
-        routerLink="/home">
-        <mat-icon>arrow_back_ios</mat-icon>
-      </a>
-
-      <h2>Create a Group</h2>
-    </div>
+	selector: "app-create-group",
+	standalone: true,
+	imports: [
+		ReactiveFormsModule,
+		MatFormFieldModule,
+		MatInputModule,
+		MatButtonModule,
+		PageNavHeaderComponent
+	],
+	template: `
+    <app-page-nav-header backRoute="/home" title="Create a group"></app-page-nav-header>
 
     <div class="create-group-section">
       <form [formGroup]="form" (ngSubmit)="create()">
@@ -68,7 +60,7 @@ import { groupImages } from '../models/group.model';
       </form>
     </div>
   `,
-  styles: [`
+	styles: [`
     .create-group-section {
       margin: 16px;
 
@@ -102,53 +94,53 @@ import { groupImages } from '../models/group.model';
   `]
 })
 export class CreateGroupComponent {
-  private readonly router = inject(Router);
-  private readonly notification = inject(NotificationService);
-  private readonly groupService = inject(GroupService);
-  private readonly usersService = inject(UserService);
+	private readonly router = inject(Router);
+	private readonly notification = inject(NotificationService);
+	private readonly groupService = inject(GroupService);
+	private readonly usersService = inject(UserService);
   
-  protected readonly formBuilder = inject(NonNullableFormBuilder);
+	protected readonly formBuilder = inject(NonNullableFormBuilder);
 
-  protected  groupImages = groupImages;
-  protected selectedIndex: number | undefined;
-  protected form = this.formBuilder.group({
-    name: ['', [Validators.required]],
-  });
+	protected  groupImages = groupImages;
+	protected selectedIndex: number | undefined;
+	protected form = this.formBuilder.group({
+		name: ["", [Validators.required]],
+	});
 
-  selectImage(index: number) {
-    this.selectedIndex = index;
-    this.form.markAsDirty();
-  }
+	selectImage(index: number) {
+		this.selectedIndex = index;
+		this.form.markAsDirty();
+	}
 
-  async create() {
-    const { name } = this.form.value;
-    if(!name || this.selectedIndex == undefined) {
-      return;
-    }
+	async create() {
+		const { name } = this.form.value;
+		if(!name || this.selectedIndex == undefined) {
+			return;
+		}
 
-    try {
-      this.notification.showLoading()
-      const groupId = await this.groupService.createGroup({
-        name, 
-        imageUrl: this.groupImages[this.selectedIndex].alt
-      });
+		try {
+			this.notification.showLoading();
+			const groupId = await this.groupService.createGroup({
+				name, 
+				imageUrl: this.groupImages[this.selectedIndex].alt
+			});
 
-      const currentUser = this.usersService.currentUser();
-      if(currentUser) {
-        await this.usersService.updateUser({
-          ...currentUser,
-          groups: [
-            ...currentUser.groups ?? [],
-            groupId
-          ]
-        })
-      }
+			const currentUser = this.usersService.currentUser();
+			if(currentUser) {
+				await this.usersService.updateUser({
+					...currentUser,
+					groups: [
+						...currentUser.groups ?? [],
+						groupId
+					]
+				});
+			}
 
-      this.router.navigate(["home"]);
-    } catch (error) {
-      this.notification.error(getFirebaseErrorMessage(error));
-    } finally {
-      this.notification.hideLoading();
-    }
-  }
+			this.router.navigate(["home"]);
+		} catch (error) {
+			this.notification.error(getFirebaseErrorMessage(error));
+		} finally {
+			this.notification.hideLoading();
+		}
+	}
 }

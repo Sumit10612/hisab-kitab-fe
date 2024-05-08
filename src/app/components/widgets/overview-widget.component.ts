@@ -1,13 +1,13 @@
-import { Component } from '@angular/core';
-import { MatCardModule } from '@angular/material/card';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatIconModule } from '@angular/material/icon';
+import { Component } from "@angular/core";
+import { MatCardModule } from "@angular/material/card";
+import { MatDividerModule } from "@angular/material/divider";
+import { MatIconModule } from "@angular/material/icon";
 
 @Component({
-  selector: 'overview-widget',
-  standalone: true,
-  imports: [MatCardModule, MatIconModule, MatDividerModule],
-  template: `
+	selector: "app-overview-widget",
+	standalone: true,
+	imports: [MatCardModule, MatIconModule, MatDividerModule],
+	template: `
   <div class="overview-widget mat-elevation-z20">
     <mat-card>
       <mat-card-content>
@@ -33,7 +33,7 @@ import { MatIconModule } from '@angular/material/icon';
     </mat-card>
   </div>
   `,
-  styles: [`
+	styles: [`
     .overview-widget {
       border-radius: 32px;
       

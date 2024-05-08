@@ -1,15 +1,16 @@
-import { Component, Input } from '@angular/core';
-import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
-import { Group, getGroupImage } from '../../models/group.model';
-import { RouterLink } from '@angular/router';
+import { Component, Input } from "@angular/core";
+import { MatCardModule } from "@angular/material/card";
+import { MatIconModule } from "@angular/material/icon";
+import { RouterLink } from "@angular/router";
+
+import { getGroupImage, Group } from "../../models/group.model";
 
 @Component({
-  selector: 'group-widget',
-  standalone: true,
-  imports: [MatCardModule, MatIconModule, RouterLink],
-  template: `
-  <mat-card routerLink="/create-group">
+	selector: "app-group-widget",
+	standalone: true,
+	imports: [MatCardModule, MatIconModule, RouterLink],
+	template: `
+  <mat-card [routerLink]="['/group', data?.uid]">
     <mat-card-content>
       <img
         width="66"
@@ -27,7 +28,7 @@ import { RouterLink } from '@angular/router';
     </mat-card-content>
   </mat-card>
   `,
-  styles: [`
+	styles: [`
     .mat-mdc-card-content {
       display: flex;
       align-items: center;
@@ -51,7 +52,7 @@ import { RouterLink } from '@angular/router';
   `]
 })
 export class GroupWidgetComponent {
-  protected getGroupImage = getGroupImage;
+	protected getGroupImage = getGroupImage;
 
   @Input() data: Group | undefined;
 }

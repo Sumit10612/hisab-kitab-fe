@@ -1,37 +1,29 @@
-import { Component, effect, inject } from '@angular/core';
-import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { UserService } from '../services/user.service';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { NotificationService } from '../services/notification.service';
-import { getFirebaseErrorMessage } from '../utilities/firebase-errors';
-import { Router, RouterLink } from '@angular/router';
-import { MatIconModule } from '@angular/material/icon';
+import { Component, effect, inject } from "@angular/core";
+import { NonNullableFormBuilder, ReactiveFormsModule } from "@angular/forms";
+import { MatButtonModule } from "@angular/material/button";
+import { MatFormFieldModule } from "@angular/material/form-field";
+import { MatInputModule } from "@angular/material/input";
+import { Router } from "@angular/router";
 
-import { avatars } from '../models/user.model';
+import { avatars } from "../models/user.model";
+import { NotificationService } from "../services/notification.service";
+import { UserService } from "../services/user.service";
+import { getFirebaseErrorMessage } from "../utilities/firebase-errors";
+
+import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
 
 @Component({
-  selector: 'app-edit-profile',
-  standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatIconModule,
-    RouterLink
-  ],
-  template: `
-    <div class="nav-section">
-      <a role="button"
-        mat-icon-button 
-        routerLink="/profile">
-        <mat-icon>arrow_back_ios</mat-icon>
-      </a>
-
-      <h2>Edit Profile</h2>
-    </div>
+	selector: "app-edit-profile",
+	standalone: true,
+	imports: [
+		ReactiveFormsModule,
+		MatFormFieldModule,
+		MatInputModule,
+		MatButtonModule,
+		PageNavHeaderComponent
+	],
+	template: `
+    <app-page-nav-header backRoute="/profile" title="Edit Profile"></app-page-nav-header>
 
     <div class="edit-profile-section">
       <form [formGroup]="form" (ngSubmit)="update()">
@@ -64,7 +56,7 @@ import { avatars } from '../models/user.model';
       </form>
     </div>
   `,
-  styles: [`
+	styles: [`
     .edit-profile-section {
       margin: 16px;
 
@@ -88,48 +80,48 @@ import { avatars } from '../models/user.model';
   `]
 })
 export class EditProfileComponent {
-  private readonly userService = inject(UserService);
-  private readonly notificationService = inject(NotificationService);
-  private readonly router = inject(Router);  
-  protected readonly formBuilder = inject(NonNullableFormBuilder);
+	private readonly userService = inject(UserService);
+	private readonly notificationService = inject(NotificationService);
+	private readonly router = inject(Router);  
+	protected readonly formBuilder = inject(NonNullableFormBuilder);
 
-  protected avatars = avatars;
+	protected avatars = avatars;
 
-  protected selectedIndex: number | undefined;
-  protected form = this.formBuilder.group({
-    uid: [''],
-    name: [''],
-    photoUrl: [''],
-  });
+	protected selectedIndex: number | undefined;
+	protected form = this.formBuilder.group({
+		uid: [""],
+		name: [""],
+		photoUrl: [""],
+	});
 
-  constructor() {
-    effect(() => {
-      this.form.patchValue({ ...this.userService.currentUser() })
-    });
-  }
+	constructor() {
+		effect(() => {
+			this.form.patchValue({ ...this.userService.currentUser() });
+		});
+	}
 
-  selectImage(index: number) {
-    this.selectedIndex = index;
-    this.form.controls.photoUrl.setValue(this.avatars[index].alt);
-    this.form.markAsDirty();
-  }
+	selectImage(index: number) {
+		this.selectedIndex = index;
+		this.form.controls.photoUrl.setValue(this.avatars[index].alt);
+		this.form.markAsDirty();
+	}
 
-  async update() {
-    const { uid, ...data } = this.form.value;
+	async update() {
+		const { uid, ...data } = this.form.value;
 
-    if(!uid) {
-      return;
-    }
+		if(!uid) {
+			return;
+		}
 
-    try {
-      this.notificationService.showLoading();
-      await this.userService.updateUser({ uid, ...data });
+		try {
+			this.notificationService.showLoading();
+			await this.userService.updateUser({ uid, ...data });
 
-      this.router.navigate(["/profile"]);
-    } catch (err) {
-      this.notificationService.error(getFirebaseErrorMessage(err));
-    } finally {
-      this.notificationService.hideLoading();
-    }
-  }
+			this.router.navigate(["/profile"]);
+		} catch (err) {
+			this.notificationService.error(getFirebaseErrorMessage(err));
+		} finally {
+			this.notificationService.hideLoading();
+		}
+	}
 }

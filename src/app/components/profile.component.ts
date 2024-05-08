@@ -1,35 +1,30 @@
-import { Component, inject } from '@angular/core';
-import { AuthService } from '../services/auth.service';
-import { Router, RouterLink } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatDividerModule } from '@angular/material/divider';
-import { UserService } from '../services/user.service';
-import { MatRadioChange, MatRadioModule } from '@angular/material/radio';
-import { NotificationService } from '../services/notification.service';
-import { getFirebaseErrorMessage } from '../utilities/firebase-errors';
-import { MatIconModule } from '@angular/material/icon';
-import { getUserImage } from '../models/user.model';
+import { Component, inject } from "@angular/core";
+import { MatButtonModule } from "@angular/material/button";
+import { MatDividerModule } from "@angular/material/divider";
+import { MatIconModule } from "@angular/material/icon";
+import { MatRadioChange, MatRadioModule } from "@angular/material/radio";
+import { Router } from "@angular/router";
+
+import { getUserImage } from "../models/user.model";
+import { AuthService } from "../services/auth.service";
+import { NotificationService } from "../services/notification.service";
+import { UserService } from "../services/user.service";
+import { getFirebaseErrorMessage } from "../utilities/firebase-errors";
+
+import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
 
 @Component({
-  selector: 'app-profile',
-  standalone: true,
-  imports: [
-    MatButtonModule,
-    MatDividerModule,
-    MatIconModule,
-    RouterLink,
-    MatRadioModule
-  ],
-  template: `
-    <div class="nav-section">
-      <a role="button"
-        mat-icon-button 
-        routerLink="/home">
-        <mat-icon>arrow_back_ios</mat-icon>
-      </a>
-
-      <h2>Profile</h2>
-    </div>
+	selector: "app-profile",
+	standalone: true,
+	imports: [
+		MatButtonModule,
+		MatDividerModule,
+		MatIconModule,
+		MatRadioModule,
+		PageNavHeaderComponent
+	],
+	template: `
+    <app-page-nav-header backRoute="/home" title="Profile"></app-page-nav-header>
 
     <div class="profile-section">
       @if (userService.currentUser()) {
@@ -69,7 +64,7 @@ import { getUserImage } from '../models/user.model';
       <button mat-raised-button color="primary" (click)="logout()">Logout</button>
     </div>
   `,
-  styles: [`
+	styles: [`
     .profile-section {
       display: flex;
       flex-direction: column;
@@ -90,36 +85,36 @@ import { getUserImage } from '../models/user.model';
   `]
 })
 export class ProfileComponent {
-  private router = inject(Router);
-  private readonly authService = inject(AuthService);
-  private readonly notificationService = inject(NotificationService);
+	private router = inject(Router);
+	private readonly authService = inject(AuthService);
+	private readonly notificationService = inject(NotificationService);
   
-  protected readonly userService = inject(UserService);
+	protected readonly userService = inject(UserService);
 
-  protected getUserImage = getUserImage;
+	protected getUserImage = getUserImage;
 
-  async logout() {
-    await this.authService.logout();
+	async logout() {
+		await this.authService.logout();
 
-    this.router.navigate(["/login"]);
-  }
+		this.router.navigate(["/login"]);
+	}
 
-  async onThemeChange($event: MatRadioChange) {
-    const user = this.userService.currentUser();
-    if(user) {
-      const { uid, ...data } = user;
-      data.preferences = {
-        theme: $event.value
-      };
+	async onThemeChange($event: MatRadioChange) {
+		const user = this.userService.currentUser();
+		if(user) {
+			const { uid, ...data } = user;
+			data.preferences = {
+				theme: $event.value
+			};
 
-      try {
-        this.notificationService.showLoading();
-        await this.userService.updateUser({ uid, ...data });
-      } catch (err) {
-        this.notificationService.error(getFirebaseErrorMessage(err));
-      } finally {
-        this.notificationService.hideLoading();
-      }
-    }
-  }
+			try {
+				this.notificationService.showLoading();
+				await this.userService.updateUser({ uid, ...data });
+			} catch (err) {
+				this.notificationService.error(getFirebaseErrorMessage(err));
+			} finally {
+				this.notificationService.hideLoading();
+			}
+		}
+	}
 }

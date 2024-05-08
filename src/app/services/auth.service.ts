@@ -1,58 +1,59 @@
-import { Injectable, inject } from '@angular/core';
+import { inject, Injectable } from "@angular/core";
 import { 
-  Auth, 
-  GoogleAuthProvider,
-  UserCredential, 
-  authState, 
-  createUserWithEmailAndPassword, 
-  getAdditionalUserInfo, 
-  sendPasswordResetEmail, 
-  signInWithEmailAndPassword, 
-  signInWithPopup, 
-  signOut
-} from '@angular/fire/auth';
-import { User } from '../models/user.model';
+	Auth, 
+	authState,
+	createUserWithEmailAndPassword, 
+	getAdditionalUserInfo, 
+	GoogleAuthProvider, 
+	sendPasswordResetEmail, 
+	signInWithEmailAndPassword, 
+	signInWithPopup, 
+	signOut, 
+	UserCredential
+} from "@angular/fire/auth";
+
+import { User } from "../models/user.model";
 
 @Injectable({
-  providedIn: 'root'
+	providedIn: "root"
 })
 export class AuthService {
-  firebaseAuth = inject(Auth);
+	firebaseAuth = inject(Auth);
 
-  private googleProvider = new GoogleAuthProvider();
+	private googleProvider = new GoogleAuthProvider();
 
-  currentUser$ = authState(this.firebaseAuth);
+	currentUser$ = authState(this.firebaseAuth);
 
-  login(email: string, password: string): Promise<UserCredential> {
-    return signInWithEmailAndPassword(this.firebaseAuth, email, password);
-  }
+	login(email: string, password: string): Promise<UserCredential> {
+		return signInWithEmailAndPassword(this.firebaseAuth, email, password);
+	}
 
-  async googleSignIn(): Promise<User | null> {
-    const userCredential = await signInWithPopup(this.firebaseAuth, this.googleProvider);
-    const info = getAdditionalUserInfo(userCredential);
+	async googleSignIn(): Promise<User | null> {
+		const userCredential = await signInWithPopup(this.firebaseAuth, this.googleProvider);
+		const info = getAdditionalUserInfo(userCredential);
 
-    if(!info?.isNewUser) {
-      return Promise.resolve(null);
-    }
+		if(!info?.isNewUser) {
+			return Promise.resolve(null);
+		}
 
-    const { user: { displayName, uid, email } } = userCredential;
+		const { user: { displayName, uid, email } } = userCredential;
 
-    return Promise.resolve({
-      uid: uid,
-      name: displayName ?? '',
-      email: email ?? ''
-    });
-  }
+		return Promise.resolve({
+			uid: uid,
+			name: displayName ?? "",
+			email: email ?? ""
+		});
+	}
 
-  logout(): Promise<void> {
-    return signOut(this.firebaseAuth);
-  }
+	logout(): Promise<void> {
+		return signOut(this.firebaseAuth);
+	}
 
-  signUp(email: string, password: string): Promise<UserCredential> {
-    return createUserWithEmailAndPassword(this.firebaseAuth, email, password);
-  }
+	signUp(email: string, password: string): Promise<UserCredential> {
+		return createUserWithEmailAndPassword(this.firebaseAuth, email, password);
+	}
 
-  passwordReset(email: string): Promise<void> {
-    return sendPasswordResetEmail(this.firebaseAuth, email);
-  }
+	passwordReset(email: string): Promise<void> {
+		return sendPasswordResetEmail(this.firebaseAuth, email);
+	}
 }

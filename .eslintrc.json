@@ -1,18 +1,24 @@
 {
   "root": true,
   "ignorePatterns": [
-    "projects/**/*"
+    "node_modules/**/*"
   ],
   "overrides": [
     {
       "files": [
+        "*.js",
         "*.ts"
       ],
       "extends": [
         "eslint:recommended",
         "plugin:@typescript-eslint/recommended",
         "plugin:@angular-eslint/recommended",
-        "plugin:@angular-eslint/template/process-inline-templates"
+        "plugin:@angular-eslint/template/process-inline-templates",
+        "plugin:import/recommended",
+        "plugin:import/typescript"
+      ],
+      "plugins": [
+        "import-newlines"
       ],
       "rules": {
         "@angular-eslint/directive-selector": [
@@ -30,6 +36,130 @@
             "prefix": "app",
             "style": "kebab-case"
           }
+        ],
+        "@angular-eslint/component-class-suffix": [
+          "error",
+          {
+            "suffixes": [
+              "Component",
+              "Container"
+            ]
+          }
+        ],
+        "@angular-eslint/no-input-rename": "off",
+        "@angular-eslint/no-output-rename": "off",
+        "indent": [
+          "warn",
+          "tab",
+          {
+            "SwitchCase": 1,
+            "ignoredNodes": [
+              "FunctionExpression > .params[decorators.length > 0]",
+              "FunctionExpression > .params > :matches(Decorator, :not(:first-child))",
+              "ClassBody.body > PropertyDefinition[decorators.length > 0] > .key"
+            ]
+          }
+        ],
+        "import/order": [
+          "warn",
+          {
+            "alphabetize": {
+              "order": "asc",
+              "caseInsensitive": true
+            },
+            "groups": [
+              "external",
+              "internal",
+              "parent",
+              "sibling",
+              "index"
+            ],
+            "newlines-between": "always"
+          }
+        ],
+        "sort-imports": [
+          "warn",
+          {
+            "ignoreCase": true,
+            "ignoreDeclarationSort": true,
+            "ignoreMemberSort": false,
+            "allowSeparatedGroups": false
+          }
+        ],
+        "quotes": [
+          "warn",
+          "double"
+        ],
+        "semi": [
+          "error",
+          "always"
+        ],
+        "no-multiple-empty-lines": [
+          "warn",
+          {
+            "max": 1,
+            "maxEOF": 0,
+            "maxBOF": 0
+          }
+        ],
+        "@typescript-eslint/no-namespace": "off",
+        "@typescript-eslint/no-unused-vars": [
+          "warn",
+          {
+            "argsIgnorePattern": "^_",
+            "ignoreRestSiblings": true
+          }
+        ],
+        "@typescript-eslint/member-delimiter-style": [
+          "warn",
+          {
+            "multiline": {
+              "delimiter": "semi",
+              "requireLast": true
+            },
+            "singleline": {
+              "delimiter": "semi",
+              "requireLast": false
+            }
+          }
+        ],
+        "@typescript-eslint/ban-types": [
+          "error",
+          {
+            "types": {
+              "{}": false
+            }
+          }
+        ],
+        "import-newlines/enforce": [
+          "warn",
+          {
+            "max-len": 140,
+            "semi": true,
+            "forceSingleLine": false
+          }
+        ],
+        "@ngrx/prefer-effect-callback-in-block-statement": "off",
+        "@ngrx/no-typed-global-store": "off",
+        "@ngrx/on-function-explicit-return-type": "off",
+        "@ngrx/avoid-mapping-selectors": "off",
+        "@ngrx/no-store-subscription": "off",
+        "@ngrx/avoid-dispatching-multiple-actions-sequentially": "off",
+		    "@ngrx/avoid-combining-selectors": "off"
+      },
+      "settings": {
+        "import/parsers": {
+          "@typescript-eslint/parser": [
+            ".ts"
+          ]
+        },
+        "import/resolver": {
+          "typescript": {
+            "alwaysTryTypes": true
+          }
+        },
+        "import/extensions": [
+          ".ts"
         ]
       }
     },
@@ -38,8 +168,7 @@
         "*.html"
       ],
       "extends": [
-        "plugin:@angular-eslint/template/recommended",
-        "plugin:@angular-eslint/template/accessibility"
+        "plugin:@angular-eslint/template/recommended"
       ],
       "rules": {}
     }
