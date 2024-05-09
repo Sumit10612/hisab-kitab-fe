@@ -20,7 +20,10 @@
         </div>
 
         <div class="header-section-tab">
-            <mat-button-toggle-group [(value)]="selectedTab">
+            <mat-button-toggle-group
+                [(value)]="selectedTab"
+                hideSingleSelectionIndicator="true"
+                >
                 <mat-button-toggle value="expense">Expense</mat-button-toggle>
                 <mat-button-toggle value="summary">Summary</mat-button-toggle>
             </mat-button-toggle-group>
