@@ -58,20 +58,5 @@ export class AppComponent implements OnInit {
 				}
 			});
 		}
-
-		// Prompting for installation
-		if(window.matchMedia("(display-mode: browser)").matches) {
-			if ("standalone" in navigator) {
-				this.snackBar.open("You can install this app, use Share > Add to home screeen", "", { duration: 5000 });        
-			} else {
-				window.addEventListener("beforeinstallprompt", event => {
-					event.preventDefault();
-					const sb = this.snackBar.open("You can install this app", "Install", { duration: 10000 });
-					sb.onAction().subscribe(() => {
-						(event as any).prompt();
-					});
-				});
-			}
-		}
 	}
 }
