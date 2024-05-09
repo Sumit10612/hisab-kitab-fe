@@ -11,28 +11,33 @@ import { RouterLink } from "@angular/router";
     <div class="page-section">
     <div>
       @if (backRoute) {
-        <a role="button"
-          mat-icon-button 
-          [routerLink]="backRoute">
+        <a role="button" mat-icon-button [routerLink]="backRoute">
           <mat-icon>arrow_back_ios</mat-icon>
         </a>
       }
     </div>
     <div class="title"><h2>{{title}}</h2></div>
-    <div class="c"></div>
+    <div class="end">
+      @if (endIcon && endRoute) {
+        <a role="button" mat-icon-button [routerLink]="endRoute">
+          <mat-icon>{{endIcon}}</mat-icon>
+        </a>
+      }
+    </div>
   </div>
   `,
 	styles: [`
     .page-section { 
       display: flex;
-      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: space-between;
     }
     
     .title {
       margin-top: 8px;
     }
 
-    .c {
+    .end {
       margin-left: auto;
     }
   `]
@@ -40,4 +45,6 @@ import { RouterLink } from "@angular/router";
 export class PageNavHeaderComponent {
   @Input() title: string | undefined;
   @Input() backRoute: string | undefined;
+  @Input() endRoute: string | undefined;
+  @Input() endIcon: string | undefined;
 }

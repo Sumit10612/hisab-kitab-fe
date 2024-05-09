@@ -80,7 +80,6 @@ import { LayoutComponent } from "./shared/layout.component";
     }   
 
     .group-widget-container {
-
       .mat-mdc-card-content {        
         height: calc(100vh - 332px);
         display: flex;
@@ -88,6 +87,7 @@ import { LayoutComponent } from "./shared/layout.component";
         gap: 8px;
         margin: 8px 0;
         overflow-y: auto;
+        cursor: pointer;
       }
     }
 

@@ -7,6 +7,14 @@
   "display": "standalone",
   "scope": "./",
   "start_url": "./?utm_source=pwa",
+  "description": "Track all your expenses at one place.",
+  "screeshots": [
+    {
+      "src": "assets/screenshot_1.png",
+      "sizes": "358x738",
+      "type": "image/png"
+    }
+  ],
   "icons": [
     {
       "src": "assets/icons/icon.png",

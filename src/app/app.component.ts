@@ -66,7 +66,7 @@ export class AppComponent implements OnInit {
 			} else {
 				window.addEventListener("beforeinstallprompt", event => {
 					event.preventDefault();
-					const sb = this.snackBar.open("You can install this app", "Install", { duration: 5000 });
+					const sb = this.snackBar.open("You can install this app", "Install", { duration: 10000 });
 					sb.onAction().subscribe(() => {
 						(event as any).prompt();
 					});

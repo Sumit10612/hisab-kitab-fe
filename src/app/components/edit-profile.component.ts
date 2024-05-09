@@ -108,6 +108,7 @@ export class EditProfileComponent {
 	selectImage(index: number) {
 		this.selectedIndex = index;
 		this.form.controls.photoUrl.setValue(this.avatars[index].alt);
+    this.form.markAsDirty();
 	}
 
 	async update() {
