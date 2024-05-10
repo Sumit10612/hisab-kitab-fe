@@ -125,21 +125,10 @@ export class CreateGroupComponent {
 
 		try {
 			this.notification.showLoading();
-			const groupId = await this.groupService.createGroup({
+			await this.groupService.createGroup({
 				name, 
 				imageUrl: this.groupImages[this.selectedIndex].alt
 			});
-
-			const currentUser = this.usersService.currentUser();
-			if(currentUser) {
-				await this.usersService.updateUser({
-					...currentUser,
-					groups: [
-						...currentUser.groups ?? [],
-						groupId
-					]
-				});
-			}
 
 			this.router.navigate(["home"]);
 		} catch (error) {

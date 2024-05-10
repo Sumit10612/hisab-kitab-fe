@@ -1,12 +1,20 @@
 import { Image } from "./image.model";
 
+export interface GroupUser {
+	name: string;
+	photoUrl?: string;
+	role?: "admin" | "user";
+}
+
 export interface CreateGroup {
     name: string;
     imageUrl: string;
 }
 
 export interface Group extends CreateGroup {
-    uid: string;    
+    uid?: string;
+	userIds: string[],
+	users: GroupUser[]; 
 }
 
 export const getGroupImage = (alt?: string) => {

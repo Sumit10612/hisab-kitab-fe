@@ -1,4 +1,5 @@
-import { Component, inject, Input } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { Component, Input, TemplateRef } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { MatIconModule } from "@angular/material/icon";
 import { RouterLink } from "@angular/router";
@@ -6,7 +7,7 @@ import { RouterLink } from "@angular/router";
 @Component({
 	selector: "app-page-nav-header",
 	standalone: true,
-	imports: [MatIconModule, MatButtonModule, RouterLink],
+	imports: [CommonModule, MatIconModule, MatButtonModule, RouterLink],
 	template: `
     <div class="page-section">
     <div>
@@ -18,33 +19,30 @@ import { RouterLink } from "@angular/router";
     </div>
     <div class="title"><h2>{{title}}</h2></div>
     <div class="end">
-      @if (endIcon && endRoute) {
-        <a role="button" mat-icon-button [routerLink]="endRoute">
-          <mat-icon>{{endIcon}}</mat-icon>
-        </a>
+      @if(template) {
+        <ng-container *ngTemplateOutlet="template"></ng-container>
       }
     </div>
   </div>
   `,
 	styles: [`
     .page-section { 
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
+      display: grid;
+      grid-template-columns: 1fr 2fr 1fr;
     }
     
     .title {
       margin-top: 8px;
+      text-align: center;
     }
 
     .end {
-      margin-left: auto;
+      text-align: right;
     }
   `]
 })
 export class PageNavHeaderComponent {
   @Input() title: string | undefined;
-  @Input() backRoute: string | undefined;
-  @Input() endRoute: string | undefined;
-  @Input() endIcon: string | undefined;
+  @Input() backRoute: string | string[] | undefined;
+  @Input() template: TemplateRef<any> | undefined;
 }

@@ -5,7 +5,7 @@ import { getFirestore, provideFirestore } from "@angular/fire/firestore";
 import { MatSnackBarModule } from "@angular/material/snack-bar";
 import { MatBottomSheetModule } from "@angular/material/bottom-sheet";
 import { provideAnimationsAsync } from "@angular/platform-browser/animations/async";
-import { provideRouter } from "@angular/router";
+import { provideRouter, withComponentInputBinding } from "@angular/router";
 import { provideServiceWorker } from "@angular/service-worker";
 
 import { routes } from "./app.routes";
@@ -24,7 +24,7 @@ const initializer = (pwaService: PwaService) => () => pwaService.initPwaPrompt()
 
 export const appConfig: ApplicationConfig = {
 	providers: [
-		provideRouter(routes),
+		provideRouter(routes, withComponentInputBinding()),
 		provideAnimationsAsync(),
 		importProvidersFrom([
 			provideFirebaseApp(() => initializeApp(firebaseConfig)),

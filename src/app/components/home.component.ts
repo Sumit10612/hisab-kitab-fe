@@ -53,7 +53,7 @@ import { LayoutComponent } from "./shared/layout.component";
           <mat-card-title>Groups</mat-card-title>          
         </mat-card-header>
           <mat-card-content>
-            @for (item of groupService.myGroups(); track item) {
+            @for (item of groupService.$myGroups(); track item) {
               <app-group-widget [data]="item"></app-group-widget>
             }
           </mat-card-content>
