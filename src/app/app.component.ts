@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component, inject, OnInit } from "@angular/core";
+import { Component, effect, HostBinding, inject, OnInit, Renderer2 } from "@angular/core";
 import { MatProgressSpinner } from "@angular/material/progress-spinner";
 import { MatSnackBar } from "@angular/material/snack-bar";
 import { RouterOutlet } from "@angular/router";
@@ -13,7 +13,7 @@ import { UserService } from "./services/user.service";
 	standalone: true,
 	imports: [CommonModule, RouterOutlet, MatProgressSpinner],
 	template: `
-    <div [ngClass]="userService.currentUser()?.preferences?.theme ?? 'light'">
+    <!-- <div [ngClass]="userService.currentUser()?.preferences?.theme ?? 'light'"> -->
       <div class="container">
         <router-outlet></router-outlet>
       </div>
@@ -21,13 +21,13 @@ import { UserService } from "./services/user.service";
       @if(notificationService.loading()) {
         <mat-progress-spinner mode="indeterminate" diameter="50"></mat-progress-spinner>
       }
-    </div>
+    <!-- </div> -->
   `,
 	styles: [`
     .container {
-		min-height: 100vh;
 		max-width: 500px;
 		margin: auto;
+  		min-height: 100vh;
 	}
 
     mat-progress-spinner {
@@ -39,11 +39,22 @@ import { UserService } from "./services/user.service";
   `]
 })
 export class AppComponent implements OnInit {
+	@HostBinding("class") class: string = '';
+
 	private readonly snackBar = inject(MatSnackBar);
 	private readonly swUpdate = inject(SwUpdate);
+	private readonly renderer = inject(Renderer2);
 
 	protected readonly userService = inject(UserService);
 	protected readonly notificationService = inject(NotificationService);
+
+	constructor() {
+		effect(() => {
+			this.userService.currentUser()?.preferences?.theme === "dark" ?
+				this.renderer.addClass(document.body, "dark-theme") :
+				this.renderer.removeClass(document.body, "dark-theme");
+		});
+	}
 
 	ngOnInit() {
 		// Checking service worker based update

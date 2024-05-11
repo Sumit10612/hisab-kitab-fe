@@ -28,7 +28,8 @@ import { getFirebaseErrorMessage } from '../utilities/firebase-errors';
 
       <div section="detail" class="detail-section">
         <button 
-          mat-raised-button 
+          mat-raised-button
+          class="rounded-button"
           color="warn"
           (click)="deleteGroup()">
           Delete Group
@@ -40,10 +41,6 @@ import { getFirebaseErrorMessage } from '../utilities/firebase-errors';
     .detail-section {
       margin: 16px;
       text-align: center;
-
-      > button {
-        border-radius: 16px;
-      }
     }
   `]
 })

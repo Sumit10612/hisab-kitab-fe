@@ -17,16 +17,14 @@ import { MatListModule } from '@angular/material/list';
           width="100"
           src="/assets/screenshot_1.png" />
       </div>
-
-      {{data.mobileType}}
       
-      @if (data.mobileType !== "android") {
+      @if (data.platform === "ios") {
         <span>To install this app on your device tap the Menu button and then 'Add to Home screen' button.</span>
       }
 
       <div class="button-group">
         <button mat-button (click)="close()">Close</button>
-        @if (data.mobileType === "android") {
+        @if (data.platform === "android") {
           <button mat-raised-button color="primary" (click)="installPwa()">Install App</button>
         }
       </div>
@@ -50,7 +48,7 @@ import { MatListModule } from '@angular/material/list';
 })
 export class PwaPromptComponent {
   constructor(
-    @Inject(MAT_BOTTOM_SHEET_DATA) public data: { mobileType: "ios" | "android", event?: any },
+    @Inject(MAT_BOTTOM_SHEET_DATA) public data: { platform: "ios" | "android", event?: any },
     private bottomSheetRef: MatBottomSheetRef<PwaPromptComponent>
   ) {}
 

@@ -12,12 +12,15 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatBottomSheet, MatBottomSheetModule } from '@angular/material/bottom-sheet';
+import { AddExpenseComponent } from './widgets/add-expense.component';
 
 @Component({
   selector: 'app-group-editor',
   standalone: true,
   imports: [
     MatCardModule,
+    MatBottomSheetModule,
     MatButtonToggleModule,
     MatIconModule,
     MatButtonModule,
@@ -69,6 +72,12 @@ import { MatButtonModule } from '@angular/material/button';
       </div>
     </app-layout>
 
+    <div class="add-expense-button">
+      <button mat-fab color="warn" (click)="addExpense()">
+        <mat-icon>add</mat-icon>
+      </button>
+    </div>
+
     <ng-template #settingsRouteTemplate>
         <a role="button" mat-icon-button [routerLink]="['/group/settings', $group()?.uid]">
             <mat-icon>settings</mat-icon>
@@ -104,11 +113,18 @@ import { MatButtonModule } from '@angular/material/button';
         height: 32px;
         align-items: center;
     }
+
+    .add-expense-button {
+        position: absolute;
+        right: 24px;
+        bottom: 24px;
+    }
   `]
 })
 export class GroupEditorComponent {
   private readonly groupService = inject(GroupService);
   private readonly route = inject(ActivatedRoute);
+  private readonly bottomSheet = inject(MatBottomSheet);
 
   protected getGroupImage = getGroupImage;
   protected selectedTab: string = "expense";
@@ -118,4 +134,14 @@ export class GroupEditorComponent {
       return this.groupService.currentGroup$(id ?? "");
     })
   ));
+
+  ngOnInit() {
+    this.addExpense();
+  }
+
+  addExpense() {
+    this.bottomSheet.open(AddExpenseComponent, {
+      disableClose: true,
+    });
+  }
 }

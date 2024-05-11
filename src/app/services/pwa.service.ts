@@ -20,12 +20,12 @@ export class PwaService {
     } else if(this.platform.IOS) {
       const isInStandaloneMode = ('standalone' in window.navigator) && (window.navigator['standalone']);
       if (!isInStandaloneMode) {
-        this.openPromptComponent("ios", event);
+        this.openPromptComponent("ios");
       }
     }
   }
 
-  private openPromptComponent(platform: "android" | "ios", event: any) {
+  private openPromptComponent(platform: "android" | "ios", event?: any) {
     timer(2000)
       .pipe(take(1))
       .subscribe(() => this.bottomSheet.open(

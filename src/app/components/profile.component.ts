@@ -112,12 +112,9 @@ export class ProfileComponent {
 			};
 
 			try {
-				this.notificationService.showLoading();
 				await this.userService.updateUser({ uid, ...data });
 			} catch (err) {
 				this.notificationService.error(getFirebaseErrorMessage(err));
-			} finally {
-				this.notificationService.hideLoading();
 			}
 		}
 	}
