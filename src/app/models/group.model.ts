@@ -1,6 +1,8 @@
+import { Expense } from "./expense.model";
 import { Image } from "./image.model";
 
 export interface GroupUser {
+	uid: string;
 	name: string;
 	photoUrl?: string;
 	role?: "admin" | "user";
@@ -14,7 +16,13 @@ export interface CreateGroup {
 export interface Group extends CreateGroup {
     uid?: string;
 	userIds: string[],
-	users: GroupUser[]; 
+	users: GroupUser[];
+}
+
+export interface GroupExpenses {
+	groupId: string;
+	groupTotalAmount: number;
+	expenses: Expense[];
 }
 
 export const getGroupImage = (alt?: string) => {

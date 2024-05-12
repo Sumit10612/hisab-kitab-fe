@@ -25,7 +25,7 @@ import {
 	tap
 } from "rxjs";
 
-import { CreateGroup, Group, GroupUser } from "../models/group.model";
+import { CreateGroup, Group, GroupExpenses, GroupUser } from "../models/group.model";
 
 import { UserService } from "./user.service";
 
@@ -47,12 +47,12 @@ export class GroupService {
 
 	currentGroup$(groupId: string): Observable<Group> {
 		const ref = doc(this.firestore, "groups", groupId);
-		const group$ = docData(ref) as Observable<Group>;
-		return group$.pipe(
-			tap(group => {
-				group.uid = ref.id;
-			})
-		);
+		return docData(ref, { idField: "uid" }) as Observable<Group>;
+	};
+
+	groupExpenses$(groupId: string): Observable<GroupExpenses> {
+		const ref = doc(this.firestore, "group_expenses", groupId);
+		return docData(ref, { idField: "groupId" }) as Observable<GroupExpenses>;
 	}
   
 	$myGroups = toSignal(this.myGroups$);
@@ -68,6 +68,7 @@ export class GroupService {
 				imageUrl: createGroup.imageUrl,
 				userIds: [user?.uid ?? ''],
 				users: [{
+					uid: user?.uid ?? '',
 					name: user?.name,
 					photoUrl: user?.photoUrl,
 					role: "admin"

@@ -1,7 +1,7 @@
 import {COMMA, ENTER} from '@angular/cdk/keycodes';
-import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatBottomSheetRef } from '@angular/material/bottom-sheet';
+import { Component, ElementRef, Inject, OnInit, Signal, ViewChild, inject } from '@angular/core';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MAT_BOTTOM_SHEET_DATA, MatBottomSheetRef } from '@angular/material/bottom-sheet';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormField, MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -10,7 +10,13 @@ import {MatAutocompleteSelectedEvent, MatAutocompleteModule} from '@angular/mate
 import {MatChipInputEvent, MatChipsModule} from '@angular/material/chips';
 import { Observable, filter, map, startWith } from 'rxjs';
 import {CommonModule} from '@angular/common';
-import { Category, CategoryGroup, categoriesByGroup, filterCategories } from '../../models/category.model';
+import { Category, CategoryGroup, categoriesByGroup, filterCategories, getCategoryById } from '../../models/category.model';
+import {MatSelectModule} from '@angular/material/select';
+import {MatDatepickerModule} from '@angular/material/datepicker';
+import { provideNativeDateAdapter } from '@angular/material/core';
+import { UserService } from '../../services/user.service';
+import { GroupService } from '../../services/group.service';
+import { Group } from '../../models/group.model';
 
 @Component({
   selector: 'app-add-expense',
@@ -24,8 +30,11 @@ import { Category, CategoryGroup, categoriesByGroup, filterCategories } from '..
     ReactiveFormsModule,
     MatInputModule,
     ReactiveFormsModule,
-    MatChipsModule
+    MatChipsModule,
+    MatSelectModule,
+    MatDatepickerModule
   ],
+  providers:[provideNativeDateAdapter()],
   template: `
     <div>
       <div class="header-section">
@@ -40,24 +49,27 @@ import { Category, CategoryGroup, categoriesByGroup, filterCategories } from '..
           <div class="row">
             <mat-form-field>
               <mat-label>Description</mat-label>
-              <input matInput formControlName="description" />
+              <input matInput [formControl]="form.controls.description" />
             </mat-form-field>
             <mat-form-field appearance="fill" floatLabel="always">
               <mat-icon matTextPrefix>currency_rupee</mat-icon>
               <mat-label>Amount</mat-label>
               <input 
-                matInput 
-                placeholder="0.00">
+                matInput
+                type="number"
+                placeholder="0.00"
+                min="0"
+                [formControl]="form.controls.amount">
             </mat-form-field>          
           </div>
 
           <mat-form-field>
             <mat-label>Categories</mat-label>
             <mat-chip-grid #categoryChipGrid>
-              @for (category of selectedCategories; track category) {
-                <mat-chip-row (removed)="removeCategory(category)">
-                  <mat-icon matChipAvatar>{{category.icon}}</mat-icon>
-                  {{category.name}}
+              @for (categoryId of selectedCategories; track categoryId) {
+                <mat-chip-row (removed)="removeCategory(categoryId)">
+                  <mat-icon matChipAvatar>{{getCategoryById(categoryId)?.icon}}</mat-icon>
+                  {{getCategoryById(categoryId)?.name}}
                   <button matChipRemove>
                     <mat-icon>cancel</mat-icon>
                   </button>
@@ -69,7 +81,7 @@ import { Category, CategoryGroup, categoriesByGroup, filterCategories } from '..
               [matChipInputFor]="categoryChipGrid"
               [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
               placeholder="Add categories..."
-              [formControl]="form.controls.category"
+              [formControl]="categoryFormControl"
               [matAutocomplete]="categoryAutoComplete" />
             <mat-autocomplete
               #categoryAutoComplete="matAutocomplete"
@@ -77,7 +89,7 @@ import { Category, CategoryGroup, categoriesByGroup, filterCategories } from '..
               @for (group of categoryGroupOptions | async; track group) {
                 <mat-optgroup [label]="group.name">
                   @for (category of group.categories; track category) {
-                    <mat-option [value]="category">
+                    <mat-option [value]="category.id">
                       <mat-icon>{{category.icon}}</mat-icon>{{category.name}}
                     </mat-option>
                   }
@@ -85,14 +97,34 @@ import { Category, CategoryGroup, categoriesByGroup, filterCategories } from '..
               }
             </mat-autocomplete>
           </mat-form-field>
+
+          <div class="row">
+            <mat-form-field>
+              <mat-label>Paid by</mat-label>
+              <mat-select [formControl]="form.controls.paidBy">
+                @for (user of data.$group()?.users; track user) {
+                  <mat-option [value]="user?.uid">
+                    {{userService.currentUser()?.uid === user?.uid  ? 'You' : user?.name}}
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field>
+              <input matInput [matDatepicker]="dp" [formControl]="form.controls.expenseDate">
+              <mat-hint>MM/DD/YYYY</mat-hint>
+              <mat-datepicker-toggle matIconSuffix [for]="dp"></mat-datepicker-toggle>
+              <mat-datepicker #dp></mat-datepicker>
+            </mat-form-field>
+          </div>
           
           <div class="button-group">
-            <button mat-flat-button (click)="close()">Close</button>
             <button 
               type="submit"
               class="rounded-button"
               mat-raised-button 
-              color="primary">Submit</button>
+              color="primary"
+              [disabled]="form.invalid">Submit</button>
           </div>
         </form>
       </div>
@@ -110,17 +142,13 @@ import { Category, CategoryGroup, categoriesByGroup, filterCategories } from '..
     }
 
     .row {
-      display: flex;
-      gap: 16px;
-
-      .mat-form-field {
-        flex-basis: 50%;
-      }
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-gap: 16px;
     }
 
     .button-group {
       display: flex;
-      gap: 8px;
       justify-content: center;
     }
   `]
@@ -130,25 +158,38 @@ export class AddExpenseComponent implements OnInit {
   
   private readonly bottomSheetRef = inject(MatBottomSheetRef<AddExpenseComponent>);
   private readonly formBuilder = inject(FormBuilder);
+  
+  protected readonly userService = inject(UserService);
 
   protected readonly form = this.formBuilder.group({
     description: ["", [Validators.required]],
-    category: [""],
-    amount: [0, [Validators.required]]
+    amount: ['', [Validators.required]],
+    paidBy: [this.userService.currentUser()?.uid, [Validators.required]],
+    expenseDate: [new Date(), [Validators.required]] 
   });
+  protected categoryFormControl = new FormControl("");
   protected separatorKeysCodes: number[] = [ENTER, COMMA];
   protected categoryGroups = categoriesByGroup;
   protected categoryGroupOptions: Observable<CategoryGroup[]> | undefined;
-  protected selectedCategories: Category[] = [];
+  protected selectedCategories: number[] = [];
+  protected getCategoryById = getCategoryById;
+
+  constructor(
+    @Inject(MAT_BOTTOM_SHEET_DATA) public data: { $group: Signal<Group | undefined> }
+  ) {}
 
   ngOnInit(): void {
-    this.categoryGroupOptions = this.form.controls.category.valueChanges.pipe(
+    this.categoryGroupOptions = this.categoryFormControl.valueChanges.pipe(
       startWith(""),
       filter(value => typeof value === 'string'),
       map(value => {
         if(value) {
           return categoriesByGroup
-            .map(group => ({ name: group.name, categories: filterCategories(group.categories, value)}))
+            .map(group => ({ 
+              name: group.name, 
+              categories: filterCategories(group.categories, value)
+                .filter(c => this.selectedCategories.find(id => id !== c.id))
+            }))
             .filter(group => group.categories.length > 0)
         }
         return categoriesByGroup;
@@ -157,7 +198,7 @@ export class AddExpenseComponent implements OnInit {
   }
 
   submit(): void {
-
+    console.log({...this.form.value, categories: this.selectedCategories});
   }
 
   close(): void {
@@ -169,11 +210,11 @@ export class AddExpenseComponent implements OnInit {
     if(this.categoryInput) {
       this.categoryInput.nativeElement.value = "";
     }
-    this.form.controls.category.setValue(null);
+    this.categoryFormControl.setValue(null);
   }
 
-  removeCategory(category: Category): void {
-    const index = this.selectedCategories.findIndex(c => c.name === category.name);
+  removeCategory(categoryId: number): void {
+    const index = this.selectedCategories.findIndex(id => id === categoryId);
     if(index >= 0) {
       this.selectedCategories.splice(index, 1);
     }

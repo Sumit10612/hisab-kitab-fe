@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 
 import { PageNavHeaderComponent } from './shared/page-nav-header.component';
 import { GroupService } from '../services/group.service';
@@ -129,10 +129,7 @@ export class GroupEditorComponent {
   protected getGroupImage = getGroupImage;
   protected selectedTab: string = "expense";
   protected $group = toSignal(this.route.paramMap.pipe(
-    switchMap(params => {
-      const id = params.get('id');
-      return this.groupService.currentGroup$(id ?? "");
-    })
+    switchMap(params => this.groupService.currentGroup$(params.get('id') ?? ""))
   ));
 
   ngOnInit() {
@@ -142,6 +139,9 @@ export class GroupEditorComponent {
   addExpense() {
     this.bottomSheet.open(AddExpenseComponent, {
       disableClose: true,
+      data: {
+        $group: this.$group,
+      }
     });
   }
 }
