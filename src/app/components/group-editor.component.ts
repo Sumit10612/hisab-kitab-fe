@@ -1,35 +1,37 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, inject, Input } from "@angular/core";
+import { toSignal } from "@angular/core/rxjs-interop";
+import { MatBottomSheet, MatBottomSheetModule } from "@angular/material/bottom-sheet";
+import { MatButtonModule } from "@angular/material/button";
+import { MatButtonToggleModule } from "@angular/material/button-toggle";
+import { MatCardModule } from "@angular/material/card";
+import { MatIconModule } from "@angular/material/icon";
+import { ActivatedRoute, RouterLink } from "@angular/router";
+import { switchMap } from "rxjs";
 
-import { PageNavHeaderComponent } from './shared/page-nav-header.component';
-import { GroupService } from '../services/group.service';
-import { getGroupImage } from '../models/group.model';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { switchMap } from 'rxjs';
-import { GroupWidgetComponent } from './widgets/group-widget.component';
-import { LayoutComponent } from './shared/layout.component';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatBottomSheet, MatBottomSheetModule } from '@angular/material/bottom-sheet';
-import { AddExpenseComponent } from './widgets/add-expense.component';
+import { getGroupImage } from "../models/group.model";
+import { GroupExpenseService } from "../services/group-expense.service";
+import { GroupService } from "../services/group.service";
+
+import { LayoutComponent } from "./shared/layout.component";
+import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
+import { AddExpenseComponent } from "./widgets/add-expense.component";
+import { GroupWidgetComponent } from "./widgets/group-widget.component";
 
 @Component({
-  selector: 'app-group-editor',
-  standalone: true,
-  imports: [
-    MatCardModule,
-    MatBottomSheetModule,
-    MatButtonToggleModule,
-    MatIconModule,
-    MatButtonModule,
-    PageNavHeaderComponent,
-    GroupWidgetComponent,
-    LayoutComponent,
-    RouterLink
-  ],
-  template: `
+	selector: "app-group-editor",
+	standalone: true,
+	imports: [
+		MatCardModule,
+		MatBottomSheetModule,
+		MatButtonToggleModule,
+		MatIconModule,
+		MatButtonModule,
+		PageNavHeaderComponent,
+		GroupWidgetComponent,
+		LayoutComponent,
+		RouterLink
+	],
+	template: `
     <app-layout>
       <div section="header" class="header-section">
         <app-page-nav-header
@@ -64,7 +66,11 @@ import { AddExpenseComponent } from './widgets/add-expense.component';
       <div section="detail" class="detail-section">
         <mat-card-content>
             @if (selectedTab === "expense") {
-                Expenses
+                <div class="expenses-container">
+                  @for (expense of $expenses(); track expense) {
+                    {{expense.description}} - {{expense.amount}}
+                  }
+                </div>
             } @else {
                 Summary
             }
@@ -84,7 +90,7 @@ import { AddExpenseComponent } from './widgets/add-expense.component';
         </a>
     </ng-template>
   `,
-  styles: [`
+	styles: [`
     .header-section {
       margin: -16px;
       padding: 16px 16px 0 16px;
@@ -122,26 +128,26 @@ import { AddExpenseComponent } from './widgets/add-expense.component';
   `]
 })
 export class GroupEditorComponent {
-  private readonly groupService = inject(GroupService);
-  private readonly route = inject(ActivatedRoute);
-  private readonly bottomSheet = inject(MatBottomSheet);
+	private readonly groupService = inject(GroupService);
+	private readonly groupExpenseService = inject(GroupExpenseService);
+	private readonly route = inject(ActivatedRoute);
+	private readonly bottomSheet = inject(MatBottomSheet);
 
-  protected getGroupImage = getGroupImage;
-  protected selectedTab: string = "expense";
-  protected $group = toSignal(this.route.paramMap.pipe(
-    switchMap(params => this.groupService.currentGroup$(params.get('id') ?? ""))
-  ));
+	protected getGroupImage = getGroupImage;
+	protected selectedTab: string = "expense";
+	protected $group = toSignal(this.route.paramMap.pipe(
+		switchMap(params => this.groupService.currentGroup$(params.get("id") ?? ""))
+	));
+	protected $expenses = toSignal(this.route.paramMap.pipe(
+		switchMap(params => this.groupExpenseService.getGroupExpenses$(params.get("id") ?? ""))
+	));
 
-  ngOnInit() {
-    this.addExpense();
-  }
-
-  addExpense() {
-    this.bottomSheet.open(AddExpenseComponent, {
-      disableClose: true,
-      data: {
-        $group: this.$group,
-      }
-    });
-  }
+	addExpense() {
+		this.bottomSheet.open(AddExpenseComponent, {
+			disableClose: true,
+			data: {
+				$group: this.$group,
+			}
+		});
+	}
 }

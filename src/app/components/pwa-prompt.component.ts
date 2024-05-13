@@ -1,14 +1,14 @@
-import { Component, Inject } from '@angular/core';
-import { MAT_BOTTOM_SHEET_DATA, MatBottomSheetRef } from '@angular/material/bottom-sheet';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatListModule } from '@angular/material/list';
+import { Component, Inject } from "@angular/core";
+import { MAT_BOTTOM_SHEET_DATA, MatBottomSheetRef } from "@angular/material/bottom-sheet";
+import { MatButtonModule } from "@angular/material/button";
+import { MatIconModule } from "@angular/material/icon";
+import { MatListModule } from "@angular/material/list";
 
 @Component({
-  selector: 'app-pwa-prompt',
-  standalone: true,
-  imports: [MatListModule, MatIconModule, MatButtonModule],
-  template: `
+	selector: "app-pwa-prompt",
+	standalone: true,
+	imports: [MatListModule, MatIconModule, MatButtonModule],
+	template: `
     <div class="container">
       <h4><b>Hisab Kitab</b>: Track all your expenses at one place.</h4>
 
@@ -30,7 +30,7 @@ import { MatListModule } from '@angular/material/list';
       </div>
     </div>
   `,
-  styles: [`
+	styles: [`
     .container {
       display: block;
 
@@ -47,17 +47,17 @@ import { MatListModule } from '@angular/material/list';
   `]
 })
 export class PwaPromptComponent {
-  constructor(
-    @Inject(MAT_BOTTOM_SHEET_DATA) public data: { platform: "ios" | "android", event?: any },
+	constructor(
+    @Inject(MAT_BOTTOM_SHEET_DATA) public data: { platform: "ios" | "android"; event?: any },
     private bottomSheetRef: MatBottomSheetRef<PwaPromptComponent>
-  ) {}
+	) {}
 
-  installPwa() {
-    this.data.event.prompt();
-    this.close();
-  }
+	installPwa() {
+		this.data.event.prompt();
+		this.close();
+	}
 
-  close() {
-    this.bottomSheetRef.dismiss();
-  }
+	close() {
+		this.bottomSheetRef.dismiss();
+	}
 }

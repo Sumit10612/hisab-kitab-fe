@@ -4,11 +4,11 @@ import { Routes } from "@angular/router";
 import { CreateGroupComponent } from "./components/create-group.component";
 import { EditProfileComponent } from "./components/edit-profile.component";
 import { GroupEditorComponent } from "./components/group-editor.component";
+import { GroupSettingsComponent } from "./components/group-settings.component";
 import { HomeComponent } from "./components/home.component";
 import { LoginComponent } from "./components/login.component";
 import { ProfileComponent } from "./components/profile.component";
 import { SignupComponent } from "./components/signup.component";
-import { GroupSettingsComponent } from "./components/group-settings.component";
 
 const redirectUnauthorizedToLogin = () => redirectUnauthorizedTo(["/login"]);
 const redirectLoggedInToHome = () => redirectLoggedInTo(["/home"]);

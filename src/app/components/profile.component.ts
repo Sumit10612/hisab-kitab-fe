@@ -11,8 +11,8 @@ import { NotificationService } from "../services/notification.service";
 import { UserService } from "../services/user.service";
 import { getFirebaseErrorMessage } from "../utilities/firebase-errors";
 
-import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
 import { LayoutComponent } from "./shared/layout.component";
+import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
 
 @Component({
 	selector: "app-profile",
@@ -22,8 +22,8 @@ import { LayoutComponent } from "./shared/layout.component";
 		MatIconModule,
 		MatRadioModule,
 		PageNavHeaderComponent,
-    LayoutComponent,
-    RouterLink
+		LayoutComponent,
+		RouterLink
 	],
 	template: `
     <app-layout>

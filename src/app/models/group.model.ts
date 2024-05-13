@@ -15,14 +15,12 @@ export interface CreateGroup {
 
 export interface Group extends CreateGroup {
     uid?: string;
-	userIds: string[],
+	userIds: string[];
 	users: GroupUser[];
 }
 
 export interface GroupExpenses {
 	groupId: string;
-	groupTotalAmount: number;
-	expenses: Expense[];
 }
 
 export const getGroupImage = (alt?: string) => {

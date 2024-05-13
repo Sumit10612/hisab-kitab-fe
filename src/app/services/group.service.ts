@@ -1,17 +1,15 @@
 import { inject, Injectable } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import {
-	addDoc,
 	collection,
+	collectionData,
+	deleteDoc,
 	doc,
 	docData,
-	documentId,
 	Firestore,
-	getDocs,
 	query,
-	where,
-	deleteDoc,
-	collectionData
+	runTransaction,
+	where
 } from "@angular/fire/firestore";
 import {
 	concatMap,
@@ -39,16 +37,16 @@ export class GroupService {
 	private get myGroups$(): Observable<Group[]> {
 		const ref = collection(this.firestore, "groups");
 		return this.userService.user$.pipe(
-		switchMap((user) => {      
-			const q = query(ref, where("userIds", "array-contains", user?.uid));
-			return collectionData(q, { idField: "uid" }) as Observable<Group[]>;
-		})
-	)};
+			switchMap((user) => {      
+				const q = query(ref, where("userIds", "array-contains", user?.uid));
+				return collectionData(q, { idField: "uid" }) as Observable<Group[]>;
+			})
+		);}
 
 	currentGroup$(groupId: string): Observable<Group> {
 		const ref = doc(this.firestore, "groups", groupId);
 		return docData(ref, { idField: "uid" }) as Observable<Group>;
-	};
+	}
 
 	groupExpenses$(groupId: string): Observable<GroupExpenses> {
 		const ref = doc(this.firestore, "group_expenses", groupId);
@@ -57,25 +55,30 @@ export class GroupService {
   
 	$myGroups = toSignal(this.myGroups$);
 
-	createGroup = (group: CreateGroup) => firstValueFrom(this.createGroup$(group));
+	createGroup(createGroup: CreateGroup): Promise<void> {
+		const groupRef = doc(collection(this.firestore, "groups"));
+		const groupExpenseRef = doc(this.firestore, "group_expenses", groupRef.id);
 
-	private createGroup$(createGroup: CreateGroup): Observable<string> {
-		const ref = collection(this.firestore,"groups");
-		return this.userService.user$.pipe(
-			take(1),
-			concatMap(user => addDoc(ref, {
-				name: createGroup.name,
-				imageUrl: createGroup.imageUrl,
-				userIds: [user?.uid ?? ''],
-				users: [{
-					uid: user?.uid ?? '',
-					name: user?.name,
-					photoUrl: user?.photoUrl,
-					role: "admin"
-				} as GroupUser]
-			} as Group)),
-			map(ref => ref.id)
-		);
+		return runTransaction(this.firestore, async (transation) => {
+			const user = this.userService.currentUser();
+			if(user) {
+				transation.set(groupRef, {
+					name: createGroup.name,
+					imageUrl: createGroup.imageUrl,
+					userIds: [user?.uid ?? ""],
+					users: [{
+						uid: user?.uid ?? "",
+						name: user?.name,
+						photoUrl: user?.photoUrl,
+						role: "admin"
+					} as GroupUser]
+				} as Group);
+
+				transation.set(groupExpenseRef, {
+					groupId: groupRef.id
+				} as GroupExpenses);
+			}
+		});
 	}
 
 	deleteGroup(groupId: string): Promise<void> {

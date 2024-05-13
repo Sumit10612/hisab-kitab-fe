@@ -1,12 +1,12 @@
-import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
-import { MatCardModule } from '@angular/material/card';
+import { CommonModule } from "@angular/common";
+import { Component } from "@angular/core";
+import { MatCardModule } from "@angular/material/card";
 
 @Component({
-  selector: 'app-layout',
-  standalone: true,
-  imports: [CommonModule, MatCardModule],
-  template: `
+	selector: "app-layout",
+	standalone: true,
+	imports: [CommonModule, MatCardModule],
+	template: `
     <div class="container">
       <div class="container-header-section">
         <ng-content select="[section='header']"></ng-content>
@@ -16,7 +16,7 @@ import { MatCardModule } from '@angular/material/card';
       </mat-card>
     </div>
   `,
-  styles: [`
+	styles: [`
     .container {
       display: flex;
       flex-direction: column;

@@ -1,41 +1,59 @@
-import {COMMA, ENTER} from '@angular/cdk/keycodes';
-import { Component, ElementRef, Inject, OnInit, Signal, ViewChild, inject } from '@angular/core';
-import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MAT_BOTTOM_SHEET_DATA, MatBottomSheetRef } from '@angular/material/bottom-sheet';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormField, MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import {MatAutocompleteSelectedEvent, MatAutocompleteModule} from '@angular/material/autocomplete';
-import {MatChipInputEvent, MatChipsModule} from '@angular/material/chips';
-import { Observable, filter, map, startWith } from 'rxjs';
-import {CommonModule} from '@angular/common';
-import { Category, CategoryGroup, categoriesByGroup, filterCategories, getCategoryById } from '../../models/category.model';
-import {MatSelectModule} from '@angular/material/select';
-import {MatDatepickerModule} from '@angular/material/datepicker';
-import { provideNativeDateAdapter } from '@angular/material/core';
-import { UserService } from '../../services/user.service';
-import { GroupService } from '../../services/group.service';
-import { Group } from '../../models/group.model';
+import {COMMA, ENTER} from "@angular/cdk/keycodes";
+import {CommonModule} from "@angular/common";
+import {
+	Component,
+	ElementRef,
+	inject,
+	Inject,
+	OnInit,
+	Signal,
+	ViewChild
+} from "@angular/core";
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from "@angular/forms";
+import {MatAutocompleteModule, MatAutocompleteSelectedEvent} from "@angular/material/autocomplete";
+import { MAT_BOTTOM_SHEET_DATA, MatBottomSheetRef } from "@angular/material/bottom-sheet";
+import { MatButtonModule } from "@angular/material/button";
+import {MatChipInputEvent, MatChipsModule} from "@angular/material/chips";
+import { provideNativeDateAdapter } from "@angular/material/core";
+import {MatDatepickerModule} from "@angular/material/datepicker";
+import { MatFormField, MatFormFieldModule } from "@angular/material/form-field";
+import { MatIconModule } from "@angular/material/icon";
+import { MatInputModule } from "@angular/material/input";
+import {MatSelectModule} from "@angular/material/select";
+import { filter, map, Observable, startWith } from "rxjs";
+
+import {
+	categoriesByGroup,
+	Category,
+	CategoryGroup,
+	filterCategories,
+	getCategoryById
+} from "../../models/category.model";
+import { Group } from "../../models/group.model";
+import { GroupExpenseService } from "../../services/group-expense.service";
+import { GroupService } from "../../services/group.service";
+import { NotificationService } from "../../services/notification.service";
+import { UserService } from "../../services/user.service";
+import { getFirebaseErrorMessage } from "../../utilities/firebase-errors";
 
 @Component({
-  selector: 'app-add-expense',
-  standalone: true,
-  imports: [
-    CommonModule,
-    MatIconModule, 
-    MatButtonModule,
-    MatFormFieldModule,
-    MatAutocompleteModule,
-    ReactiveFormsModule,
-    MatInputModule,
-    ReactiveFormsModule,
-    MatChipsModule,
-    MatSelectModule,
-    MatDatepickerModule
-  ],
-  providers:[provideNativeDateAdapter()],
-  template: `
+	selector: "app-add-expense",
+	standalone: true,
+	imports: [
+		CommonModule,
+		MatIconModule, 
+		MatButtonModule,
+		MatFormFieldModule,
+		MatAutocompleteModule,
+		ReactiveFormsModule,
+		MatInputModule,
+		ReactiveFormsModule,
+		MatChipsModule,
+		MatSelectModule,
+		MatDatepickerModule
+	],
+	providers:[provideNativeDateAdapter()],
+	template: `
     <div>
       <div class="header-section">
         <button mat-icon-button (click)="close()">
@@ -130,7 +148,7 @@ import { Group } from '../../models/group.model';
       </div>
     </div>
   `,
-  styles: [`
+	styles: [`
     .header-section {
       display: grid;
       grid-template-columns: 1fr 2fr 1fr;
@@ -154,18 +172,20 @@ import { Group } from '../../models/group.model';
   `]
 })
 export class AddExpenseComponent implements OnInit {
-  @ViewChild('categoryInput') categoryInput: ElementRef<HTMLInputElement> | undefined;
+  @ViewChild("categoryInput") categoryInput: ElementRef<HTMLInputElement> | undefined;
   
   private readonly bottomSheetRef = inject(MatBottomSheetRef<AddExpenseComponent>);
   private readonly formBuilder = inject(FormBuilder);
+  private readonly groupExpenseService = inject(GroupExpenseService);
+  private readonly notificationService = inject(NotificationService);
   
   protected readonly userService = inject(UserService);
 
   protected readonly form = this.formBuilder.group({
-    description: ["", [Validators.required]],
-    amount: ['', [Validators.required]],
-    paidBy: [this.userService.currentUser()?.uid, [Validators.required]],
-    expenseDate: [new Date(), [Validators.required]] 
+  	description: ["", [Validators.required]],
+  	amount: ["", [Validators.required]],
+  	paidBy: [this.userService.currentUser()?.uid, [Validators.required]],
+  	expenseDate: [new Date(), [Validators.required]] 
   });
   protected categoryFormControl = new FormControl("");
   protected separatorKeysCodes: number[] = [ENTER, COMMA];
@@ -179,44 +199,65 @@ export class AddExpenseComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.categoryGroupOptions = this.categoryFormControl.valueChanges.pipe(
-      startWith(""),
-      filter(value => typeof value === 'string'),
-      map(value => {
-        if(value) {
-          return categoriesByGroup
-            .map(group => ({ 
-              name: group.name, 
-              categories: filterCategories(group.categories, value)
-                .filter(c => this.selectedCategories.find(id => id !== c.id))
-            }))
-            .filter(group => group.categories.length > 0)
-        }
-        return categoriesByGroup;
-      })
-    )
+  	this.categoryGroupOptions = this.categoryFormControl.valueChanges.pipe(
+  		startWith(""),
+  		filter(value => typeof value === "string"),
+  		map(value => {
+  			if(value) {
+  				return categoriesByGroup
+  					.map(group => ({ 
+  						name: group.name, 
+  						categories: filterCategories(group.categories, value)
+  							.filter(c => this.selectedCategories.find(id => id !== c.id))
+  					}))
+  					.filter(group => group.categories.length > 0);
+  			}
+  			return categoriesByGroup;
+  		})
+  	);
   }
 
-  submit(): void {
-    console.log({...this.form.value, categories: this.selectedCategories});
+  async submit() {
+  	const groupId = this.data.$group()?.uid;
+  	const { description, amount, expenseDate, paidBy} = this.form.value;
+  	if(this.form.invalid || !groupId || !expenseDate || !paidBy || !description) {
+  		return;
+  	}
+
+  	try {
+  		await this.groupExpenseService.addExpense(
+  			groupId,
+  			{
+  				description: description,
+  				amount: +(amount ?? 0),
+  				categories: this.selectedCategories,
+  				expenseDate,
+  				paidBy
+  			}
+  		);
+
+  		this.bottomSheetRef.dismiss();
+  	} catch (err) {
+  		this.notificationService.error(getFirebaseErrorMessage(err));
+  	}
   }
 
   close(): void {
-    this.bottomSheetRef.dismiss();
+  	this.bottomSheetRef.dismiss();
   }
 
   categorySelected($event: MatAutocompleteSelectedEvent): void {
-    this.selectedCategories.push($event.option.value);
-    if(this.categoryInput) {
-      this.categoryInput.nativeElement.value = "";
-    }
-    this.categoryFormControl.setValue(null);
+  	this.selectedCategories.push($event.option.value);
+  	if(this.categoryInput) {
+  		this.categoryInput.nativeElement.value = "";
+  	}
+  	this.categoryFormControl.setValue(null);
   }
 
   removeCategory(categoryId: number): void {
-    const index = this.selectedCategories.findIndex(id => id === categoryId);
-    if(index >= 0) {
-      this.selectedCategories.splice(index, 1);
-    }
+  	const index = this.selectedCategories.findIndex(id => id === categoryId);
+  	if(index >= 0) {
+  		this.selectedCategories.splice(index, 1);
+  	}
   }
 }

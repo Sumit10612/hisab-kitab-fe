@@ -16,6 +16,7 @@ import { AuthService } from "../services/auth.service";
 import { NotificationService } from "../services/notification.service";
 import { UserService } from "../services/user.service";
 import { getFirebaseErrorMessage } from "../utilities/firebase-errors";
+
 import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
 
 export function passwordsMatchValidator(): ValidatorFn {

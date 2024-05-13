@@ -1,5 +1,12 @@
 import { CommonModule } from "@angular/common";
-import { Component, effect, HostBinding, inject, OnInit, Renderer2 } from "@angular/core";
+import {
+	Component,
+	effect,
+	HostBinding,
+	inject,
+	OnInit,
+	Renderer2
+} from "@angular/core";
 import { MatProgressSpinner } from "@angular/material/progress-spinner";
 import { MatSnackBar } from "@angular/material/snack-bar";
 import { RouterOutlet } from "@angular/router";
@@ -39,7 +46,7 @@ import { UserService } from "./services/user.service";
   `]
 })
 export class AppComponent implements OnInit {
-	@HostBinding("class") class: string = '';
+	@HostBinding("class") class: string = "";
 
 	private readonly snackBar = inject(MatSnackBar);
 	private readonly swUpdate = inject(SwUpdate);

@@ -11,8 +11,8 @@ import { NotificationService } from "../services/notification.service";
 import { UserService } from "../services/user.service";
 import { getFirebaseErrorMessage } from "../utilities/firebase-errors";
 
-import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
 import { LayoutComponent } from "./shared/layout.component";
+import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
 
 @Component({
 	selector: "app-create-group",
@@ -23,7 +23,7 @@ import { LayoutComponent } from "./shared/layout.component";
 		MatInputModule,
 		MatButtonModule,
 		PageNavHeaderComponent,
-    LayoutComponent
+		LayoutComponent
 	],
 	template: `
     <app-layout>

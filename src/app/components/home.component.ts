@@ -9,9 +9,9 @@ import { getUserImage } from "../models/user.model";
 import { GroupService } from "../services/group.service";
 import { UserService } from "../services/user.service";
 
+import { LayoutComponent } from "./shared/layout.component";
 import { GroupWidgetComponent } from "./widgets/group-widget.component";
 import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
-import { LayoutComponent } from "./shared/layout.component";
 
 @Component({
 	selector: "app-home",
@@ -24,7 +24,7 @@ import { LayoutComponent } from "./shared/layout.component";
 		RouterLink,
 		GroupWidgetComponent,
 		OverviewWidgetComponent,
-    LayoutComponent
+		LayoutComponent
 	],
 	template: `
     <app-layout>

@@ -10,8 +10,8 @@ import { NotificationService } from "../services/notification.service";
 import { UserService } from "../services/user.service";
 import { getFirebaseErrorMessage } from "../utilities/firebase-errors";
 
-import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
 import { LayoutComponent } from "./shared/layout.component";
+import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
 
 @Component({
 	selector: "app-edit-profile",
@@ -22,7 +22,7 @@ import { LayoutComponent } from "./shared/layout.component";
 		MatInputModule,
 		MatButtonModule,
 		PageNavHeaderComponent,
-    LayoutComponent
+		LayoutComponent
 	],
 	template: `
     <app-layout>
@@ -108,7 +108,7 @@ export class EditProfileComponent {
 	selectImage(index: number) {
 		this.selectedIndex = index;
 		this.form.controls.photoUrl.setValue(this.avatars[index].alt);
-    this.form.markAsDirty();
+		this.form.markAsDirty();
 	}
 
 	async update() {
