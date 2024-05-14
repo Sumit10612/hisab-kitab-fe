@@ -20,10 +20,7 @@ import { getGroupImage, Group } from "../../models/group.model";
 
       <div class="details-container">
         <div class="group-name">{{data?.name}}</div>
-        <span>Total balance
-          <mat-icon>currency_rupee</mat-icon>
-          --
-        </span>
+        <span>Total balance &#8377;{{data?.groupTotalAmount ?? 0}}</span>
       </div>
     </mat-card-content>
   </mat-card>

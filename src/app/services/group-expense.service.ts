@@ -4,12 +4,14 @@ import {
 	collection,
 	collectionData,
 	Firestore,
+	getDoc,
 	orderBy,
 	query
 } from "@angular/fire/firestore";
 import { map, Observable } from "rxjs";
 
 import { Expense, ExpenseHelper, FirestoreExpense } from "../models/expense.model";
+import { doc, runTransaction } from "firebase/firestore";
 
 @Injectable({
 	providedIn: "root"
@@ -19,6 +21,17 @@ export class GroupExpenseService {
   
 	async addExpense(groupId: string, expense: Expense): Promise<void> {
 		const ref = collection(this.firestore, "group_expenses", groupId, "expenses");
+		const groupRef = doc(this.firestore, "groups", groupId);
+
+		runTransaction(this.firestore, async (transaction) => {
+			const groupDoc = await transaction.get(groupRef);
+			if(!groupDoc.exists()) {
+				throw "Group does not exist!";
+			}
+			const groupTotal = groupDoc.data()['groupTotalAmount'] ?? 0 + expense.amount;
+			transaction.update(groupRef, { groupTotalAmount: groupTotal });
+		})
+
 		await addDoc(ref, ExpenseHelper.toFireStoreModel(expense));
 	}
 

@@ -184,10 +184,6 @@ export class ExpenseEditorComponent {
   protected getCategoryById = getCategoryById;
   protected $currentGroup = toSignal(this.currentGroup$);
 
-  ngOnInit() {
-    this.openCategorySheet()
-  }
-
   openCategorySheet() {
     const bottomSheetRef = this.bottomSheet.open(CategorySelectorComponent);
     bottomSheetRef.afterDismissed().subscribe(selectedCategoryId => {

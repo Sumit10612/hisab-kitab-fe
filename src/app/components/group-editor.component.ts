@@ -58,7 +58,7 @@ import { GroupWidgetComponent } from "./widgets/group-widget.component";
                     [src]="getGroupImage($group()?.imageUrl).src"
                     [alt]="getGroupImage($group()?.imageUrl).alt" />
                 
-                <span>Total Balance</span>
+                <h2>Total Balance &#8377;{{$group()?.groupTotalAmount ?? 0}}</h2>
             }
         </div>
 

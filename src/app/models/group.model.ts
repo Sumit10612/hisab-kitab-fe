@@ -10,6 +10,7 @@ export interface GroupUser {
 export interface CreateGroup {
     name: string;
     imageUrl: string;
+	groupTotalAmount: number;
 }
 
 export interface Group extends CreateGroup {

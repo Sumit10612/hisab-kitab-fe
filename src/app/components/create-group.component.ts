@@ -127,7 +127,8 @@ export class CreateGroupComponent {
 			this.notification.showLoading();
 			await this.groupService.createGroup({
 				name, 
-				imageUrl: this.groupImages[this.selectedIndex].alt
+				imageUrl: this.groupImages[this.selectedIndex].alt,
+        groupTotalAmount: 0
 			});
 
 			this.router.navigate(["home"]);
