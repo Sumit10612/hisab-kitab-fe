@@ -9,6 +9,7 @@ import { HomeComponent } from "./components/home.component";
 import { LoginComponent } from "./components/login.component";
 import { ProfileComponent } from "./components/profile.component";
 import { SignupComponent } from "./components/signup.component";
+import { ExpenseEditorComponent } from "./components/expense-editor.component";
 
 const redirectUnauthorizedToLogin = () => redirectUnauthorizedTo(["/login"]);
 const redirectLoggedInToHome = () => redirectLoggedInTo(["/home"]);
@@ -56,8 +57,18 @@ export const routes: Routes = [
 		...canActivate(redirectUnauthorizedToLogin)
 	},
 	{
-		path: "group/settings/:id",
+		path: "group/:id/settings",
 		component: GroupSettingsComponent,
+		...canActivate(redirectUnauthorizedToLogin)
+	},
+	{
+		path: "group/:groupId/expense",
+		component: ExpenseEditorComponent,
+		...canActivate(redirectUnauthorizedToLogin)
+	},
+	{
+		path: "group/:groupId/expense/:id",
+		component: ExpenseEditorComponent,
 		...canActivate(redirectUnauthorizedToLogin)
 	}
 ];

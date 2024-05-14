@@ -75,7 +75,11 @@ export class GroupService {
 	}
 
 	deleteGroup(groupId: string): Promise<void> {
-		const ref = doc(this.firestore, "groups", groupId);
-		return deleteDoc(ref);
+		const groupRef = doc(this.firestore, "groups", groupId);
+		const groupExpenseRef = doc(this.firestore, "group_expenses", groupId);
+		return runTransaction(this.firestore, async (trasaction) => {
+			trasaction.delete(groupRef);
+			trasaction.delete(groupExpenseRef);
+		});
 	}
 }

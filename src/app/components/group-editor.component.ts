@@ -1,7 +1,6 @@
 import { CommonModule } from "@angular/common";
 import { Component, inject } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
-import { MatBottomSheet, MatBottomSheetModule } from "@angular/material/bottom-sheet";
 import { MatButtonModule } from "@angular/material/button";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
 import { MatCardModule } from "@angular/material/card";
@@ -25,7 +24,6 @@ import { UserService } from "../services/user.service";
 
 import { LayoutComponent } from "./shared/layout.component";
 import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
-import { AddExpenseComponent } from "./widgets/add-expense.component";
 import { GroupWidgetComponent } from "./widgets/group-widget.component";
 
 @Component({
@@ -34,7 +32,6 @@ import { GroupWidgetComponent } from "./widgets/group-widget.component";
 	imports: [
 		CommonModule,
 		MatCardModule,
-		MatBottomSheetModule,
 		MatButtonToggleModule,
 		MatIconModule,
 		MatButtonModule,
@@ -112,13 +109,19 @@ import { GroupWidgetComponent } from "./widgets/group-widget.component";
     </app-layout>
 
     <div class="add-expense-button">
-      <button mat-fab color="warn" (click)="addExpense()">
-        <mat-icon>add</mat-icon>
-      </button>
+      <a mat-fab color="warn"
+        role="button"
+        [routerLink]="['/group', $group()?.uid, 'expense']"
+        [disabled]="!$group()?.uid">
+          <mat-icon>add</mat-icon>
+      </a>
     </div>
 
     <ng-template #settingsRouteTemplate>
-        <a role="button" mat-icon-button [routerLink]="['/group/settings', $group()?.uid]">
+        <a role="button" 
+          mat-icon-button
+          [routerLink]="['/group', $group()?.uid, 'settings']"
+          [disabled]="!$group()?.uid">
             <mat-icon>settings</mat-icon>
         </a>
     </ng-template>
@@ -212,7 +215,6 @@ export class GroupEditorComponent {
 	private readonly groupService = inject(GroupService);
 	private readonly groupExpenseService = inject(GroupExpenseService);
 	private readonly route = inject(ActivatedRoute);
-	private readonly bottomSheet = inject(MatBottomSheet);
 
 	private group$ = this.route.paramMap.pipe(
 		switchMap(params => this.groupService.currentGroup$(params.get("id") ?? ""))
@@ -248,13 +250,4 @@ export class GroupEditorComponent {
 	protected getGroupImage = getGroupImage;
 	protected selectedTab: string = "expense";
 	protected getCategory = getCategoryById;
-
-	addExpense() {
-		this.bottomSheet.open(AddExpenseComponent, {
-			disableClose: true,
-			data: {
-				$group: this.$group,
-			}
-		});
-	}
 }
