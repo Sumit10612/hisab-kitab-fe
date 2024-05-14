@@ -44,5 +44,5 @@ import { RouterLink } from "@angular/router";
 export class PageNavHeaderComponent {
   @Input() title: string | undefined;
   @Input() backRoute: string | string[] | undefined;
-  @Input() template: TemplateRef<any> | undefined;
+  @Input() template: TemplateRef<unknown> | undefined;
 }

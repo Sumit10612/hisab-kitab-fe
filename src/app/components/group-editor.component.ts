@@ -1,34 +1,38 @@
-import { Component, effect, inject, Input } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { Component, inject } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { MatBottomSheet, MatBottomSheetModule } from "@angular/material/bottom-sheet";
 import { MatButtonModule } from "@angular/material/button";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
 import { MatCardModule } from "@angular/material/card";
+import { MatDividerModule } from "@angular/material/divider";
 import { MatIconModule } from "@angular/material/icon";
 import { ActivatedRoute, RouterLink } from "@angular/router";
+import {
+	fromPairs,
+	groupBy,
+	sortBy,
+	toPairs
+} from "lodash";
 import { combineLatest, map, switchMap } from "rxjs";
 
+import { getCategoryById } from "../models/category.model";
+import { Expense } from "../models/expense.model";
 import { getGroupImage } from "../models/group.model";
 import { GroupExpenseService } from "../services/group-expense.service";
 import { GroupService } from "../services/group.service";
+import { UserService } from "../services/user.service";
 
 import { LayoutComponent } from "./shared/layout.component";
 import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
 import { AddExpenseComponent } from "./widgets/add-expense.component";
 import { GroupWidgetComponent } from "./widgets/group-widget.component";
 
-import { fromPairs, groupBy, orderBy, sortBy, toPairs } from 'lodash';
-import { CommonModule } from "@angular/common";
-import { MatDivider, MatDividerModule } from "@angular/material/divider";
-import { getCategoryById } from "../models/category.model";
-import { UserService } from "../services/user.service";
-import { Expense } from "../models/expense.model";
-
 @Component({
 	selector: "app-group-editor",
 	standalone: true,
 	imports: [
-    CommonModule,
+		CommonModule,
 		MatCardModule,
 		MatBottomSheetModule,
 		MatButtonToggleModule,
@@ -38,7 +42,7 @@ import { Expense } from "../models/expense.model";
 		GroupWidgetComponent,
 		LayoutComponent,
 		RouterLink,
-    MatDividerModule
+		MatDividerModule
 	],
 	template: `
     <app-layout>
@@ -83,9 +87,9 @@ import { Expense } from "../models/expense.model";
                         <div class="expense-record">
                           <span class="expense-date">
                             <span class="expense-date-month">{{expense.expenseDate | date: "MMM" | uppercase}}</span>
-                            {{expense.expenseDate | date: "dd"}}
+                            <span class="expense-date-date">{{expense.expenseDate | date: "dd"}}</span>
                           </span>
-                          <mat-icon>{{getCategory(expense.categories[0])?.icon}}</mat-icon>
+                          <mat-icon>{{getCategory(expense?.category ?? 0)?.icon}}</mat-icon>
                           {{expense.description}}
                           <span class="expense-amount">
                             <span class="expense-amount-paid-by">{{expense.paidBy.split(' ')[0]}} paid</span>
@@ -155,7 +159,7 @@ import { Expense } from "../models/expense.model";
 
       .month-group {
         font-weight: 500;
-        font-size: 0.75rem;
+        font-size: 0.9rem;
         margin: 8px 0;
       }
 
@@ -165,7 +169,7 @@ import { Expense } from "../models/expense.model";
 
       .expense-record {
         display: grid;
-        grid-template-columns: 0.5fr 0.5fr 3fr 2fr;
+        grid-template-columns: 0.5fr 0.5fr 3fr 1fr;
         grid-gap: 8px;
         width: 100%;
         margin: 0 8px;
@@ -178,6 +182,10 @@ import { Expense } from "../models/expense.model";
 
           &-month {
             font-size: 0.6rem;
+          }
+
+          &-date {
+            font-size: 1.1rem
           }
         }
 
@@ -200,47 +208,46 @@ import { Expense } from "../models/expense.model";
   `]
 })
 export class GroupEditorComponent {
-  private readonly userService = inject(UserService);
+	private readonly userService = inject(UserService);
 	private readonly groupService = inject(GroupService);
 	private readonly groupExpenseService = inject(GroupExpenseService);
 	private readonly route = inject(ActivatedRoute);
 	private readonly bottomSheet = inject(MatBottomSheet);
 
-  private group$ = this.route.paramMap.pipe(
+	private group$ = this.route.paramMap.pipe(
 		switchMap(params => this.groupService.currentGroup$(params.get("id") ?? ""))
 	);
-  private expenses$ = combineLatest([
-    this.userService.user$,
-    this.group$,
-    this.route.paramMap.pipe(
-      switchMap(params => this.groupExpenseService.getGroupExpenses$(params.get("id") ?? ""))
-    )
-  ]).pipe(
-    map(([user, group, expenses]) => {
-      const groupExpenses = groupBy(
-        expenses.map(expense => {
-          return {
-            ...expense,
-            paidBy: expense.paidBy === user?.uid ? "you" : group.users.find(user => user.uid === expense.paidBy)?.name 
-          } as Expense;
-        }),
-        expense => new Date(
-          expense.expenseDate.getFullYear(),
-          expense.expenseDate.getMonth(),
-          1
-        ).getTime()
-      );
+	private expenses$ = combineLatest([
+		this.userService.user$,
+		this.group$,
+		this.route.paramMap.pipe(
+			switchMap(params => this.groupExpenseService.getGroupExpenses$(params.get("id") ?? ""))
+		)
+	]).pipe(
+		map(([user, group, expenses]) => {
+			const groupExpenses = groupBy(
+				expenses.map(expense => {
+					return {
+						...expense,
+						paidBy: expense.paidBy === user?.uid ? "you" : group.users.find(user => user.uid === expense.paidBy)?.name 
+					} as Expense;
+				}),
+				expense => new Date(
+					expense.expenseDate.getFullYear(),
+					expense.expenseDate.getMonth(),
+					1
+				).getTime()
+			);
 
-      return fromPairs(sortBy(toPairs(groupExpenses), ([key, _]) => key));
-    })
-  );
+			return fromPairs(sortBy(toPairs(groupExpenses), ([key, _]) => key));
+		})
+	);
 
 	protected $group = toSignal(this.group$);
 	protected $expenses = toSignal(this.expenses$);
 	protected getGroupImage = getGroupImage;
 	protected selectedTab: string = "expense";
-  protected getCategory = getCategoryById;
-
+	protected getCategory = getCategoryById;
 
 	addExpense() {
 		this.bottomSheet.open(AddExpenseComponent, {

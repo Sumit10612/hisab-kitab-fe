@@ -1,13 +1,11 @@
 import { inject, Injectable } from "@angular/core";
-import { toSignal } from "@angular/core/rxjs-interop";
 import {
 	addDoc,
 	collection,
 	collectionData,
 	Firestore,
 	orderBy,
-	query,
-	Timestamp
+	query
 } from "@angular/fire/firestore";
 import { map, Observable } from "rxjs";
 

@@ -1,4 +1,3 @@
-import { Expense } from "./expense.model";
 import { Image } from "./image.model";
 
 export interface GroupUser {

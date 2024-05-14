@@ -34,7 +34,7 @@ import { UserService } from "./services/user.service";
     .container {
 		max-width: 500px;
 		margin: auto;
-  		min-height: 100vh;
+		min-height: 100vh;
 	}
 
     mat-progress-spinner {
