@@ -9,9 +9,9 @@ import {
 	query,
 	Timestamp
 } from "@angular/fire/firestore";
-import { Observable } from "rxjs";
+import { map, Observable } from "rxjs";
 
-import { Expense } from "../models/expense.model";
+import { Expense, ExpenseHelper, FirestoreExpense } from "../models/expense.model";
 
 @Injectable({
 	providedIn: "root"
@@ -21,15 +21,14 @@ export class GroupExpenseService {
   
 	async addExpense(groupId: string, expense: Expense): Promise<void> {
 		const ref = collection(this.firestore, "group_expenses", groupId, "expenses");
-		await addDoc(ref, {
-			...expense,
-			timestamp: Timestamp.fromDate(new Date())
-		} as Expense);
+		await addDoc(ref, ExpenseHelper.toFireStoreModel(expense));
 	}
 
 	getGroupExpenses$(groupId: string): Observable<Expense[]> {
 		const ref = collection(this.firestore, "group_expenses", groupId, "expenses");
 		const q = query(ref, orderBy("expenseDate", "asc"));
-		return collectionData(q) as Observable<Expense[]>;
+		return (collectionData(q) as Observable<FirestoreExpense[]>).pipe(
+			map(expenses => expenses.map(expense => ExpenseHelper.toModel(expense)))
+		);
 	}
 }

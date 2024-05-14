@@ -1,4 +1,4 @@
-import { Component, inject, Input } from "@angular/core";
+import { Component, effect, inject, Input } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { MatBottomSheet, MatBottomSheetModule } from "@angular/material/bottom-sheet";
 import { MatButtonModule } from "@angular/material/button";
@@ -6,7 +6,7 @@ import { MatButtonToggleModule } from "@angular/material/button-toggle";
 import { MatCardModule } from "@angular/material/card";
 import { MatIconModule } from "@angular/material/icon";
 import { ActivatedRoute, RouterLink } from "@angular/router";
-import { switchMap } from "rxjs";
+import { combineLatest, map, switchMap } from "rxjs";
 
 import { getGroupImage } from "../models/group.model";
 import { GroupExpenseService } from "../services/group-expense.service";
@@ -17,10 +17,18 @@ import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
 import { AddExpenseComponent } from "./widgets/add-expense.component";
 import { GroupWidgetComponent } from "./widgets/group-widget.component";
 
+import { fromPairs, groupBy, orderBy, sortBy, toPairs } from 'lodash';
+import { CommonModule } from "@angular/common";
+import { MatDivider, MatDividerModule } from "@angular/material/divider";
+import { getCategoryById } from "../models/category.model";
+import { UserService } from "../services/user.service";
+import { Expense } from "../models/expense.model";
+
 @Component({
 	selector: "app-group-editor",
 	standalone: true,
 	imports: [
+    CommonModule,
 		MatCardModule,
 		MatBottomSheetModule,
 		MatButtonToggleModule,
@@ -29,7 +37,8 @@ import { GroupWidgetComponent } from "./widgets/group-widget.component";
 		PageNavHeaderComponent,
 		GroupWidgetComponent,
 		LayoutComponent,
-		RouterLink
+		RouterLink,
+    MatDividerModule
 	],
 	template: `
     <app-layout>
@@ -66,9 +75,29 @@ import { GroupWidgetComponent } from "./widgets/group-widget.component";
       <div section="detail" class="detail-section">
         <mat-card-content>
             @if (selectedTab === "expense") {
-                <div class="expenses-container">
-                  @for (expense of $expenses(); track expense) {
-                    {{expense.description}} - {{expense.amount}}
+                <div class="expenses-area">
+                  @for (kvp of $expenses() | keyvalue; track kvp) {
+                    <div class="expense-record-container">
+                      <div class="month-group">{{ kvp.key | date: "MMMM yyyy" | uppercase }}</div>
+                      @for (expense of kvp.value; track expense) {
+                        <div class="expense-record">
+                          <span class="expense-date">
+                            <span class="expense-date-month">{{expense.expenseDate | date: "MMM" | uppercase}}</span>
+                            {{expense.expenseDate | date: "dd"}}
+                          </span>
+                          <mat-icon>{{getCategory(expense.categories[0])?.icon}}</mat-icon>
+                          {{expense.description}}
+                          <span class="expense-amount">
+                            <span class="expense-amount-paid-by">{{expense.paidBy.split(' ')[0]}} paid</span>
+                              &#8377;
+                              {{expense.amount}}
+                          </span>
+                        </div>
+                        @if ($index !== kvp.value.length - 1) {
+                          <mat-divider></mat-divider>
+                        }
+                      }
+                    </div>
                   }
                 </div>
             } @else {
@@ -109,6 +138,7 @@ import { GroupWidgetComponent } from "./widgets/group-widget.component";
 
     .detail-section {
         height: calc(100vh - 176px);
+        overflow-y: auto;
     }
 
     .mat-button-toggle-group {
@@ -120,27 +150,97 @@ import { GroupWidgetComponent } from "./widgets/group-widget.component";
         align-items: center;
     }
 
+    .expense-record-container {
+      margin-bottom: 16px;
+
+      .month-group {
+        font-weight: 500;
+        font-size: 0.75rem;
+        margin: 8px 0;
+      }
+
+      > mat-divider {
+        margin: 8px 16px;
+      }
+
+      .expense-record {
+        display: grid;
+        grid-template-columns: 0.5fr 0.5fr 3fr 2fr;
+        grid-gap: 8px;
+        width: 100%;
+        margin: 0 8px;
+        align-items: center;
+
+        .expense-date {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+
+          &-month {
+            font-size: 0.6rem;
+          }
+        }
+
+        .expense-amount {
+            display: flex;
+            flex-direction: column;
+
+            &-paid-by {
+              font-size: 0.6rem;
+            }
+          }
+      }
+    }
+
     .add-expense-button {
         position: absolute;
-        right: 24px;
-        bottom: 24px;
+        right: 16px;
+        bottom: 16px;
     }
   `]
 })
 export class GroupEditorComponent {
+  private readonly userService = inject(UserService);
 	private readonly groupService = inject(GroupService);
 	private readonly groupExpenseService = inject(GroupExpenseService);
 	private readonly route = inject(ActivatedRoute);
 	private readonly bottomSheet = inject(MatBottomSheet);
 
+  private group$ = this.route.paramMap.pipe(
+		switchMap(params => this.groupService.currentGroup$(params.get("id") ?? ""))
+	);
+  private expenses$ = combineLatest([
+    this.userService.user$,
+    this.group$,
+    this.route.paramMap.pipe(
+      switchMap(params => this.groupExpenseService.getGroupExpenses$(params.get("id") ?? ""))
+    )
+  ]).pipe(
+    map(([user, group, expenses]) => {
+      const groupExpenses = groupBy(
+        expenses.map(expense => {
+          return {
+            ...expense,
+            paidBy: expense.paidBy === user?.uid ? "you" : group.users.find(user => user.uid === expense.paidBy)?.name 
+          } as Expense;
+        }),
+        expense => new Date(
+          expense.expenseDate.getFullYear(),
+          expense.expenseDate.getMonth(),
+          1
+        ).getTime()
+      );
+
+      return fromPairs(sortBy(toPairs(groupExpenses), ([key, _]) => key));
+    })
+  );
+
+	protected $group = toSignal(this.group$);
+	protected $expenses = toSignal(this.expenses$);
 	protected getGroupImage = getGroupImage;
 	protected selectedTab: string = "expense";
-	protected $group = toSignal(this.route.paramMap.pipe(
-		switchMap(params => this.groupService.currentGroup$(params.get("id") ?? ""))
-	));
-	protected $expenses = toSignal(this.route.paramMap.pipe(
-		switchMap(params => this.groupExpenseService.getGroupExpenses$(params.get("id") ?? ""))
-	));
+  protected getCategory = getCategoryById;
+
 
 	addExpense() {
 		this.bottomSheet.open(AddExpenseComponent, {
