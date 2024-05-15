@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component, inject } from "@angular/core";
+import { Component, Input, OnDestroy, OnInit, effect, inject } from "@angular/core";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { MatBottomSheet } from "@angular/material/bottom-sheet";
 import { MatButtonModule } from "@angular/material/button";
@@ -17,7 +17,7 @@ import { NotificationService } from "../services/notification.service";
 import { UserService } from "../services/user.service";
 import { getFirebaseErrorMessage } from "../utilities/firebase-errors";
 import { toSignal } from "@angular/core/rxjs-interop";
-import { combineLatest, map, Observable, switchMap } from "rxjs";
+import { combineLatest, map, Observable, Subscription, switchMap } from "rxjs";
 import { CategorySelectorComponent } from "./category-selector.component";
 import { ActivatedRoute, Router } from "@angular/router";
 import { GroupService } from "../services/group.service";
@@ -29,7 +29,7 @@ import { LayoutComponent } from "./shared/layout.component";
 	standalone: true,
 	imports: [
 		CommonModule,
-		MatIconModule, 
+		MatIconModule,
 		MatButtonModule,
 		MatFormFieldModule,
 		ReactiveFormsModule,
@@ -45,7 +45,7 @@ import { LayoutComponent } from "./shared/layout.component";
     <app-layout>
       <div section="header">
         <app-page-nav-header
-            [backRoute]="['/group',  $currentGroup()?.uid ?? '']" 
+            [backRoute]="['/group',  $currentGroup()?.uid ?? '']"
             title="Add Expense">
         </app-page-nav-header>
       </div>
@@ -55,7 +55,7 @@ import { LayoutComponent } from "./shared/layout.component";
             <mat-label>Description</mat-label>
             <input matInput [formControl]="form.controls.description" />
           </mat-form-field>
-          <div class="row">            
+          <div class="row">
             <mat-form-field appearance="fill" floatLabel="always">
               <mat-label>Amount</mat-label>
               <span matTextPrefix>&#8377;</span>
@@ -66,15 +66,15 @@ import { LayoutComponent } from "./shared/layout.component";
                 placeholder="0.00"
                 min="0"
                 [formControl]="form.controls.amount">
-            </mat-form-field> 
+            </mat-form-field>
             <mat-form-field>
               <mat-label>Category</mat-label>
               <input matInput
                 [formControl]="form.controls.category"
                 (click)="openCategorySheet()"
                 (keyup)="openCategorySheet()" readonly />
-              <mat-icon matSuffix (click)="openCategorySheet()">keyboard_arrow_down</mat-icon>
-            </mat-form-field>         
+              <mat-icon matSuffix (click)="openCategorySheet()">arrow_drop_down</mat-icon>
+            </mat-form-field>
           </div>
 
           <div class="row">
@@ -97,12 +97,22 @@ import { LayoutComponent } from "./shared/layout.component";
           </div>
 
           <div class="button-group">
-            <button 
+            <button
               type="submit"
               class="rounded-button"
-              mat-raised-button 
+              mat-raised-button
               color="primary"
-              [disabled]="form.invalid">Submit expense</button>
+              [disabled]="form.invalid || !form.dirty">{{ id ? "Update" : "Submit" }} expense</button>
+
+            @if (id) {
+              <button 
+                class="rounded-button"
+                mat-raised-button
+                color="warn"
+                (click)="deleteExpense()">
+                  Delete expense
+              </button>
+            }
           </div>
         </form>
       </div>
@@ -125,7 +135,9 @@ import { LayoutComponent } from "./shared/layout.component";
 
     .button-group {
       display: flex;
-      justify-content: center;
+      flex-direction: column;
+      gap: 16px;
+      align-items: center;
       margin: 32px;
 
       > button {
@@ -134,7 +146,7 @@ import { LayoutComponent } from "./shared/layout.component";
     }
   `]
 })
-export class ExpenseEditorComponent {
+export class ExpenseEditorComponent implements OnInit, OnDestroy {
 	private readonly bottomSheet = inject(MatBottomSheet);
   private readonly formBuilder = inject(FormBuilder);
   private readonly groupService = inject(GroupService);
@@ -145,6 +157,7 @@ export class ExpenseEditorComponent {
   private readonly router = inject(Router);
 
   private selectedCategory = getCategoryById(101);
+  private expenseSubscription$$: Subscription | undefined;
 
   private group$ = this.route.paramMap.pipe(
 		switchMap(params => this.groupService.currentGroup$(params.get("groupId") ?? ""))
@@ -167,14 +180,35 @@ export class ExpenseEditorComponent {
 
   protected readonly form = this.formBuilder.group({
   	description: ["", [Validators.required]],
-  	amount: ["", [Validators.required]],
+  	amount: this.formBuilder.control<number | null>(null, { validators: [Validators.required] }),
   	category: [this.selectedCategory?.name],
   	paidBy: [this.userService.currentUser()?.uid, [Validators.required]],
-  	expenseDate: [new Date(), [Validators.required]] 
+  	expenseDate: [new Date(), [Validators.required]]
   });
   protected categoryGroups = categoriesByGroup;
   protected getCategoryById = getCategoryById;
   protected $currentGroup = toSignal(this.currentGroup$);
+
+  @Input() groupId: string | undefined;
+  @Input() id: string | undefined;
+
+  ngOnInit(): void {
+    if(this.groupId && this.id) {
+      this.expenseSubscription$$ = this.groupExpenseService.getExpense$(this.groupId, this.id)
+        .subscribe(expense => {
+          if(expense.category) {
+            this.selectedCategory = getCategoryById(expense.category);
+          }
+          this.form.patchValue({ ...expense, category: this.selectedCategory?.name });
+        });
+    }
+  }
+
+  ngOnDestroy(): void {
+    if(this.expenseSubscription$$) {
+      this.expenseSubscription$$.unsubscribe();
+    }
+  }
 
   openCategorySheet() {
     const bottomSheetRef = this.bottomSheet.open(CategorySelectorComponent);
@@ -209,5 +243,9 @@ export class ExpenseEditorComponent {
   	} catch (err) {
   		this.notificationService.error(getFirebaseErrorMessage(err));
   	}
+  }
+
+  deleteExpense() {
+
   }
 }

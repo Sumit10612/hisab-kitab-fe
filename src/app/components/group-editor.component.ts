@@ -81,7 +81,7 @@ import { GroupWidgetComponent } from "./widgets/group-widget.component";
                     <div class="expense-record-container">
                       <div class="month-group">{{ kvp.key | date: "MMMM yyyy" | uppercase }}</div>
                       @for (expense of kvp.value; track expense) {
-                        <div class="expense-record">
+                        <a class="expense-record" [routerLink]="['/group', $group()?.uid, 'expense', expense.uid]">
                           <span class="expense-date">
                             <span class="expense-date-month">{{expense.expenseDate | date: "MMM" | uppercase}}</span>
                             <span class="expense-date-date">{{expense.expenseDate | date: "dd"}}</span>
@@ -93,7 +93,7 @@ import { GroupWidgetComponent } from "./widgets/group-widget.component";
                               &#8377;
                               {{expense.amount}}
                           </span>
-                        </div>
+                        </a>
                         @if ($index !== kvp.value.length - 1) {
                           <mat-divider></mat-divider>
                         }
@@ -171,6 +171,8 @@ import { GroupWidgetComponent } from "./widgets/group-widget.component";
       }
 
       .expense-record {
+        text-decoration: none;
+        color: inherit;
         display: grid;
         grid-template-columns: 0.5fr 0.5fr 3fr 1fr;
         grid-gap: 8px;

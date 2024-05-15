@@ -3,8 +3,8 @@ import {
 	addDoc,
 	collection,
 	collectionData,
+	docData,
 	Firestore,
-	getDoc,
 	orderBy,
 	query
 } from "@angular/fire/firestore";
@@ -18,6 +18,13 @@ import { doc, runTransaction } from "firebase/firestore";
 })
 export class GroupExpenseService {
 	private firestore = inject(Firestore);
+
+	getExpense$ = (groupId: string, id: string): Observable<Expense> => {
+		const ref = doc(this.firestore, "group_expenses", groupId, "expenses", id);
+		return (docData(ref) as Observable<FirestoreExpense>).pipe(
+			map(expense => ExpenseHelper.toModel(expense))
+		);
+	}
   
 	async addExpense(groupId: string, expense: Expense): Promise<void> {
 		const ref = collection(this.firestore, "group_expenses", groupId, "expenses");
@@ -38,7 +45,7 @@ export class GroupExpenseService {
 	getGroupExpenses$(groupId: string): Observable<Expense[]> {
 		const ref = collection(this.firestore, "group_expenses", groupId, "expenses");
 		const q = query(ref, orderBy("expenseDate", "asc"));
-		return (collectionData(q) as Observable<FirestoreExpense[]>).pipe(
+		return (collectionData(q, { idField: "uid" }) as Observable<FirestoreExpense[]>).pipe(
 			map(expenses => expenses.map(expense => ExpenseHelper.toModel(expense)))
 		);
 	}
