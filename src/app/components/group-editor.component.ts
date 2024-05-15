@@ -7,12 +7,6 @@ import { MatCardModule } from "@angular/material/card";
 import { MatDividerModule } from "@angular/material/divider";
 import { MatIconModule } from "@angular/material/icon";
 import { ActivatedRoute, RouterLink } from "@angular/router";
-import {
-	fromPairs,
-	groupBy,
-	sortBy,
-	toPairs
-} from "lodash";
 import { combineLatest, map, switchMap } from "rxjs";
 
 import { getCategoryById } from "../models/category.model";
@@ -82,7 +76,7 @@ import { GroupWidgetComponent } from "./widgets/group-widget.component";
         <mat-card-content>
             @if (selectedTab === "expense") {
                 <div class="expenses-area">
-                  @for (kvp of $expenses() | keyvalue; track kvp) {
+                  @for (kvp of $expenses() | keyvalue: noSort; track kvp) {
                     <div class="expense-record-container">
                       <div class="month-group">{{ kvp.key | date: "MMMM yyyy" | uppercase }}</div>
                       @for (expense of kvp.value; track expense) {
@@ -246,23 +240,15 @@ export class GroupEditorComponent {
 			switchMap(params => this.groupExpenseService.getGroupExpenses$(params.get("id") ?? ""))
 		)
 	]).pipe(
-		map(([user, group, expenses]) => {
-			const groupExpenses = groupBy(
-				expenses.map(expense => {
-					return {
-						...expense,
-						paidBy: expense.paidBy === user?.uid ? "you" : group.users.find(user => user.uid === expense.paidBy)?.name 
-					} as Expense;
-				}),
-				expense => new Date(
-					expense.expenseDate.getFullYear(),
-					expense.expenseDate.getMonth(),
-					1
-				).getTime()
-			);
-
-			return fromPairs(sortBy(toPairs(groupExpenses), ([key, _]) => key));
-		})
+		map(([user, group, expenses]) => expenses.reduce((acc, e) => {
+			const key = `${e.expenseDate.getFullYear()}-${e.expenseDate.getMonth() + 1}`;    
+			acc[key] = acc[key] || [];
+			acc[key].push({
+				...e,
+				paidBy: e.paidBy === user?.uid ? "you" : group.users.find(user => user.uid === e.paidBy)?.name 
+			} as Expense);
+			return acc;
+		}, {} as Record<string, Expense[]>))
 	);
 
 	protected $group = toSignal(this.group$);
@@ -270,4 +256,8 @@ export class GroupEditorComponent {
 	protected getGroupImage = getGroupImage;
 	protected selectedTab: string = "expense";
 	protected getCategory = getCategoryById;
+
+	noSort() {
+		return 0;
+	}
 }

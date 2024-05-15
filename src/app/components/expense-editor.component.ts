@@ -1,5 +1,13 @@
 import { CommonModule } from "@angular/common";
-import { Component, Input, OnDestroy, OnInit, effect, inject } from "@angular/core";
+import {
+	Component,
+	effect,
+	inject,
+	Input,
+	OnDestroy,
+	OnInit
+} from "@angular/core";
+import { toSignal } from "@angular/core/rxjs-interop";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { MatBottomSheet } from "@angular/material/bottom-sheet";
 import { MatButtonModule } from "@angular/material/button";
@@ -9,21 +17,27 @@ import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatIconModule } from "@angular/material/icon";
 import { MatInputModule } from "@angular/material/input";
 import { MatSelectModule } from "@angular/material/select";
+import { ActivatedRoute, Router } from "@angular/router";
+import {
+	combineLatest,
+	map,
+	Observable,
+	Subscription,
+	switchMap
+} from "rxjs";
 
 import { categoriesByGroup, getCategoryById } from "../models/category.model";
+import { Expense } from "../models/expense.model";
 import { Group } from "../models/group.model";
 import { GroupExpenseService } from "../services/group-expense.service";
+import { GroupService } from "../services/group.service";
 import { NotificationService } from "../services/notification.service";
 import { UserService } from "../services/user.service";
 import { getFirebaseErrorMessage } from "../utilities/firebase-errors";
-import { toSignal } from "@angular/core/rxjs-interop";
-import { combineLatest, map, Observable, Subscription, switchMap } from "rxjs";
+
 import { CategorySelectorComponent } from "./category-selector.component";
-import { ActivatedRoute, Router } from "@angular/router";
-import { GroupService } from "../services/group.service";
-import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
 import { LayoutComponent } from "./shared/layout.component";
-import { Expense } from "../models/expense.model";
+import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
 
 @Component({
 	selector: "app-add-expense",
@@ -38,8 +52,8 @@ import { Expense } from "../models/expense.model";
 		ReactiveFormsModule,
 		MatSelectModule,
 		MatDatepickerModule,
-    PageNavHeaderComponent,
-    LayoutComponent
+		PageNavHeaderComponent,
+		LayoutComponent
 	],
 	providers:[provideNativeDateAdapter()],
 	template: `
@@ -152,76 +166,76 @@ import { Expense } from "../models/expense.model";
 })
 export class ExpenseEditorComponent implements OnInit, OnDestroy {
 	private readonly bottomSheet = inject(MatBottomSheet);
-  private readonly formBuilder = inject(FormBuilder);
-  private readonly groupService = inject(GroupService);
-  private readonly groupExpenseService = inject(GroupExpenseService);
-  private readonly notificationService = inject(NotificationService);
-  private readonly userService = inject(UserService);
-  private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
+	private readonly formBuilder = inject(FormBuilder);
+	private readonly groupService = inject(GroupService);
+	private readonly groupExpenseService = inject(GroupExpenseService);
+	private readonly notificationService = inject(NotificationService);
+	private readonly userService = inject(UserService);
+	private readonly route = inject(ActivatedRoute);
+	private readonly router = inject(Router);
 
-  private selectedCategory = getCategoryById(101);
-  private expenseSubscription$$: Subscription | undefined;
+	private selectedCategory = getCategoryById(101);
+	private expenseSubscription$$: Subscription | undefined;
 
-  private group$ = this.route.paramMap.pipe(
+	private group$ = this.route.paramMap.pipe(
 		switchMap(params => this.groupService.currentGroup$(params.get("groupId") ?? ""))
 	);
 
-  private currentGroup$: Observable<Group> = combineLatest([
-    this.group$,
-    this.userService.user$
-  ]).pipe(
-    map(([group, currentUser]) => {
-      group.users = group.users.map(user => {
-        if(user.uid === currentUser?.uid) {
-          return { ...user, name: "You" };
-        }
-        return user;
-      })
-      return group;
-    })
-  );
+	private currentGroup$: Observable<Group> = combineLatest([
+		this.group$,
+		this.userService.user$
+	]).pipe(
+		map(([group, currentUser]) => {
+			group.users = group.users.map(user => {
+				if(user.uid === currentUser?.uid) {
+					return { ...user, name: "You" };
+				}
+				return user;
+			});
+			return group;
+		})
+	);
 
-  protected readonly form = this.formBuilder.group({
+	protected readonly form = this.formBuilder.group({
   	description: ["", [Validators.required]],
   	amount: this.formBuilder.control<number | null>(null, { validators: [Validators.required] }),
   	category: [this.selectedCategory?.name],
   	paidBy: [this.userService.currentUser()?.uid, [Validators.required]],
   	expenseDate: [new Date(), [Validators.required]]
-  });
-  protected categoryGroups = categoriesByGroup;
-  protected getCategoryById = getCategoryById;
-  protected $currentGroup = toSignal(this.currentGroup$);
+	});
+	protected categoryGroups = categoriesByGroup;
+	protected getCategoryById = getCategoryById;
+	protected $currentGroup = toSignal(this.currentGroup$);
 
   @Input() groupId: string | undefined;
   @Input() id: string | undefined;
 
   ngOnInit(): void {
-    if(this.groupId && this.id) {
-      this.expenseSubscription$$ = this.groupExpenseService.getExpense$(this.groupId, this.id)
-        .subscribe(expense => {
-          if(expense.category) {
-            this.selectedCategory = getCategoryById(expense.category);
-          }
-          this.form.patchValue({ ...expense, category: this.selectedCategory?.name });
-        });
-    }
+  	if(this.groupId && this.id) {
+  		this.expenseSubscription$$ = this.groupExpenseService.getExpense$(this.groupId, this.id)
+  			.subscribe(expense => {
+  				if(expense.category) {
+  					this.selectedCategory = getCategoryById(expense.category);
+  				}
+  				this.form.patchValue({ ...expense, category: this.selectedCategory?.name });
+  			});
+  	}
   }
 
   ngOnDestroy(): void {
-    if(this.expenseSubscription$$) {
-      this.expenseSubscription$$.unsubscribe();
-    }
+  	if(this.expenseSubscription$$) {
+  		this.expenseSubscription$$.unsubscribe();
+  	}
   }
 
   openCategorySheet() {
-    const bottomSheetRef = this.bottomSheet.open(CategorySelectorComponent);
-    bottomSheetRef.afterDismissed().subscribe(selectedCategoryId => {
-      if(selectedCategoryId && +selectedCategoryId > 0) {
-        this.selectedCategory = getCategoryById(selectedCategoryId);
-        this.form.controls.category.setValue(this.selectedCategory?.name ?? "");
-      }
-    })
+  	const bottomSheetRef = this.bottomSheet.open(CategorySelectorComponent);
+  	bottomSheetRef.afterDismissed().subscribe(selectedCategoryId => {
+  		if(selectedCategoryId && +selectedCategoryId > 0) {
+  			this.selectedCategory = getCategoryById(selectedCategoryId);
+  			this.form.controls.category.setValue(this.selectedCategory?.name ?? "");
+  		}
+  	});
   }
 
   async submit() {
@@ -230,35 +244,35 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
   		return;
   	}
 
-    const expense: Expense = {
-      description: description,
-      amount: +(amount ?? 0),
-      category: this.selectedCategory?.id,
-      expenseDate,
-      paidBy
-    };
+  	const expense: Expense = {
+  		description: description,
+  		amount: +(amount ?? 0),
+  		category: this.selectedCategory?.id,
+  		expenseDate,
+  		paidBy
+  	};
 
   	try {
-      if(this.id) {
-        await this.groupExpenseService.updateExpense(this.groupId, this.id, expense);
-      } else {
-        await this.groupExpenseService.addExpense(this.groupId, expense);
-      }
-      this.router.navigate(["/group", this.groupId]);
+  		if(this.id) {
+  			await this.groupExpenseService.updateExpense(this.groupId, this.id, expense);
+  		} else {
+  			await this.groupExpenseService.addExpense(this.groupId, expense);
+  		}
+  		this.router.navigate(["/group", this.groupId]);
   	} catch (err) {
   		this.notificationService.error(getFirebaseErrorMessage(err));
   	}
   }
 
   async deleteExpense() {
-    if(!this.groupId || !this.id) {
-      return;
-    }
+  	if(!this.groupId || !this.id) {
+  		return;
+  	}
 
-    try {
-      await this.groupExpenseService.deleteExpense(this.groupId, this.id);
-      this.router.navigate(["/group", this.groupId]);
-    } catch (err) {
+  	try {
+  		await this.groupExpenseService.deleteExpense(this.groupId, this.id);
+  		this.router.navigate(["/group", this.groupId]);
+  	} catch (err) {
   		this.notificationService.error(getFirebaseErrorMessage(err));
   	}
   }

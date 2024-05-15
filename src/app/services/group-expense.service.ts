@@ -8,10 +8,10 @@ import {
 	orderBy,
 	query
 } from "@angular/fire/firestore";
+import { doc, runTransaction } from "firebase/firestore";
 import { map, Observable } from "rxjs";
 
 import { Expense, ExpenseHelper, FirestoreExpense } from "../models/expense.model";
-import { doc, runTransaction } from "firebase/firestore";
 
 @Injectable({
 	providedIn: "root"
@@ -24,11 +24,11 @@ export class GroupExpenseService {
 		return (docData(ref) as Observable<FirestoreExpense>).pipe(
 			map(expense => ExpenseHelper.toModel(expense))
 		);
-	}
+	};
 
 	getGroupExpenses$(groupId: string): Observable<Expense[]> {
 		const ref = collection(this.firestore, "group_expenses", groupId, "expenses");
-		const q = query(ref, orderBy("expenseDate", "asc"));
+		const q = query(ref, orderBy("expenseDate", "desc"));
 		return (collectionData(q, { idField: "uid" }) as Observable<FirestoreExpense[]>).pipe(
 			map(expenses => expenses.map(expense => ExpenseHelper.toModel(expense)))
 		);
@@ -42,7 +42,7 @@ export class GroupExpenseService {
 			if(!groupDoc.exists()) {
 				throw "Group does not exist!";
 			}
-			const groupTotal = +(groupDoc.data()['groupTotalAmount'] ?? 0) + expense.amount;
+			const groupTotal = +(groupDoc.data()["groupTotalAmount"] ?? 0) + expense.amount;
 			transaction.update(groupRef, { groupTotalAmount: groupTotal });
 			transaction.set(ref, ExpenseHelper.toFireStoreModel(expense));
 		});
@@ -57,7 +57,7 @@ export class GroupExpenseService {
 			if(!groupDoc.exists() || !expenseDoc.exists()) {
 				throw "Group or expense does not exist!";
 			}
-			const groupTotal = +groupDoc.data()['groupTotalAmount'] - +expenseDoc.data()["amount"] + expense.amount;
+			const groupTotal = +groupDoc.data()["groupTotalAmount"] - +expenseDoc.data()["amount"] + expense.amount;
 			transaction.update(groupRef, { groupTotalAmount: groupTotal });
 			transaction.set(ref, ExpenseHelper.toFireStoreModel(expense), { merge: true });
 		});
@@ -72,7 +72,7 @@ export class GroupExpenseService {
 			if(!groupDoc.exists() || !expenseDoc.exists()) {
 				throw "Group or expense does not exist!";
 			}
-			const groupTotal = +groupDoc.data()['groupTotalAmount'] - +expenseDoc.data()["amount"];
+			const groupTotal = +groupDoc.data()["groupTotalAmount"] - +expenseDoc.data()["amount"];
 			transaction.update(groupRef, { groupTotalAmount: groupTotal });
 			transaction.delete(ref);
 		});

@@ -1,19 +1,20 @@
 import { Component, inject } from "@angular/core";
-import { MatIconModule } from "@angular/material/icon";
-import { categoriesByGroup } from "../models/category.model";
-import { MatDividerModule } from "@angular/material/divider";
-import { MatButtonModule } from "@angular/material/button";
 import { MatBottomSheetRef } from "@angular/material/bottom-sheet";
+import { MatButtonModule } from "@angular/material/button";
+import { MatDividerModule } from "@angular/material/divider";
+import { MatIconModule } from "@angular/material/icon";
+
+import { categoriesByGroup } from "../models/category.model";
 
 @Component({
-    selector: "app-category-selector",
-    standalone: true,
-    imports:[
-        MatIconModule,
-        MatDividerModule,
-        MatButtonModule
-    ],
-    template: `
+	selector: "app-category-selector",
+	standalone: true,
+	imports:[
+		MatIconModule,
+		MatDividerModule,
+		MatButtonModule
+	],
+	template: `
         <div class="container">
             <span>Select Category</span>
             @for (group of groupCategories; track group) {
@@ -31,7 +32,7 @@ import { MatBottomSheetRef } from "@angular/material/bottom-sheet";
             }
         </div>
     `,
-    styles: [`
+	styles: [`
         .container {
             margin: 16px;
             display: flex;
@@ -57,10 +58,10 @@ import { MatBottomSheetRef } from "@angular/material/bottom-sheet";
     `]
 })
 export class CategorySelectorComponent {
-    private bottomSheetRef = inject(MatBottomSheetRef<CategorySelectorComponent>);
-    protected groupCategories = categoriesByGroup;
+	private bottomSheetRef = inject(MatBottomSheetRef<CategorySelectorComponent>);
+	protected groupCategories = categoriesByGroup;
 
-    onCategorySelected(categoryId: number) {
-        this.bottomSheetRef.dismiss(categoryId);
-    }
+	onCategorySelected(categoryId: number) {
+		this.bottomSheetRef.dismiss(categoryId);
+	}
 }
