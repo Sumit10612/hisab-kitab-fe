@@ -58,7 +58,12 @@ import { GroupWidgetComponent } from "./widgets/group-widget.component";
                     [src]="getGroupImage($group()?.imageUrl).src"
                     [alt]="getGroupImage($group()?.imageUrl).alt" />
                 
-                <h2>Total Balance &#8377;{{$group()?.groupTotalAmount ?? 0}}</h2>
+                <div class="header-section-group-info-overview">
+                  <span class="header-section-group-info-overview-total">
+                    <span>Total</span> 
+                    <span>&#8377;{{$group()?.groupTotalAmount ?? 0}}</span>
+                  </span>
+                </div>
             }
         </div>
 
@@ -133,8 +138,21 @@ import { GroupWidgetComponent } from "./widgets/group-widget.component";
 
       &-group-info {
           margin: 0 16px;
-          display: flex;
-          gap: 16px;
+          display: grid;
+          grid-template-columns: 1fr 2fr;
+          grid-gap: 16px;
+
+          &-overview {
+            align-items: center;
+            justify-content: center;
+
+            &-total {
+              display: flex;
+              gap: 8px;
+              font-size: 1.2rem;
+              font-weight: 500;
+            }
+          }
       }
 
       &-tab {

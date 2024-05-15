@@ -23,6 +23,7 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { GroupService } from "../services/group.service";
 import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
 import { LayoutComponent } from "./shared/layout.component";
+import { Expense } from "../models/expense.model";
 
 @Component({
 	selector: "app-add-expense",
@@ -96,25 +97,27 @@ import { LayoutComponent } from "./shared/layout.component";
             </mat-form-field>
           </div>
 
-          <div class="button-group">
+          <div class="button-container">
             <button
               type="submit"
               class="rounded-button"
               mat-raised-button
               color="primary"
-              [disabled]="form.invalid || !form.dirty">{{ id ? "Update" : "Submit" }} expense</button>
-
-            @if (id) {
-              <button 
-                class="rounded-button"
-                mat-raised-button
-                color="warn"
-                (click)="deleteExpense()">
-                  Delete expense
-              </button>
-            }
+              [disabled]="form.invalid || !form.dirty">{{ id ? "Update" : "Submit" }} expense</button>            
           </div>
         </form>
+
+        @if (id) {
+          <div class="button-container">
+            <button
+              class="rounded-button button"
+              mat-raised-button
+              color="warn"
+              (click)="deleteExpense()">
+                Delete expense
+            </button>
+          </div>
+        }
       </div>
     </app-layout>
   `,
@@ -133,15 +136,16 @@ import { LayoutComponent } from "./shared/layout.component";
       text-align: right;
     }
 
-    .button-group {
+    .button-container {
       display: flex;
       flex-direction: column;
       gap: 16px;
       align-items: center;
-      margin: 32px;
+      margin-top: 16px;
 
       > button {
         width: 300px;
+        text-align: center;
       }
     }
   `]
@@ -221,31 +225,41 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
   }
 
   async submit() {
-  	const groupId = this.$currentGroup()?.uid;
   	const { description, amount, expenseDate, paidBy} = this.form.value;
-  	if(this.form.invalid || !groupId || !expenseDate || !paidBy || !description) {
+  	if(this.form.invalid || !this.groupId || !expenseDate || !paidBy || !description) {
   		return;
   	}
 
-  	try {
-  		await this.groupExpenseService.addExpense(
-  			groupId,
-  			{
-  				description: description,
-  				amount: +(amount ?? 0),
-  				category: this.selectedCategory?.id,
-  				expenseDate,
-  				paidBy
-  			}
-  		);
+    const expense: Expense = {
+      description: description,
+      amount: +(amount ?? 0),
+      category: this.selectedCategory?.id,
+      expenseDate,
+      paidBy
+    };
 
-      this.router.navigate(["/group", groupId]);
+  	try {
+      if(this.id) {
+        await this.groupExpenseService.updateExpense(this.groupId, this.id, expense);
+      } else {
+        await this.groupExpenseService.addExpense(this.groupId, expense);
+      }
+      this.router.navigate(["/group", this.groupId]);
   	} catch (err) {
   		this.notificationService.error(getFirebaseErrorMessage(err));
   	}
   }
 
-  deleteExpense() {
+  async deleteExpense() {
+    if(!this.groupId || !this.id) {
+      return;
+    }
 
+    try {
+      await this.groupExpenseService.deleteExpense(this.groupId, this.id);
+      this.router.navigate(["/group", this.groupId]);
+    } catch (err) {
+  		this.notificationService.error(getFirebaseErrorMessage(err));
+  	}
   }
 }
