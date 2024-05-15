@@ -42,6 +42,7 @@ import { MatBottomSheetRef } from "@angular/material/bottom-sheet";
         .category-group {
             display: flex;
             gap: 16px;
+            flex-wrap: wrap;
 
             .mat-icon {
                 transform: scale(1.2);

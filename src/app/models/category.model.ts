@@ -29,24 +29,40 @@ export const categoriesByGroup: CategoryGroup[] = [
 	{
 		name: "",
 		categories: [
-			{ id: 101, name: "Others", icon: "confirmation_number" },
+			{ id: 101, name: "Others", icon: "format_list_bulleted" },
+			{ id: 102, name: "Travel", icon: "airport_shuttle" },
+			{ id: 103, name: "Fuel", icon: "local_gas_station" },
+			{ id: 104, name: "Investment", icon: "savings" },
+			{ id: 105, name: "Bills", icon: "receipt_long" },
+			{ id: 106, name: "EMI", icon: "incomplete_circle" },
 		]
 	},
 	{
 		name: "Entertainment",
 		categories: [
-			{ id: 1, name: "Games", icon: "sports_esports" },
-			{ id: 2, name: "Movies", icon: "movie" },
-			{ id: 3, name: "Music", icon: "music_note" },
-			{ id: 4, name: "Sports", icon: "sports_soccer" },
+			{ id: 201, name: "Shopping", icon: "shopping_cart" },
+			{ id: 202, name: "Movies", icon: "movie" },
+			{ id: 203, name: "Entertainment", icon: "confirmation_number" },
+			{ id: 204, name: "Sports", icon: "sports_soccer" },
 		]
 	},
 	{
 		name: "Food & drink",
 		categories: [
-			{ id: 6, name: "Dining", icon: "dining" },
-			{ id: 7, name: "Groceries", icon: "grocery" },
-			{ id: 8, name: "Liquor", icon: "liquor" }
+			{ id: 301, name: "Dining", icon: "dining" },
+			{ id: 302, name: "Groceries", icon: "shopping_basket" },
+			{ id: 303, name: "Liquor", icon: "liquor" },
+			{ id: 304, name: "Vegitable", icon: "eco" },
+			{ id: 305, name: "Dairy", icon: "local_drink" }
+		]
+	},
+	{
+		name: "Home",
+		categories: [
+			{ id: 401, name: "Electronics", icon: "tv_gen" },
+			{ id: 402, name: "Furniture", icon: "chair" },
+			{ id: 403, name: "Household supplies", icon: "household_supplies" },
+			{ id: 404, name: "Maintenance", icon: "engineering" },
 		]
 	}
 ];

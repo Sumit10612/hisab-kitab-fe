@@ -10,7 +10,7 @@ import { MatIconModule } from "@angular/material/icon";
 import { MatInputModule } from "@angular/material/input";
 import { MatSelectModule } from "@angular/material/select";
 
-import { Category, categoriesByGroup, getCategoryById } from "../models/category.model";
+import { categoriesByGroup, getCategoryById } from "../models/category.model";
 import { Group } from "../models/group.model";
 import { GroupExpenseService } from "../services/group-expense.service";
 import { NotificationService } from "../services/notification.service";
@@ -22,6 +22,7 @@ import { CategorySelectorComponent } from "./category-selector.component";
 import { ActivatedRoute, Router } from "@angular/router";
 import { GroupService } from "../services/group.service";
 import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
+import { LayoutComponent } from "./shared/layout.component";
 
 @Component({
 	selector: "app-add-expense",
@@ -36,110 +37,101 @@ import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
 		ReactiveFormsModule,
 		MatSelectModule,
 		MatDatepickerModule,
-    PageNavHeaderComponent
+    PageNavHeaderComponent,
+    LayoutComponent
 	],
 	providers:[provideNativeDateAdapter()],
 	template: `
-    <div class="header-section">
-      <app-page-nav-header
-          [backRoute]="['/group',  $currentGroup()?.uid ?? '']" 
-          title="Add Expense">
-      </app-page-nav-header>
-    </div>
-
-    <div class="detail-section">
-      <form [formGroup]="form" (ngSubmit)="submit()">
-        <div class="row">
+    <app-layout>
+      <div section="header">
+        <app-page-nav-header
+            [backRoute]="['/group',  $currentGroup()?.uid ?? '']" 
+            title="Add Expense">
+        </app-page-nav-header>
+      </div>
+      <div section="detail" class="detail-section">
+        <form [formGroup]="form" (ngSubmit)="submit()">
           <mat-form-field>
             <mat-label>Description</mat-label>
             <input matInput [formControl]="form.controls.description" />
           </mat-form-field>
-          <mat-form-field appearance="fill" floatLabel="always">
-            <mat-label>Amount</mat-label>
-            <span matTextPrefix>&#8377;</span>
-            <input
-              class="amount-input"
-              matInput
-              type="number"
-              placeholder="0.00"
-              min="0"
-              [formControl]="form.controls.amount">
-          </mat-form-field>          
-        </div>
+          <div class="row">            
+            <mat-form-field appearance="fill" floatLabel="always">
+              <mat-label>Amount</mat-label>
+              <span matTextPrefix>&#8377;</span>
+              <input
+                class="amount-input"
+                matInput
+                type="number"
+                placeholder="0.00"
+                min="0"
+                [formControl]="form.controls.amount">
+            </mat-form-field> 
+            <mat-form-field>
+              <mat-label>Category</mat-label>
+              <input matInput
+                [formControl]="form.controls.category"
+                (click)="openCategorySheet()"
+                (keyup)="openCategorySheet()" readonly />
+              <mat-icon matSuffix (click)="openCategorySheet()">keyboard_arrow_down</mat-icon>
+            </mat-form-field>         
+          </div>
 
-        <div class="row">
-          <mat-form-field>
-            <mat-label>Category</mat-label>
-            <input matInput
-              [formControl]="form.controls.category"
-              (click)="openCategorySheet()"
-              (keyup)="openCategorySheet()" readonly />
-            <mat-icon matSuffix (click)="openCategorySheet()">keyboard_arrow_down</mat-icon>
-            <!-- <mat-select [formControl]="form.controls.category">
-              <mat-option>-- None --</mat-option>
-              @for (group of categoryGroups; track group) {
-                <mat-optgroup [label]="group.name">
-                  @for (category of group.categories; track category) {
-                    <mat-option [value]="category.id">
-                      <mat-icon>{{category.icon}}</mat-icon>
-                      {{category.name}}
-                    </mat-option>
-                  }
-                </mat-optgroup>
-              }
-            </mat-select> -->
-          </mat-form-field>
-          <mat-form-field>
-            <mat-label>Paid by</mat-label>
-            <mat-select [formControl]="form.controls.paidBy">
-              @for (user of $currentGroup()?.users; track user) {
-                <mat-option [value]="user?.uid">
-                  {{user.name}}
-                </mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-        </div>
+          <div class="row">
+            <mat-form-field>
+              <mat-label>Paid by</mat-label>
+              <mat-select [formControl]="form.controls.paidBy">
+                @for (user of $currentGroup()?.users; track user) {
+                  <mat-option [value]="user?.uid">
+                    {{user.name}}
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field>
+              <input matInput [matDatepicker]="dp" [formControl]="form.controls.expenseDate">
+              <mat-hint>MM/DD/YYYY</mat-hint>
+              <mat-datepicker-toggle matIconSuffix [for]="dp"></mat-datepicker-toggle>
+              <mat-datepicker #dp></mat-datepicker>
+            </mat-form-field>
+          </div>
 
-        <div class="row">
-          <mat-form-field>
-            <input matInput [matDatepicker]="dp" [formControl]="form.controls.expenseDate">
-            <mat-hint>MM/DD/YYYY</mat-hint>
-            <mat-datepicker-toggle matIconSuffix [for]="dp"></mat-datepicker-toggle>
-            <mat-datepicker #dp></mat-datepicker>
-          </mat-form-field>
-        </div>
-
-        <div class="button-group">
-          <button 
-            type="submit"
-            class="rounded-button"
-            mat-raised-button 
-            color="primary"
-            [disabled]="form.invalid">Submit</button>
-        </div>
-      </form>
-    </div>
+          <div class="button-group">
+            <button 
+              type="submit"
+              class="rounded-button"
+              mat-raised-button 
+              color="primary"
+              [disabled]="form.invalid">Submit expense</button>
+          </div>
+        </form>
+      </div>
+    </app-layout>
   `,
 	styles: [`
-    .header-section, .detail-section {
-      margin: 16px;
+    .detail-section {
+      margin: 32px 16px;
     }
 
-  .row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-gap: 16px;
-  }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-gap: 16px;
+    }
 
-  .amount-input {
-    text-align: right;
-  }
+    .amount-input {
+      text-align: right;
+    }
 
-  .button-group {
-    display: flex;
-    justify-content: center;
-  }
+    .button-group {
+      display: flex;
+      justify-content: center;
+      margin: 32px;
+
+      > button {
+        width: 300px;
+      }
+    }
   `]
 })
 export class ExpenseEditorComponent {
@@ -176,7 +168,7 @@ export class ExpenseEditorComponent {
   protected readonly form = this.formBuilder.group({
   	description: ["", [Validators.required]],
   	amount: ["", [Validators.required]],
-  	category: [""],
+  	category: [this.selectedCategory?.name],
   	paidBy: [this.userService.currentUser()?.uid, [Validators.required]],
   	expenseDate: [new Date(), [Validators.required]] 
   });

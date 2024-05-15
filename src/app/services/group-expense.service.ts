@@ -23,12 +23,12 @@ export class GroupExpenseService {
 		const ref = collection(this.firestore, "group_expenses", groupId, "expenses");
 		const groupRef = doc(this.firestore, "groups", groupId);
 
-		runTransaction(this.firestore, async (transaction) => {
+		await runTransaction(this.firestore, async (transaction) => {
 			const groupDoc = await transaction.get(groupRef);
 			if(!groupDoc.exists()) {
 				throw "Group does not exist!";
 			}
-			const groupTotal = groupDoc.data()['groupTotalAmount'] ?? 0 + expense.amount;
+			const groupTotal = +(groupDoc.data()['groupTotalAmount'] ?? 0) + expense.amount;
 			transaction.update(groupRef, { groupTotalAmount: groupTotal });
 		})
 
