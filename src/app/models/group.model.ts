@@ -11,6 +11,7 @@ export interface CreateGroup {
     name: string;
     imageUrl: string;
 	groupTotalAmount: number;
+	thisMonthTotal: number;
 }
 
 export interface Group extends CreateGroup {
@@ -21,6 +22,7 @@ export interface Group extends CreateGroup {
 
 export interface GroupExpenses {
 	groupId: string;
+	monthTotal: Record<number, number>;
 }
 
 export const getGroupImage = (alt?: string) => {

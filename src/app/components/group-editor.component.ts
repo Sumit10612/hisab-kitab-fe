@@ -52,11 +52,18 @@ import { GroupWidgetComponent } from "./widgets/group-widget.component";
                     [src]="getGroupImage($group()?.imageUrl).src"
                     [alt]="getGroupImage($group()?.imageUrl).alt" />
                 
-                <div class="header-section-group-info-overview">
-                  <span class="header-section-group-info-overview-total">
-                    <span>Total</span> 
-                    <span>&#8377;{{$group()?.groupTotalAmount ?? 0}}</span>
+                <div class="header-section-group-info-month">                  
+                  <span class="header-section-group-info-month-amount">
+                    &#8377; {{$group()?.thisMonthTotal ?? 0}}
+                  </span>                  
+                  <span class="header-section-group-info-month-label">this month</span>
+                </div>
+
+                <div class="header-section-group-info-total">
+                  <span class="header-section-group-info-total-amount">
+                    &#8377; {{$group()?.groupTotalAmount ?? 0}}
                   </span>
+                  <span class="header-section-group-info-total-label">total</span>
                 </div>
             }
         </div>
@@ -132,19 +139,37 @@ import { GroupWidgetComponent } from "./widgets/group-widget.component";
 
       &-group-info {
           margin: 0 16px;
-          display: grid;
-          grid-template-columns: 1fr 2fr;
-          grid-gap: 16px;
+          display: flex;
+          gap: 16px;
 
-          &-overview {
-            align-items: center;
-            justify-content: center;
+          &-month {
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+            margin: auto;
+            gap: 8px;
 
-            &-total {
-              display: flex;
-              gap: 8px;
-              font-size: 1.2rem;
-              font-weight: 500;
+            &-amount {
+              font-size: 24px;
+            }
+
+            &-label {
+              font-size: 12px;
+            }
+          }
+
+          &-total {
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+            margin-left: auto;
+
+            &-label {
+              font-size: 12px;
+            }
+
+            &-amount {
+              font-size: 16px;
             }
           }
       }
