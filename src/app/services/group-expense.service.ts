@@ -2,7 +2,6 @@ import { inject, Injectable } from "@angular/core";
 import {
 	collection,
 	collectionData,
-	deleteDoc,
 	docData,
 	Firestore,
 	orderBy,

@@ -1,7 +1,6 @@
 import { CommonModule } from "@angular/common";
 import {
 	Component,
-	effect,
 	inject,
 	Input,
 	OnDestroy,
@@ -53,9 +52,9 @@ import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
 		MatSelectModule,
 		MatDatepickerModule,
 		PageNavHeaderComponent,
-		LayoutComponent
+		LayoutComponent,
 	],
-	providers:[provideNativeDateAdapter()],
+	providers: [provideNativeDateAdapter()],
 	template: `
     <app-layout>
       <div section="header">
@@ -135,7 +134,8 @@ import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
       </div>
     </app-layout>
   `,
-	styles: [`
+	styles: [
+		`
     .detail-section {
       margin: 32px 16px;
     }
@@ -162,7 +162,8 @@ import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
         text-align: center;
       }
     }
-  `]
+  `,
+	],
 })
 export class ExpenseEditorComponent implements OnInit, OnDestroy {
 	private readonly bottomSheet = inject(MatBottomSheet);
@@ -178,30 +179,33 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
 	private expenseSubscription$$: Subscription | undefined;
 
 	private group$ = this.route.paramMap.pipe(
-		switchMap(params => this.groupService.currentGroup$(params.get("groupId") ?? ""))
+		switchMap((params) =>
+			this.groupService.currentGroup$(params.get("groupId") ?? "")
+		)
 	);
 
 	private currentGroup$: Observable<Group> = combineLatest([
 		this.group$,
-		this.userService.user$
+		this.userService.user$,
 	]).pipe(
 		map(([group, currentUser]) => {
-			group.users = group.users.map(user => {
-				if(user.uid === currentUser?.uid) {
-					return { ...user, name: "You" };
-				}
-				return user;
-			});
-			return group;
+			return {
+				...group,
+				users: group.users.map(user => 
+					user.uid === currentUser?.uid ? { ...user, name: "You" } : user
+				),
+			};
 		})
 	);
 
 	protected readonly form = this.formBuilder.group({
-  	description: ["", [Validators.required]],
-  	amount: this.formBuilder.control<number | null>(null, { validators: [Validators.required] }),
-  	category: [this.selectedCategory?.name],
-  	paidBy: [this.userService.currentUser()?.uid, [Validators.required]],
-  	expenseDate: [new Date(), [Validators.required]]
+		description: ["", Validators.required],
+		amount: this.formBuilder.control<number | null>(null, {
+			validators: [Validators.required],
+		}),
+		category: this.selectedCategory?.name,
+		paidBy: [this.userService.currentUser()?.uid, Validators.required],
+		expenseDate: [new Date(), Validators.required],
 	});
 	protected categoryGroups = categoriesByGroup;
 	protected getCategoryById = getCategoryById;
@@ -211,61 +215,64 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
   @Input() id: string | undefined;
 
   ngOnInit(): void {
-  	if(this.groupId && this.id) {
+  	if (this.groupId && this.id) {
   		this.expenseSubscription$$ = this.groupExpenseService.getExpense$(this.groupId, this.id)
-  			.subscribe(expense => {
-  				if(expense.category) {
+  			.subscribe((expense) => {
+  				if (expense.category) {
   					this.selectedCategory = getCategoryById(expense.category);
   				}
-  				this.form.patchValue({ ...expense, category: this.selectedCategory?.name });
+  				this.form.patchValue({
+  					...expense,
+  					category: this.selectedCategory?.name,
+  				});
   			});
   	}
   }
 
   ngOnDestroy(): void {
-  	if(this.expenseSubscription$$) {
+  	if (this.expenseSubscription$$) {
   		this.expenseSubscription$$.unsubscribe();
   	}
   }
 
   openCategorySheet() {
-  	const bottomSheetRef = this.bottomSheet.open(CategorySelectorComponent);
-  	bottomSheetRef.afterDismissed().subscribe(selectedCategoryId => {
-  		if(selectedCategoryId && +selectedCategoryId > 0) {
-  			this.selectedCategory = getCategoryById(selectedCategoryId);
-  			this.form.controls.category.setValue(this.selectedCategory?.name ?? "");
-  		}
-  	});
+  	this.bottomSheet.open(CategorySelectorComponent)
+	  .afterDismissed()
+	  .subscribe(selectedCategoryId => {
+  			if (selectedCategoryId && typeof selectedCategoryId === "number" && selectedCategoryId > 0) {
+		  this.selectedCategory = getCategoryById(selectedCategoryId);
+		  this.form.controls.category.setValue(this.selectedCategory?.name || "");
+  			}
+	  });
   }
 
   async submit() {
-  	const { description, amount, expenseDate, paidBy} = this.form.value;
-  	if(this.form.invalid || !this.groupId || !expenseDate || !paidBy || !description) {
+  	const { description, amount, expenseDate, paidBy } = this.form.value;
+  	if (!this.form.valid || !this.groupId || !expenseDate || !paidBy || !description) {
   		return;
   	}
 
-  	const expense: Expense = {
-  		description: description,
+  	const expense = {
+  		description,
   		amount: +(amount ?? 0),
   		category: this.selectedCategory?.id,
   		expenseDate,
-  		paidBy
-  	};
+  		paidBy,
+  	} as Expense;
 
   	try {
-  		if(this.id) {
-  			await this.groupExpenseService.updateExpense(this.groupId, this.id, expense);
-  		} else {
-  			await this.groupExpenseService.addExpense(this.groupId, expense);
-  		}
+  		await (this.id
+		  ? this.groupExpenseService.updateExpense(this.groupId, this.id, expense)
+		  : this.groupExpenseService.addExpense(this.groupId, expense)
+  		);
   		this.router.navigate(["/group", this.groupId]);
-  	} catch (err) {
+	  } catch (err) {
   		this.notificationService.error(getFirebaseErrorMessage(err));
-  	}
+	  }
   }
 
   async deleteExpense() {
-  	if(!this.groupId || !this.id) {
+  	if (!this.groupId || !this.id) {
   		return;
   	}
 

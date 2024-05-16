@@ -20,7 +20,6 @@ import { UserService } from "./services/user.service";
 	standalone: true,
 	imports: [CommonModule, RouterOutlet, MatProgressSpinner],
 	template: `
-    <!-- <div [ngClass]="userService.currentUser()?.preferences?.theme ?? 'light'"> -->
       <div class="container">
         <router-outlet></router-outlet>
       </div>
@@ -28,7 +27,6 @@ import { UserService } from "./services/user.service";
       @if(notificationService.loading()) {
         <mat-progress-spinner mode="indeterminate" diameter="50"></mat-progress-spinner>
       }
-    <!-- </div> -->
   `,
 	styles: [`
     .container {
