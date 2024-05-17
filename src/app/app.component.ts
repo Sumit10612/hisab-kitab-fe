@@ -14,6 +14,7 @@ import { SwUpdate } from "@angular/service-worker";
 
 import { NotificationService } from "./services/notification.service";
 import { UserService } from "./services/user.service";
+import { NavigationService } from "./services/navigation.service";
 
 @Component({
 	selector: "app-root",
@@ -49,6 +50,7 @@ export class AppComponent implements OnInit {
 	private readonly snackBar = inject(MatSnackBar);
 	private readonly swUpdate = inject(SwUpdate);
 	private readonly renderer = inject(Renderer2);
+	private readonly navigation = inject(NavigationService);
 
 	protected readonly userService = inject(UserService);
 	protected readonly notificationService = inject(NotificationService);
@@ -62,6 +64,8 @@ export class AppComponent implements OnInit {
 	}
 
 	ngOnInit() {
+		this.navigation.clearRouteHistory();
+		
 		// Checking service worker based update
 		if(this.swUpdate.isEnabled) {
 			this.swUpdate.checkForUpdate();

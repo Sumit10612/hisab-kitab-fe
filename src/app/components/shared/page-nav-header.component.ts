@@ -1,8 +1,9 @@
 import { CommonModule } from "@angular/common";
-import { Component, Input, TemplateRef } from "@angular/core";
+import { Component, Input, TemplateRef, inject } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { MatIconModule } from "@angular/material/icon";
 import { RouterLink } from "@angular/router";
+import { NavigationService } from "../../services/navigation.service";
 
 @Component({
 	selector: "app-page-nav-header",
@@ -10,20 +11,16 @@ import { RouterLink } from "@angular/router";
 	imports: [CommonModule, MatIconModule, MatButtonModule, RouterLink],
 	template: `
     <div class="page-section">
-    <div>
-      @if (backRoute) {
-        <a role="button" mat-icon-button [routerLink]="backRoute">
-          <mat-icon>arrow_back_ios</mat-icon>
-        </a>
-      }
+      <button mat-icon-button (click)="navigateBack()">
+        <mat-icon>arrow_back_ios</mat-icon>
+      </button>
+      <div class="title"><h2>{{title}}</h2></div>
+      <div class="end">
+        @if(template) {
+          <ng-container *ngTemplateOutlet="template"></ng-container>
+        }
+      </div>
     </div>
-    <div class="title"><h2>{{title}}</h2></div>
-    <div class="end">
-      @if(template) {
-        <ng-container *ngTemplateOutlet="template"></ng-container>
-      }
-    </div>
-  </div>
   `,
 	styles: [`
     .page-section { 
@@ -42,7 +39,12 @@ import { RouterLink } from "@angular/router";
   `]
 })
 export class PageNavHeaderComponent {
+  private readonly navigation = inject(NavigationService);
+
   @Input() title: string | undefined;
-  @Input() backRoute: string | string[] | undefined;
   @Input() template: TemplateRef<unknown> | undefined;
+
+  navigateBack() {
+    this.navigation.navigateBack();
+  }
 }

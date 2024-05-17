@@ -23,7 +23,6 @@ import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
     <app-layout>
       <div section="header">
         <app-page-nav-header 
-          [backRoute]="['/group', $group()?.uid ?? '']"
           [title]="$group()?.name + ' - Settings'" >
         </app-page-nav-header>
       </div>

@@ -25,9 +25,8 @@ import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
 		RouterLink
 	],
 	template: `
-    <app-layout>
+    <app-layout [showNav]="true" pageTitle="Profile">
       <div section="header">
-        <app-page-nav-header backRoute="/home" title="Profile"></app-page-nav-header>
         <div class="profile-section">
           @if (userService.currentUser()) {
             <img

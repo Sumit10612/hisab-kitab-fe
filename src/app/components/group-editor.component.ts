@@ -128,7 +128,7 @@ import { GroupWidgetComponent } from "./widgets/group-widget.component";
           mat-icon-button
           [routerLink]="['/group', $group()?.uid, 'settings']"
           [disabled]="!$group()?.uid">
-            <mat-icon>settings</mat-icon>
+            <mat-icon>tune</mat-icon>
         </a>
     </ng-template>
   `,

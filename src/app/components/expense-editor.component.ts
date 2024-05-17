@@ -37,6 +37,7 @@ import { getFirebaseErrorMessage } from "../utilities/firebase-errors";
 import { CategorySelectorComponent } from "./category-selector.component";
 import { LayoutComponent } from "./shared/layout.component";
 import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
+import { NavigationService } from "../services/navigation.service";
 
 @Component({
 	selector: "app-add-expense",
@@ -56,13 +57,7 @@ import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
 	],
 	providers: [provideNativeDateAdapter()],
 	template: `
-    <app-layout>
-      <div section="header">
-        <app-page-nav-header
-            [backRoute]="['/group',  $currentGroup()?.uid ?? '']"
-            title="Add Expense">
-        </app-page-nav-header>
-      </div>
+    <app-layout [showNav]="true" [pageTitle]="(id ? 'Update' : 'Add') + ' expense'">
       <div section="detail" class="detail-section">
         <form [formGroup]="form" (ngSubmit)="submit()">
           <mat-form-field>
@@ -156,11 +151,6 @@ import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
       gap: 16px;
       align-items: center;
       margin-top: 16px;
-
-      > button {
-        width: 300px;
-        text-align: center;
-      }
     }
   `,
 	],
@@ -170,10 +160,11 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
 	private readonly formBuilder = inject(FormBuilder);
 	private readonly groupService = inject(GroupService);
 	private readonly groupExpenseService = inject(GroupExpenseService);
-	private readonly notificationService = inject(NotificationService);
+	private readonly notification = inject(NotificationService);
 	private readonly userService = inject(UserService);
 	private readonly route = inject(ActivatedRoute);
 	private readonly router = inject(Router);
+	private readonly navigation = inject(NavigationService);
 
 	private selectedCategory = getCategoryById(101);
 	private expenseSubscription$$: Subscription | undefined;
@@ -261,13 +252,16 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
   	} as Expense;
 
   	try {
+		this.notification.showLoading();
   		await (this.id
 		  ? this.groupExpenseService.updateExpense(this.groupId, this.id, expense)
 		  : this.groupExpenseService.addExpense(this.groupId, expense)
   		);
-  		this.router.navigate(["/group", this.groupId]);
+  		this.navigation.navigateBack();
 	  } catch (err) {
-  		this.notificationService.error(getFirebaseErrorMessage(err));
+  		this.notification.error(getFirebaseErrorMessage(err));
+	  } finally {
+		this.notification.hideLoading();
 	  }
   }
 
@@ -277,10 +271,13 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
   	}
 
   	try {
+		this.notification.showLoading();
   		await this.groupExpenseService.deleteExpense(this.groupId, this.id);
-  		this.router.navigate(["/group", this.groupId]);
+  		this.navigation.navigateBack();
   	} catch (err) {
-  		this.notificationService.error(getFirebaseErrorMessage(err));
-  	}
+  		this.notification.error(getFirebaseErrorMessage(err));
+  	} finally {
+		this.notification.hideLoading();
+	}
   }
 }

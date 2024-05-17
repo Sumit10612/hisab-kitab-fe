@@ -12,6 +12,7 @@ import { getFirebaseErrorMessage } from "../utilities/firebase-errors";
 
 import { LayoutComponent } from "./shared/layout.component";
 import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
+import { NavigationService } from "../services/navigation.service";
 
 @Component({
 	selector: "app-edit-profile",
@@ -25,33 +26,29 @@ import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
 		LayoutComponent
 	],
 	template: `
-    <app-layout>
-      <div section="header">
-        <app-page-nav-header backRoute="/profile" title="Edit Profile"></app-page-nav-header>
+    <app-layout [showNav]="true" pageTitle="Edit Profile">
+      <div section="header" class="edit-profile-section">
+        <form [formGroup]="form">
+          <mat-form-field>
+            <mat-label>Name</mat-label>
+            <input matInput [formControl]="form.controls.name" />
+          </mat-form-field>
 
-        <div class="edit-profile-section">
-          <form [formGroup]="form">
-            <mat-form-field>
-              <mat-label>Name</mat-label>
-              <input matInput [formControl]="form.controls.name" />
-            </mat-form-field>
-
-            <div class="image-container">
-              @for (item of avatars; track item) {
-                <img
-                  width="50"
-                  height="50"
-                  [class.selected]="selectedIndex === $index"
-                  [src]="item.src"
-                  [alt]="item.alt"
-                  (click)="selectImage($index)" />
-              }
-            </div>        
-          </form>
-        </div>
+          <div class="image-container">
+            @for (item of avatars; track item) {
+              <img
+                width="50"
+                height="50"
+                [class.selected]="selectedIndex === $index"
+                [src]="item.src"
+                [alt]="item.alt"
+                (click)="selectImage($index)" />
+            }
+          </div>
+        </form>
       </div>
       <div section="detail" class="text-center margin-top">
-        <button 
+        <button class="rounded-button"
           (click)="update()"
           mat-raised-button 
           color="primary"
@@ -89,6 +86,7 @@ export class EditProfileComponent {
 	private readonly notificationService = inject(NotificationService);
 	private readonly router = inject(Router);  
 	protected readonly formBuilder = inject(NonNullableFormBuilder);
+  private readonly navigation = inject(NavigationService);
 
 	protected avatars = avatars;
 
@@ -121,8 +119,7 @@ export class EditProfileComponent {
 		try {
 			this.notificationService.showLoading();
 			await this.userService.updateUser({ uid, ...data });
-
-			this.router.navigate(["/profile"]);
+      this.navigation.navigateBack();
 		} catch (err) {
 			this.notificationService.error(getFirebaseErrorMessage(err));
 		} finally {

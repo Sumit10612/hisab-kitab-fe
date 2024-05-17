@@ -1,14 +1,18 @@
 import { CommonModule } from "@angular/common";
-import { Component } from "@angular/core";
+import { Component, Input } from "@angular/core";
 import { MatCardModule } from "@angular/material/card";
+import { PageNavHeaderComponent } from "./page-nav-header.component";
 
 @Component({
 	selector: "app-layout",
 	standalone: true,
-	imports: [CommonModule, MatCardModule],
+	imports: [CommonModule, MatCardModule, PageNavHeaderComponent],
 	template: `
-    <div class="container">
+    <div class="container">      
       <div class="container-header-section">
+        @if (showNav) {
+          <app-page-nav-header [title]="pageTitle"></app-page-nav-header>
+        }
         <ng-content select="[section='header']"></ng-content>
       </div>
       <mat-card class="container-detail-section">
@@ -35,4 +39,7 @@ import { MatCardModule } from "@angular/material/card";
     }
   `]
 })
-export class LayoutComponent { }
+export class LayoutComponent {
+  @Input() showNav: boolean = false;
+  @Input() pageTitle: string | undefined;
+}
