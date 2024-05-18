@@ -1,8 +1,9 @@
 import { CommonModule } from "@angular/common";
-import { Component, Input, TemplateRef, inject } from "@angular/core";
+import { Component, inject, Input, TemplateRef } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { MatIconModule } from "@angular/material/icon";
 import { RouterLink } from "@angular/router";
+
 import { NavigationService } from "../../services/navigation.service";
 
 @Component({
@@ -45,13 +46,13 @@ import { NavigationService } from "../../services/navigation.service";
   `]
 })
 export class PageNavHeaderComponent {
-  private readonly navigation = inject(NavigationService);
+	private readonly navigation = inject(NavigationService);
 
   @Input() backRoute: string | undefined;
   @Input() title: string | undefined;
   @Input() template: TemplateRef<unknown> | undefined;
 
   navigateBack() {
-    this.navigation.navigateBack();
+  	this.navigation.navigateBack();
   }
 }

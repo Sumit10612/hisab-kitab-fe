@@ -15,24 +15,23 @@ import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatIconModule } from "@angular/material/icon";
 import { MatInputModule } from "@angular/material/input";
 import { MatSelectModule } from "@angular/material/select";
+import { ActivatedRoute } from "@angular/router";
 import {
-	combineLatest,
-	map,
-	Observable,
-	Subscription
+	Subscription,
+	switchMap,
+	tap
 } from "rxjs";
 
 import { categoriesByGroup, getCategoryById } from "../models/category.model";
 import { Expense } from "../models/expense.model";
-import { Group } from "../models/group.model";
+import { GroupMember } from "../models/group.model";
 import { ExpenseService } from "../services/expense.service";
 import { GroupService } from "../services/group.service";
+import { NavigationService } from "../services/navigation.service";
 import { NotificationService } from "../services/notification.service";
-import { UserService } from "../services/user.service";
 
 import { CategorySelectorComponent } from "./category-selector.component";
 import { LayoutComponent } from "./shared/layout.component";
-import { NavigationService } from "../services/navigation.service";
 
 @Component({
 	selector: "app-add-expense",
@@ -55,7 +54,7 @@ import { NavigationService } from "../services/navigation.service";
       <div section="detail" class="detail-section">
         <form [formGroup]="form" (ngSubmit)="submit()">
           <mat-form-field>
-            <mat-label>Description</mat-label>
+			<mat-label>Description</mat-label>
             <input matInput [formControl]="form.controls.description" />
           </mat-form-field>
 		  <mat-form-field>
@@ -88,7 +87,7 @@ import { NavigationService } from "../services/navigation.service";
             <mat-form-field>
               <mat-label>Paid by</mat-label>
               <mat-select [formControl]="form.controls.paidBy">
-				@for (member of (currentGroup$ | async)?.members; track member) {
+				@for (member of (group$ | async)?.members; track member) {
 					<mat-option [value]="member.id">
 						{{member.name}}
 					</mat-option>
@@ -159,13 +158,22 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
 	private readonly groupService = inject(GroupService);
 	private readonly expenseService = inject(ExpenseService);
 	private readonly notification = inject(NotificationService);
-	private readonly userService = inject(UserService);
 	private readonly navigation = inject(NavigationService);
+	private readonly route = inject(ActivatedRoute);
 
 	private selectedCategory = getCategoryById(101);
 	private expenseSubscription$$: Subscription | undefined;
 
-	protected currentGroup$: Observable<Group> | undefined;
+	protected group$ = this.route.paramMap.pipe(
+		switchMap(params =>
+			this.groupService.get$(params.get("groupId") ?? "").pipe(
+				tap(group => {
+					const member = group.members.find(m => m.name === "You") as GroupMember;
+					this.form.controls.paidBy.setValue(member.id);
+				})
+			)
+		)
+	);
 
 	protected readonly form = this.formBuilder.group({
 		description: ["", Validators.required],
@@ -184,21 +192,6 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
   @Input() id: string | undefined;
 
   ngOnInit(): void {
-	this.currentGroup$ = combineLatest([
-		this.groupService.get$(this.groupId),
-		this.userService.user$,
-	]).pipe(
-		map(([group, currentUser]) => {
-			this.form.controls.paidBy.setValue(currentUser?.uid || "");
-			const member = group.members.find(member => member.id === currentUser?.uid);
-			if(member) {
-				member.name = "You";
-			}
-
-			return group;
-		})
-	);
-
   	if (this.id) {
   		this.expenseSubscription$$ = this.expenseService.get$(this.groupId, this.id)
   			.subscribe((expense) => {
@@ -214,17 +207,17 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-	this.expenseSubscription$$?.unsubscribe();
+  	this.expenseSubscription$$?.unsubscribe();
   }
 
   openCategorySheet() {
   	this.bottomSheet.open(CategorySelectorComponent)
 	  .afterDismissed()
 	  .subscribe(selectedCategoryId => {
-		if (selectedCategoryId && typeof selectedCategoryId === "number" && selectedCategoryId > 0) {
-			this.selectedCategory = getCategoryById(selectedCategoryId);
-			this.form.controls.category.setValue(this.selectedCategory?.name || "");
-		}
+  			if (selectedCategoryId && typeof selectedCategoryId === "number" && selectedCategoryId > 0) {
+  				this.selectedCategory = getCategoryById(selectedCategoryId);
+  				this.form.controls.category.setValue(this.selectedCategory?.name || "");
+  			}
 	  });
   }
 
@@ -236,7 +229,7 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
 
   	const expense = {
   		description,
-		where,
+  		where,
   		amount: +(amount ?? 0),
   		category: this.selectedCategory?.id,
   		expenseDate,
@@ -244,7 +237,7 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
   	} as Expense;
 
   	try {
-		this.notification.showLoading();
+  		this.notification.showLoading();
   		await (this.id
 		  ? this.expenseService.update(this.groupId, this.id, expense)
 		  : this.expenseService.add(this.groupId, expense)
@@ -254,7 +247,7 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
 	  } catch (err) {
   		this.notification.firebaseError(err);
 	  } finally {
-		this.notification.hideLoading();
+  		this.notification.hideLoading();
 	  }
   }
 
@@ -264,13 +257,13 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
   	}
 
   	try {
-		this.notification.showLoading();
+  		this.notification.showLoading();
   		await this.expenseService.delete(this.groupId, this.id);
   		this.navigation.navigateBack();
   	} catch (err) {
   		this.notification.firebaseError(err);
   	} finally {
-		this.notification.hideLoading();
-	}
+  		this.notification.hideLoading();
+  	}
   }
 }

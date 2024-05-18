@@ -6,13 +6,13 @@ import { MatInputModule } from "@angular/material/input";
 import { Router } from "@angular/router";
 
 import { avatars } from "../models/user.model";
+import { NavigationService } from "../services/navigation.service";
 import { NotificationService } from "../services/notification.service";
 import { UserService } from "../services/user.service";
 import { getFirebaseErrorMessage } from "../utilities/firebase-errors";
 
 import { LayoutComponent } from "./shared/layout.component";
 import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
-import { NavigationService } from "../services/navigation.service";
 
 @Component({
 	selector: "app-edit-profile",
@@ -86,7 +86,7 @@ export class EditProfileComponent {
 	private readonly notificationService = inject(NotificationService);
 	private readonly router = inject(Router);  
 	protected readonly formBuilder = inject(NonNullableFormBuilder);
-  private readonly navigation = inject(NavigationService);
+	private readonly navigation = inject(NavigationService);
 
 	protected avatars = avatars;
 
@@ -119,7 +119,7 @@ export class EditProfileComponent {
 		try {
 			this.notificationService.showLoading();
 			await this.userService.updateUser({ uid, ...data });
-      this.navigation.navigateBack();
+			this.navigation.navigateBack();
 		} catch (err) {
 			this.notificationService.error(getFirebaseErrorMessage(err));
 		} finally {

@@ -1,3 +1,4 @@
+import { CommonModule } from "@angular/common";
 import { Component, inject } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { MatCardModule } from "@angular/material/card";
@@ -12,13 +13,12 @@ import { UserService } from "../services/user.service";
 import { LayoutComponent } from "./shared/layout.component";
 import { GroupWidgetComponent } from "./widgets/group-widget.component";
 import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
-import { CommonModule } from "@angular/common";
 
 @Component({
 	selector: "app-home",
 	standalone: true,
 	imports: [
-    CommonModule,
+		CommonModule,
 		MatButtonModule, 
 		MatIconModule,
 		MatDividerModule,
@@ -63,7 +63,7 @@ import { CommonModule } from "@angular/common";
     </app-layout>
 
     <div class="create-group-button">
-      <a mat-fab routerLink="/create-group" color="warn">
+      <a mat-fab routerLink="/group" color="warn">
         <mat-icon>group_add</mat-icon>
       </a>
     </div>

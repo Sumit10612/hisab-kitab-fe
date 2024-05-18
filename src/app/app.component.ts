@@ -12,9 +12,9 @@ import { MatSnackBar } from "@angular/material/snack-bar";
 import { RouterOutlet } from "@angular/router";
 import { SwUpdate } from "@angular/service-worker";
 
+import { NavigationService } from "./services/navigation.service";
 import { NotificationService } from "./services/notification.service";
 import { UserService } from "./services/user.service";
-import { NavigationService } from "./services/navigation.service";
 
 @Component({
 	selector: "app-root",

@@ -1,11 +1,10 @@
 import { canActivate, redirectLoggedInTo, redirectUnauthorizedTo } from "@angular/fire/auth-guard";
 import { Routes } from "@angular/router";
 
-import { CreateGroupComponent } from "./components/create-group.component";
 import { EditProfileComponent } from "./components/edit-profile.component";
 import { ExpenseEditorComponent } from "./components/expense-editor.component";
 import { GroupEditorComponent } from "./components/group-editor.component";
-import { GroupSettingsComponent } from "./components/group-settings.component";
+import { GroupExpenseDetailComponent } from "./components/group-expesnse-deatil.component";
 import { HomeComponent } from "./components/home.component";
 import { LoginComponent } from "./components/login.component";
 import { ProfileComponent } from "./components/profile.component";
@@ -47,18 +46,18 @@ export const routes: Routes = [
 		...canActivate(redirectUnauthorizedToLogin)
 	},
 	{
-		path: "create-group",
-		component: CreateGroupComponent,
+		path: "group-detail/:id",
+		component: GroupExpenseDetailComponent,
+		...canActivate(redirectUnauthorizedToLogin)
+	},
+	{
+		path: "group",
+		component: GroupEditorComponent,
 		...canActivate(redirectUnauthorizedToLogin)
 	},
 	{
 		path: "group/:id",
 		component: GroupEditorComponent,
-		...canActivate(redirectUnauthorizedToLogin)
-	},
-	{
-		path: "group/:id/settings",
-		component: GroupSettingsComponent,
 		...canActivate(redirectUnauthorizedToLogin)
 	},
 	{

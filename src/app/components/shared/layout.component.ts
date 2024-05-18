@@ -1,6 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { Component, Input } from "@angular/core";
 import { MatCardModule } from "@angular/material/card";
+
 import { PageNavHeaderComponent } from "./page-nav-header.component";
 
 @Component({

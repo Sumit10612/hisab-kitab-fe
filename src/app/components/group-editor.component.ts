@@ -1,300 +1,291 @@
-import { CommonModule } from "@angular/common";
-import { Component, Input, inject } from "@angular/core";
+import {
+	Component,
+	inject,
+	Input,
+	OnDestroy,
+	OnInit
+} from "@angular/core";
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
-import { MatButtonToggleModule } from "@angular/material/button-toggle";
 import { MatCardModule } from "@angular/material/card";
 import { MatDividerModule } from "@angular/material/divider";
+import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatIconModule } from "@angular/material/icon";
-import { RouterLink } from "@angular/router";
-import { Observable, combineLatest, map } from "rxjs";
+import { MatInputModule } from "@angular/material/input";
+import {MatSlideToggleModule} from "@angular/material/slide-toggle";
+import { finalize, Subscription } from "rxjs";
 
-import { getCategoryById } from "../models/category.model";
-import { Expense } from "../models/expense.model";
-import { Group, GroupMember, getGroupImage } from "../models/group.model";
-import { ExpenseService } from "../services/expense.service";
+import { groupImages, GroupMember } from "../models/group.model";
 import { GroupService } from "../services/group.service";
-import { UserService } from "../services/user.service";
+import { NavigationService } from "../services/navigation.service";
+import { NotificationService } from "../services/notification.service";
 
 import { LayoutComponent } from "./shared/layout.component";
-import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
-import { GroupWidgetComponent } from "./widgets/group-widget.component";
-import { getYearMonth } from "../utilities/date";
 
 @Component({
 	selector: "app-group-editor",
 	standalone: true,
 	imports: [
-		CommonModule,
-		MatCardModule,
-		MatButtonToggleModule,
-		MatIconModule,
+		LayoutComponent, 
 		MatButtonModule,
-		PageNavHeaderComponent,
-		GroupWidgetComponent,
-		LayoutComponent,
-		RouterLink,
-		MatDividerModule
+		MatFormFieldModule,
+		MatInputModule,
+		MatDividerModule,
+		MatCardModule,
+		ReactiveFormsModule,
+		MatIconModule,
+		MatSlideToggleModule
 	],
 	template: `
-    <app-layout>
-      <div section="header" class="header-section">
-        <app-page-nav-header
-            backRoute="/home" 
-            [title]="group?.name"
-            [template]="settingsRouteTemplate">
-        </app-page-nav-header>
+    <app-layout [showNav]="true" [pageTitle]="id ? 'Settings' : 'Create a group'">
+		<div section="header" class="create-group-section">
+			<form [formGroup]="form" (ngSubmit)="create()">
+				<mat-form-field>
+					<mat-label>Group Name</mat-label>
+					<input matInput [formControl]="form.controls.name" [readonly]="currentUser?.role !== 'admin'" />
+				</mat-form-field>
 
-        <div class="header-section-group-info">
-          @if (group) {
-            <img
-                width="50"
-                height="50"
-                [src]="getGroupImage(group.imageUrl).src"
-                [alt]="getGroupImage(group.imageUrl).alt" />
-            
-            <div class="header-section-group-info-month">                  
-              <span class="header-section-group-info-month-amount">
-                &#8377; {{getCurrentMonthTotal}}
-              </span>                  
-              <span class="header-section-group-info-month-label">this month</span>
-            </div>
+				<div class="image-container">
+					@for (item of groupImages; track item) {
+						<div>
+							<img
+							width="48"
+							height="48"
+							[class.selected]="selectedIndex === $index"
+							[src]="item.src"
+							[alt]="item.alt"
+							(click)="selectImage($index)" />
+							<span>{{item.alt}}</span>
+						</div>      
+					}
+				</div>
+			</form>
+		</div>
 
-            <div class="header-section-group-info-total">
-              <span class="header-section-group-info-total-amount">
-                &#8377; {{group.groupTotal}}
-              </span>
-              <span class="header-section-group-info-total-label">total</span>
-            </div>
-          }
-        </div>
+		<div section="detail" class="detail-section">
+			@if (currentUser?.role === "admin") {
+				<button 
+					(click)="id ? update() : create()"
+					mat-raised-button
+					class="rounded-button"
+					color="primary"
+					[disabled]="!form.dirty || !(selectedIndex === 0 ? 1 : selectedIndex)">
+						{{ id ? "Update" : "Create" }} Group
+				</button>
+			}
 
-        <div class="header-section-tab">
-            <mat-button-toggle-group
-                [(value)]="selectedTab"
-                hideSingleSelectionIndicator="true"
-                >
-                <mat-button-toggle value="expense">Expense</mat-button-toggle>
-                <mat-button-toggle value="summary">Summary</mat-button-toggle>
-            </mat-button-toggle-group>
-        </div>
-      </div>
+			@if (id) {
+				<mat-card>
+					<mat-card-header>
+						<mat-card-subtitle>Members:</mat-card-subtitle>
+					</mat-card-header>
+					<mat-card-content>
+						@for (member of members; track member) {
+							<div class="user-info">
+								<div class="user-details">
+									<span>{{ member.name }}</span>
+									@if (isAdmin(member)) { <span class="role">(admin)</span> }
+								</div>
+								@if (currentUser && isAdmin(currentUser)) {
+									<div class="user-actions">
+										<button mat-button>Delete</button>
+										<button mat-button>
+											Remove
+										</button>
+									</div>
+								}
+							</div>
+							<mat-divider></mat-divider>
+						}
+					</mat-card-content>
+				</mat-card>				
+			}
 
-      <div section="detail" class="detail-section">
-        <mat-card-content>
-            @if (selectedTab === "expense") {
-                <div class="expenses-area">
-                  @for (kvp of expenses$ | async | keyvalue: noSort; track kvp) {
-                    <div class="expense-record-container">
-                      <div class="month-group">{{ kvp.key | date: "MMMM yyyy" | uppercase }}</div>
-                      @for (expense of kvp.value; track expense) {
-                        <a class="expense-record" [routerLink]="['/group', group?.id, 'expense', expense.id]">
-                          <span class="expense-date">
-                            <span class="expense-date-month">{{expense.expenseDate | date: "MMM" | uppercase}}</span>
-                            <span class="expense-date-date">{{expense.expenseDate | date: "dd"}}</span>
-                          </span>
-                          <mat-icon>{{getCategory(expense?.category ?? 0)?.icon}}</mat-icon>
-                          {{expense.description}}
-                          <span class="expense-amount">
-                            <span class="expense-amount-paid-by">{{expense.paidBy.split(' ')[0]}} paid</span>
-                              &#8377;
-                              {{expense.amount}}
-                          </span>
-                        </a>
-                        @if ($index !== kvp.value.length - 1) {
-                          <mat-divider></mat-divider>
-                        }
-                      }
-                    </div>
-                  }
-                </div>
-            } @else {
-                Summary
-            }
-        </mat-card-content>
-      </div>
+			@if (id && currentUser?.role === "admin") {
+				<button 
+					mat-raised-button
+					class="rounded-button"
+					color="warn"
+					(click)="deleteGroup()">
+						Delete Group
+				</button>
+			}
+		</div>
     </app-layout>
-
-    <div class="add-expense-button">
-      <a mat-fab color="warn"
-        role="button"
-        [routerLink]="['/group', group?.id, 'expense']"
-        [disabled]="!group?.id">
-          <mat-icon>add</mat-icon>
-      </a>
-    </div>
-
-    <ng-template #settingsRouteTemplate>
-        <a role="button" 
-          mat-icon-button
-          [routerLink]="['/group', group?.id, 'settings']"
-          [disabled]="!group?.id">
-            <mat-icon>tune</mat-icon>
-        </a>
-    </ng-template>
   `,
-	styles: [`
-    .header-section {
-      margin: -16px;
-      padding: 16px 16px 0 16px;
+	styles:[`
+	.create-group-section {
+      margin: 16px;
 
-      &-group-info {
-          margin: 0 16px;
-          display: flex;
-          gap: 16px;
+      .image-container {
+        display: flex;
+        overflow-x: auto;
+        margin-bottom: 24px;
+        white-space: nowrap;
 
-          &-month {
-            display: flex;
-            flex-direction: column;
-            text-align: center;
-            margin: auto;
-            gap: 8px;
-
-            &-amount {
-              font-size: 24px;
-            }
-
-            &-label {
-              font-size: 12px;
-            }
-          }
-
-          &-total {
-            display: flex;
-            flex-direction: column;
-            text-align: center;
-            margin-left: auto;
-
-            &-label {
-              font-size: 12px;
-            }
-
-            &-amount {
-              font-size: 16px;
-            }
-          }
-      }
-
-      &-tab {
-          margin-top: 16px;
-          text-align: center;
-      }
-    }
-
-    .detail-section {
-        height: calc(100vh - 176px);
-        overflow-y: auto;
-    }
-
-    .mat-button-toggle-group {
-        border-radius: 16px;
-    }
-
-    .mat-button-toggle-group {
-        height: 32px;
-        align-items: center;
-    }
-
-    .expense-record-container {
-      margin-bottom: 16px;
-
-      .month-group {
-        font-weight: 500;
-        font-size: 0.9rem;
-        margin: 8px 0;
-      }
-
-      > mat-divider {
-        margin: 8px 16px;
-      }
-
-      .expense-record {
-        text-decoration: none;
-        color: inherit;
-        display: grid;
-        grid-template-columns: 0.5fr 0.5fr 3fr 1fr;
-        grid-gap: 8px;
-        width: 100%;
-        margin: 0 8px;
-        align-items: center;
-
-        .expense-date {
+        > div {
           display: flex;
           flex-direction: column;
           align-items: center;
 
-          &-month {
-            font-size: 0.6rem;
+          > img {
+            margin: 8px 8px 0 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
           }
 
-          &-date {
-            font-size: 1.1rem
+          > span {
+            margin-bottom: 8px;
           }
-        }
 
-        .expense-amount {
-            display: flex;
-            flex-direction: column;
-
-            &-paid-by {
-              font-size: 0.6rem;
-            }
+          .selected {
+            transform: scale(1.4);
           }
+        }        
       }
     }
 
-    .add-expense-button {
-        position: absolute;
-        right: 16px;
-        bottom: 16px;
+    .detail-section {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+    	margin: 16px;
+    	align-items: center;
+
+		> mat-card {
+			width: 100%;
+			height: 250px;
+
+			> mat-card-content {
+				display: flex;
+				flex-direction: column;
+
+				.user-info {
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+				}
+
+				.user-details {
+					display: flex;
+					align-items: center;
+
+					> span:first-child {
+						margin-right: 8px;
+					}
+				}
+
+				.user-actions {
+					display: flex;
+					gap: 8px;
+
+					> button {
+						min-width: fit-content;
+					}
+
+					.mat-icon {
+						transform: scale(0.7);
+					}
+				}
+			}
+		}
     }
   `]
 })
-export class GroupEditorComponent {
-	private readonly userService = inject(UserService);
+export class GroupEditorComponent implements OnInit, OnDestroy {
+	private readonly notification = inject(NotificationService);
+	private readonly navigation = inject(NavigationService);
 	private readonly groupService = inject(GroupService);
-	private readonly expenseService = inject(ExpenseService);
 
-	protected expenses$: Observable<Record<string, Expense[]>> | undefined;
-  protected group: Group | undefined;
-	protected getGroupImage = getGroupImage;
-	protected selectedTab: string = "expense";
-	protected getCategory = getCategoryById;
+	private groupSubscription$$: Subscription | undefined;
 
-  @Input() id: string = "";
+	protected readonly formBuilder = inject(NonNullableFormBuilder);
 
-  ngOnInit() {
-    this.expenses$ = combineLatest([
-      this.userService.user$,
-      this.groupService.get$(this.id),
-      this.expenseService.getAll$(this.id)
-    ]).pipe(
-      map(([user, group, expenses]) => {
-        this.group = group;
+	protected  groupImages = groupImages;
+	protected selectedIndex: number | undefined;
+	protected form = this.formBuilder.group({
+		name: ["", [Validators.required]],
+	});
+	protected members: GroupMember[] | undefined;
+	protected currentUser: GroupMember | undefined;
 
-        const members = group.members.reduce((acc, member) => {
-          acc[member.id] = member;
-          return acc;
-        }, {} as Record<string, GroupMember>);
+	@Input() id: string = "";
 
-        return expenses.reduce((acc, e) => {
-          const key = getYearMonth(e.expenseDate);    
-          acc[key] = acc[key] || [];
-          acc[key].push({
-            ...e,
-            paidBy: e.paidBy === user?.uid ? "you" : members[e.paidBy].name 
-          } as Expense);
-          return acc;
-        }, {} as Record<string, Expense[]>)
-      })
-    )
-  }
+	ngOnInit(): void {
+		if(this.id) {
+			this.groupSubscription$$ = this.groupService.get$(this.id).subscribe(group => {
+				this.form.patchValue({ ...group });
+				this.selectedIndex = groupImages.findIndex(g => g.alt === group.imageUrl);
+				this.members = group.members;
+				this.currentUser = this.members.find(member => this.isCurrentUser(member));
+			});
+		}
+	}
 
-  get getCurrentMonthTotal() {
-    const currentMonth = getYearMonth(new Date());
-    return this.group?.monthTotal[currentMonth] ?? 0;
-  }
+	ngOnDestroy(): void {
+		this.groupSubscription$$?.unsubscribe();
+	}
 
-	noSort() {
-		return 0;
+	isAdmin(member: GroupMember) {
+		return member.role === "admin";
+	}
+
+	isCurrentUser(member: GroupMember) {
+		return member.name === "You";
+	}
+
+	selectImage(index: number) {
+		this.selectedIndex = index;
+		this.form.markAsDirty();
+	}
+
+	create() {
+		const { name } = this.form.value;
+		if(!name || this.selectedIndex == undefined) {
+			return;
+		}
+
+		this.notification.showLoading();
+		this.groupService.create$({
+			name,
+			imageUrl: groupImages[this.selectedIndex].alt,
+			groupTotal: 0,
+			members: [],
+			monthTotal: {}
+		}).pipe(
+			finalize(() => this.notification.hideLoading())
+		).subscribe({
+			next: (id) => this.navigation.navigateTo(["/group-detail", id]), 
+			error: (error) => this.notification.firebaseError(error) 
+		});
+	}
+
+	async update() {
+		const { name } = this.form.value;
+		if(!name || this.selectedIndex == undefined) {
+			return;
+		}
+
+		try {
+			this.notification.showLoading();
+			await this.groupService.update(this.id, name, groupImages[this.selectedIndex].alt);
+			this.navigation.navigateTo(["/group-detail", this.id]);
+		} catch (err) {
+			this.notification.firebaseError(err);
+		} finally {
+			this.notification.hideLoading();
+		}
+	}
+
+	async deleteGroup() {
+		try {
+			this.notification.showLoading();
+			await this.groupService.delete(this.id);
+			this.navigation.navigateTo(["/home"]);
+		} catch (err) {
+			this.notification.firebaseError(err);
+		} finally {
+			this.notification.hideLoading();
+		}
 	}
 }
