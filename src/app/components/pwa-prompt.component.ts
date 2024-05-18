@@ -48,7 +48,7 @@ import { MatListModule } from "@angular/material/list";
 })
 export class PwaPromptComponent {
 	constructor(
-    @Inject(MAT_BOTTOM_SHEET_DATA) public data: { platform: "ios" | "android"; event?: unknown },
+    @Inject(MAT_BOTTOM_SHEET_DATA) public data: { platform: "ios" | "android"; event?: any },
     private bottomSheetRef: MatBottomSheetRef<PwaPromptComponent>
 	) {}
 
