@@ -6,7 +6,6 @@ import {
 	OnDestroy,
 	OnInit
 } from "@angular/core";
-import { toSignal } from "@angular/core/rxjs-interop";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { MatBottomSheet } from "@angular/material/bottom-sheet";
 import { MatButtonModule } from "@angular/material/button";
@@ -16,27 +15,23 @@ import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatIconModule } from "@angular/material/icon";
 import { MatInputModule } from "@angular/material/input";
 import { MatSelectModule } from "@angular/material/select";
-import { ActivatedRoute, Router } from "@angular/router";
 import {
 	combineLatest,
 	map,
 	Observable,
-	Subscription,
-	switchMap
+	Subscription
 } from "rxjs";
 
 import { categoriesByGroup, getCategoryById } from "../models/category.model";
 import { Expense } from "../models/expense.model";
 import { Group } from "../models/group.model";
-import { GroupExpenseService } from "../services/group-expense.service";
+import { ExpenseService } from "../services/expense.service";
 import { GroupService } from "../services/group.service";
 import { NotificationService } from "../services/notification.service";
 import { UserService } from "../services/user.service";
-import { getFirebaseErrorMessage } from "../utilities/firebase-errors";
 
 import { CategorySelectorComponent } from "./category-selector.component";
 import { LayoutComponent } from "./shared/layout.component";
-import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
 import { NavigationService } from "../services/navigation.service";
 
 @Component({
@@ -52,7 +47,6 @@ import { NavigationService } from "../services/navigation.service";
 		ReactiveFormsModule,
 		MatSelectModule,
 		MatDatepickerModule,
-		PageNavHeaderComponent,
 		LayoutComponent,
 	],
 	providers: [provideNativeDateAdapter()],
@@ -63,6 +57,10 @@ import { NavigationService } from "../services/navigation.service";
           <mat-form-field>
             <mat-label>Description</mat-label>
             <input matInput [formControl]="form.controls.description" />
+          </mat-form-field>
+		  <mat-form-field>
+            <mat-label>Where</mat-label>
+            <input matInput [formControl]="form.controls.where" />
           </mat-form-field>
           <div class="row">
             <mat-form-field appearance="fill" floatLabel="always">
@@ -90,11 +88,11 @@ import { NavigationService } from "../services/navigation.service";
             <mat-form-field>
               <mat-label>Paid by</mat-label>
               <mat-select [formControl]="form.controls.paidBy">
-                @for (user of $currentGroup()?.users; track user) {
-                  <mat-option [value]="user?.uid">
-                    {{user.name}}
-                  </mat-option>
-                }
+				@for (member of (currentGroup$ | async)?.members; track member) {
+					<mat-option [value]="member.id">
+						{{member.name}}
+					</mat-option>
+				}
               </mat-select>
             </mat-form-field>
             <mat-form-field>
@@ -159,55 +157,50 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
 	private readonly bottomSheet = inject(MatBottomSheet);
 	private readonly formBuilder = inject(FormBuilder);
 	private readonly groupService = inject(GroupService);
-	private readonly groupExpenseService = inject(GroupExpenseService);
+	private readonly expenseService = inject(ExpenseService);
 	private readonly notification = inject(NotificationService);
 	private readonly userService = inject(UserService);
-	private readonly route = inject(ActivatedRoute);
-	private readonly router = inject(Router);
 	private readonly navigation = inject(NavigationService);
 
 	private selectedCategory = getCategoryById(101);
 	private expenseSubscription$$: Subscription | undefined;
 
-	private group$ = this.route.paramMap.pipe(
-		switchMap((params) =>
-			this.groupService.currentGroup$(params.get("groupId") ?? "")
-		)
-	);
-
-	private currentGroup$: Observable<Group> = combineLatest([
-		this.group$,
-		this.userService.user$,
-	]).pipe(
-		map(([group, currentUser]) => {
-			return {
-				...group,
-				users: group.users.map(user => 
-					user.uid === currentUser?.uid ? { ...user, name: "You" } : user
-				),
-			};
-		})
-	);
+	protected currentGroup$: Observable<Group> | undefined;
 
 	protected readonly form = this.formBuilder.group({
 		description: ["", Validators.required],
+		where: [""],
 		amount: this.formBuilder.control<number | null>(null, {
 			validators: [Validators.required],
 		}),
 		category: this.selectedCategory?.name,
-		paidBy: [this.userService.currentUser()?.uid, Validators.required],
+		paidBy: ["", Validators.required],
 		expenseDate: [new Date(), Validators.required],
 	});
 	protected categoryGroups = categoriesByGroup;
 	protected getCategoryById = getCategoryById;
-	protected $currentGroup = toSignal(this.currentGroup$);
 
-  @Input() groupId: string | undefined;
+  @Input() groupId: string = "";
   @Input() id: string | undefined;
 
   ngOnInit(): void {
-  	if (this.groupId && this.id) {
-  		this.expenseSubscription$$ = this.groupExpenseService.getExpense$(this.groupId, this.id)
+	this.currentGroup$ = combineLatest([
+		this.groupService.get$(this.groupId),
+		this.userService.user$,
+	]).pipe(
+		map(([group, currentUser]) => {
+			this.form.controls.paidBy.setValue(currentUser?.uid || "");
+			const member = group.members.find(member => member.id === currentUser?.uid);
+			if(member) {
+				member.name = "You";
+			}
+
+			return group;
+		})
+	);
+
+  	if (this.id) {
+  		this.expenseSubscription$$ = this.expenseService.get$(this.groupId, this.id)
   			.subscribe((expense) => {
   				if (expense.category) {
   					this.selectedCategory = getCategoryById(expense.category);
@@ -221,30 +214,29 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-  	if (this.expenseSubscription$$) {
-  		this.expenseSubscription$$.unsubscribe();
-  	}
+	this.expenseSubscription$$?.unsubscribe();
   }
 
   openCategorySheet() {
   	this.bottomSheet.open(CategorySelectorComponent)
 	  .afterDismissed()
 	  .subscribe(selectedCategoryId => {
-  			if (selectedCategoryId && typeof selectedCategoryId === "number" && selectedCategoryId > 0) {
-		  this.selectedCategory = getCategoryById(selectedCategoryId);
-		  this.form.controls.category.setValue(this.selectedCategory?.name || "");
-  			}
+		if (selectedCategoryId && typeof selectedCategoryId === "number" && selectedCategoryId > 0) {
+			this.selectedCategory = getCategoryById(selectedCategoryId);
+			this.form.controls.category.setValue(this.selectedCategory?.name || "");
+		}
 	  });
   }
 
   async submit() {
-  	const { description, amount, expenseDate, paidBy } = this.form.value;
+  	const { description, where, amount, expenseDate, paidBy } = this.form.value;
   	if (!this.form.valid || !this.groupId || !expenseDate || !paidBy || !description) {
   		return;
   	}
 
   	const expense = {
   		description,
+		where,
   		amount: +(amount ?? 0),
   		category: this.selectedCategory?.id,
   		expenseDate,
@@ -254,12 +246,13 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
   	try {
 		this.notification.showLoading();
   		await (this.id
-		  ? this.groupExpenseService.updateExpense(this.groupId, this.id, expense)
-		  : this.groupExpenseService.addExpense(this.groupId, expense)
+		  ? this.expenseService.update(this.groupId, this.id, expense)
+		  : this.expenseService.add(this.groupId, expense)
   		);
+
   		this.navigation.navigateBack();
 	  } catch (err) {
-  		this.notification.error(getFirebaseErrorMessage(err));
+  		this.notification.firebaseError(err);
 	  } finally {
 		this.notification.hideLoading();
 	  }
@@ -272,10 +265,10 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
 
   	try {
 		this.notification.showLoading();
-  		await this.groupExpenseService.deleteExpense(this.groupId, this.id);
+  		await this.expenseService.delete(this.groupId, this.id);
   		this.navigation.navigateBack();
   	} catch (err) {
-  		this.notification.error(getFirebaseErrorMessage(err));
+  		this.notification.firebaseError(err);
   	} finally {
 		this.notification.hideLoading();
 	}

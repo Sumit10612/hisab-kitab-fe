@@ -1,24 +1,24 @@
 import { CommonModule } from "@angular/common";
-import { Component, inject } from "@angular/core";
-import { toSignal } from "@angular/core/rxjs-interop";
+import { Component, Input, inject } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
 import { MatCardModule } from "@angular/material/card";
 import { MatDividerModule } from "@angular/material/divider";
 import { MatIconModule } from "@angular/material/icon";
-import { ActivatedRoute, RouterLink } from "@angular/router";
-import { combineLatest, map, switchMap } from "rxjs";
+import { RouterLink } from "@angular/router";
+import { Observable, combineLatest, map } from "rxjs";
 
 import { getCategoryById } from "../models/category.model";
 import { Expense } from "../models/expense.model";
-import { getGroupImage } from "../models/group.model";
-import { GroupExpenseService } from "../services/group-expense.service";
+import { Group, GroupMember, getGroupImage } from "../models/group.model";
+import { ExpenseService } from "../services/expense.service";
 import { GroupService } from "../services/group.service";
 import { UserService } from "../services/user.service";
 
 import { LayoutComponent } from "./shared/layout.component";
 import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
 import { GroupWidgetComponent } from "./widgets/group-widget.component";
+import { getYearMonth } from "../utilities/date";
 
 @Component({
 	selector: "app-group-editor",
@@ -40,32 +40,32 @@ import { GroupWidgetComponent } from "./widgets/group-widget.component";
       <div section="header" class="header-section">
         <app-page-nav-header
             backRoute="/home" 
-            [title]="$group()?.name"
+            [title]="group?.name"
             [template]="settingsRouteTemplate">
         </app-page-nav-header>
 
         <div class="header-section-group-info">
-            @if ($group()) {
-                <img
-                    width="50"
-                    height="50"
-                    [src]="getGroupImage($group()?.imageUrl).src"
-                    [alt]="getGroupImage($group()?.imageUrl).alt" />
-                
-                <div class="header-section-group-info-month">                  
-                  <span class="header-section-group-info-month-amount">
-                    &#8377; {{$group()?.thisMonthTotal ?? 0}}
-                  </span>                  
-                  <span class="header-section-group-info-month-label">this month</span>
-                </div>
+          @if (group) {
+            <img
+                width="50"
+                height="50"
+                [src]="getGroupImage(group.imageUrl).src"
+                [alt]="getGroupImage(group.imageUrl).alt" />
+            
+            <div class="header-section-group-info-month">                  
+              <span class="header-section-group-info-month-amount">
+                &#8377; {{getCurrentMonthTotal}}
+              </span>                  
+              <span class="header-section-group-info-month-label">this month</span>
+            </div>
 
-                <div class="header-section-group-info-total">
-                  <span class="header-section-group-info-total-amount">
-                    &#8377; {{$group()?.groupTotalAmount ?? 0}}
-                  </span>
-                  <span class="header-section-group-info-total-label">total</span>
-                </div>
-            }
+            <div class="header-section-group-info-total">
+              <span class="header-section-group-info-total-amount">
+                &#8377; {{group.groupTotal}}
+              </span>
+              <span class="header-section-group-info-total-label">total</span>
+            </div>
+          }
         </div>
 
         <div class="header-section-tab">
@@ -83,11 +83,11 @@ import { GroupWidgetComponent } from "./widgets/group-widget.component";
         <mat-card-content>
             @if (selectedTab === "expense") {
                 <div class="expenses-area">
-                  @for (kvp of $expenses() | keyvalue: noSort; track kvp) {
+                  @for (kvp of expenses$ | async | keyvalue: noSort; track kvp) {
                     <div class="expense-record-container">
                       <div class="month-group">{{ kvp.key | date: "MMMM yyyy" | uppercase }}</div>
                       @for (expense of kvp.value; track expense) {
-                        <a class="expense-record" [routerLink]="['/group', $group()?.uid, 'expense', expense.uid]">
+                        <a class="expense-record" [routerLink]="['/group', group?.id, 'expense', expense.id]">
                           <span class="expense-date">
                             <span class="expense-date-month">{{expense.expenseDate | date: "MMM" | uppercase}}</span>
                             <span class="expense-date-date">{{expense.expenseDate | date: "dd"}}</span>
@@ -117,8 +117,8 @@ import { GroupWidgetComponent } from "./widgets/group-widget.component";
     <div class="add-expense-button">
       <a mat-fab color="warn"
         role="button"
-        [routerLink]="['/group', $group()?.uid, 'expense']"
-        [disabled]="!$group()?.uid">
+        [routerLink]="['/group', group?.id, 'expense']"
+        [disabled]="!group?.id">
           <mat-icon>add</mat-icon>
       </a>
     </div>
@@ -126,8 +126,8 @@ import { GroupWidgetComponent } from "./widgets/group-widget.component";
     <ng-template #settingsRouteTemplate>
         <a role="button" 
           mat-icon-button
-          [routerLink]="['/group', $group()?.uid, 'settings']"
-          [disabled]="!$group()?.uid">
+          [routerLink]="['/group', group?.id, 'settings']"
+          [disabled]="!group?.id">
             <mat-icon>tune</mat-icon>
         </a>
     </ng-template>
@@ -252,35 +252,47 @@ import { GroupWidgetComponent } from "./widgets/group-widget.component";
 export class GroupEditorComponent {
 	private readonly userService = inject(UserService);
 	private readonly groupService = inject(GroupService);
-	private readonly groupExpenseService = inject(GroupExpenseService);
-	private readonly route = inject(ActivatedRoute);
+	private readonly expenseService = inject(ExpenseService);
 
-	private group$ = this.route.paramMap.pipe(
-		switchMap(params => this.groupService.currentGroup$(params.get("id") ?? ""))
-	);
-	private expenses$ = combineLatest([
-		this.userService.user$,
-		this.group$,
-		this.route.paramMap.pipe(
-			switchMap(params => this.groupExpenseService.getGroupExpenses$(params.get("id") ?? ""))
-		)
-	]).pipe(
-		map(([user, group, expenses]) => expenses.reduce((acc, e) => {
-			const key = `${e.expenseDate.getFullYear()}-${e.expenseDate.getMonth() + 1}`;    
-			acc[key] = acc[key] || [];
-			acc[key].push({
-				...e,
-				paidBy: e.paidBy === user?.uid ? "you" : group.users.find(user => user.uid === e.paidBy)?.name 
-			} as Expense);
-			return acc;
-		}, {} as Record<string, Expense[]>))
-	);
-
-	protected $group = toSignal(this.group$);
-	protected $expenses = toSignal(this.expenses$);
+	protected expenses$: Observable<Record<string, Expense[]>> | undefined;
+  protected group: Group | undefined;
 	protected getGroupImage = getGroupImage;
 	protected selectedTab: string = "expense";
 	protected getCategory = getCategoryById;
+
+  @Input() id: string = "";
+
+  ngOnInit() {
+    this.expenses$ = combineLatest([
+      this.userService.user$,
+      this.groupService.get$(this.id),
+      this.expenseService.getAll$(this.id)
+    ]).pipe(
+      map(([user, group, expenses]) => {
+        this.group = group;
+
+        const members = group.members.reduce((acc, member) => {
+          acc[member.id] = member;
+          return acc;
+        }, {} as Record<string, GroupMember>);
+
+        return expenses.reduce((acc, e) => {
+          const key = getYearMonth(e.expenseDate);    
+          acc[key] = acc[key] || [];
+          acc[key].push({
+            ...e,
+            paidBy: e.paidBy === user?.uid ? "you" : members[e.paidBy].name 
+          } as Expense);
+          return acc;
+        }, {} as Record<string, Expense[]>)
+      })
+    )
+  }
+
+  get getCurrentMonthTotal() {
+    const currentMonth = getYearMonth(new Date());
+    return this.group?.monthTotal[currentMonth] ?? 0;
+  }
 
 	noSort() {
 		return 0;

@@ -10,7 +10,7 @@ import { getGroupImage, Group } from "../../models/group.model";
 	standalone: true,
 	imports: [MatCardModule, MatIconModule, RouterLink],
 	template: `
-  <mat-card [routerLink]="['/group', data?.uid]">
+  <mat-card [routerLink]="['/group', data?.id]">
     <mat-card-content>
       <img
         width="66"
@@ -20,7 +20,7 @@ import { getGroupImage, Group } from "../../models/group.model";
 
       <div class="details-container">
         <div class="group-name">{{data?.name}}</div>
-        <span>Total balance &#8377;{{data?.groupTotalAmount ?? 0}}</span>
+        <span>Total balance &#8377;{{data?.groupTotal ?? 0}}</span>
       </div>
     </mat-card-content>
   </mat-card>

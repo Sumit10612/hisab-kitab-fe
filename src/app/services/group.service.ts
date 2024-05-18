@@ -1,23 +1,28 @@
 import { inject, Injectable } from "@angular/core";
-import { toSignal } from "@angular/core/rxjs-interop";
 import {
 	collection,
 	collectionData,
 	doc,
 	docData,
+	documentId,
 	Firestore,
+	getDocs,
 	query,
 	runTransaction,
 	where
 } from "@angular/fire/firestore";
 import {
+	concatMap,
+	filter,
 	Observable,
 	switchMap,
+	take,
 } from "rxjs";
 
-import { CreateGroup, Group, GroupExpenses, GroupUser } from "../models/group.model";
+import { Group } from "../models/group.model";
 
 import { UserService } from "./user.service";
+import { User } from "../models/user.model";
 
 @Injectable({
 	providedIn: "root"
@@ -26,59 +31,65 @@ export class GroupService {
 	private firestore = inject(Firestore);
 	private userService = inject(UserService);
 
-	private get myGroups$(): Observable<Group[]> {
-		const ref = collection(this.firestore, "groups");
-		return this.userService.user$.pipe(
-			switchMap((user) => {      
-				const q = query(ref, where("userIds", "array-contains", user?.uid));
-				return collectionData(q, { idField: "uid" }) as Observable<Group[]>;
-			})
-		);}
+	myGroups$ = this.userService.user$.pipe(
+		filter(user => !!user),
+		switchMap(user => {
+			const ref = collection(this.firestore, "groups");
+			const q = query(ref, where(documentId(), "in", user?.groups));
+			return collectionData(q, { idField: "id" }) as Observable<Group[]>;
+		})
+	);
 
-	currentGroup$(groupId: string): Observable<Group> {
+	get$(groupId: string): Observable<Group> {
 		const ref = doc(this.firestore, "groups", groupId);
-		return docData(ref, { idField: "uid" }) as Observable<Group>;
+		return docData(ref, { idField: "id" }) as Observable<Group>;
 	}
 
-	groupExpenses$(groupId: string): Observable<GroupExpenses> {
-		const ref = doc(this.firestore, "group_expenses", groupId);
-		return docData(ref, { idField: "groupId" }) as Observable<GroupExpenses>;
-	}
-  
-	$myGroups = toSignal(this.myGroups$);
+	create$(group: Group): Observable<string> {
+		const ref = doc(collection(this.firestore, "groups"));
+		return this.userService.user$.pipe(
+			take(1),
+			concatMap(user => runTransaction(this.firestore, async (transction) => {
+				if(!user) {
+					throw new Error("user not found");
+				}
 
-	createGroup(createGroup: CreateGroup): Promise<void> {
-		const groupRef = doc(collection(this.firestore, "groups"));
-		const groupExpenseRef = doc(this.firestore, "group_expenses", groupRef.id);
+				const userDocRef = doc(this.firestore, "users", user.uid);
+				const userGroups = ((await transction.get(userDocRef)).data() as User).groups ?? [];
 
-		return runTransaction(this.firestore, async (transation) => {
-			const user = this.userService.currentUser();
-			if(user) {
-				transation.set(groupRef, {
-					name: createGroup.name,
-					imageUrl: createGroup.imageUrl,
-					userIds: [user?.uid ?? ""],
-					users: [{
-						uid: user?.uid ?? "",
-						name: user?.name,
-						photoUrl: user?.photoUrl,
-						role: "admin"
-					} as GroupUser]
+				transction.set(ref, {
+					...group,
+					members: [{
+						id: user.uid,
+						name: user.name
+					}]
 				} as Group);
 
-				transation.set(groupExpenseRef, {
-					groupId: groupRef.id
-				} as GroupExpenses);
-			}
-		});
+				
+				transction.update(userDocRef, {
+					groups: [...userGroups, ref.id]
+				});
+
+				return ref.id;
+			}))
+		);
 	}
 
-	deleteGroup(groupId: string): Promise<void> {
+	delete(groupId: string): Promise<void> {
 		const groupRef = doc(this.firestore, "groups", groupId);
-		const groupExpenseRef = doc(this.firestore, "group_expenses", groupId);
-		return runTransaction(this.firestore, async (trasaction) => {
-			trasaction.delete(groupRef);
-			trasaction.delete(groupExpenseRef);
+		const usersRef = collection(this.firestore, "users");
+		const q = query(usersRef, where("groups", "array-contains", groupId));
+		return runTransaction(this.firestore, async (transaction) => {
+			const usersSnapshot = await getDocs(q);
+			usersSnapshot.forEach(userDoc => {
+				const userRef = doc(this.firestore, "users", userDoc.id);
+				const groups = (userDoc.data() as User).groups ?? [];
+				transaction.update(userRef, {
+					groups: groups.filter(group => groupId !== group)
+				});
+			});
+
+			transaction.delete(groupRef);
 		});
 	}
 }

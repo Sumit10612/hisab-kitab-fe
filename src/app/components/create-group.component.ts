@@ -3,16 +3,14 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from "@angula
 import { MatButtonModule } from "@angular/material/button";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
-import { Router } from "@angular/router";
 
 import { groupImages } from "../models/group.model";
 import { GroupService } from "../services/group.service";
 import { NotificationService } from "../services/notification.service";
-import { UserService } from "../services/user.service";
-import { getFirebaseErrorMessage } from "../utilities/firebase-errors";
 
 import { LayoutComponent } from "./shared/layout.component";
-import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
+import { finalize } from "rxjs";
+import { NavigationService } from "../services/navigation.service";
 
 @Component({
 	selector: "app-create-group",
@@ -22,14 +20,11 @@ import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
 		MatFormFieldModule,
 		MatInputModule,
 		MatButtonModule,
-		PageNavHeaderComponent,
 		LayoutComponent
 	],
 	template: `
-    <app-layout>
+    <app-layout [showNav]="true" pageTitle="Create a group">
       <div section="header">
-        <app-page-nav-header backRoute="/home" title="Create a group"></app-page-nav-header>
-
         <div class="create-group-section">
           <form [formGroup]="form" (ngSubmit)="create()">
             <mat-form-field>
@@ -99,10 +94,9 @@ import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
   `]
 })
 export class CreateGroupComponent {
-	private readonly router = inject(Router);
 	private readonly notification = inject(NotificationService);
+  private readonly navigation = inject(NavigationService);
 	private readonly groupService = inject(GroupService);
-	private readonly usersService = inject(UserService);
   
 	protected readonly formBuilder = inject(NonNullableFormBuilder);
 
@@ -123,20 +117,17 @@ export class CreateGroupComponent {
 			return;
 		}
 
-		try {
-			this.notification.showLoading();
-			await this.groupService.createGroup({
-				name, 
-				imageUrl: this.groupImages[this.selectedIndex].alt,
-				groupTotalAmount: 0,
-        thisMonthTotal: 0
-			});
-
-			this.router.navigate(["home"]);
-		} catch (error) {
-			this.notification.error(getFirebaseErrorMessage(error));
-		} finally {
-			this.notification.hideLoading();
-		}
+    this.groupService.create$({
+      name,
+      imageUrl: groupImages[this.selectedIndex].alt,
+      groupTotal: 0,
+      members: [],
+      monthTotal: {}
+    }).pipe(
+      finalize(() => this.notification.hideLoading())
+    ).subscribe({
+      next: (id) => this.navigation.navigateTo(["/group", id]), 
+      error: (error) => this.notification.firebaseError(error) 
+    });
 	}
 }

@@ -11,9 +11,15 @@ import { NavigationService } from "../../services/navigation.service";
 	imports: [CommonModule, MatIconModule, MatButtonModule, RouterLink],
 	template: `
     <div class="page-section">
-      <button mat-icon-button (click)="navigateBack()">
-        <mat-icon>arrow_back_ios</mat-icon>
-      </button>
+      @if (backRoute) {
+        <a role="button" mat-icon-button [routerLink]="backRoute">
+          <mat-icon>arrow_back_ios</mat-icon>
+        </a>
+      } @else {
+        <button mat-icon-button (click)="navigateBack()">
+          <mat-icon>arrow_back_ios</mat-icon>
+        </button>
+      }
       <div class="title"><h2>{{title}}</h2></div>
       <div class="end">
         @if(template) {
@@ -41,6 +47,7 @@ import { NavigationService } from "../../services/navigation.service";
 export class PageNavHeaderComponent {
   private readonly navigation = inject(NavigationService);
 
+  @Input() backRoute: string | undefined;
   @Input() title: string | undefined;
   @Input() template: TemplateRef<unknown> | undefined;
 

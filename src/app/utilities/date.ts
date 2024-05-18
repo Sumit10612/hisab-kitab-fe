@@ -1,0 +1,1 @@
+export const getYearMonth = (date: Date): string => `${date.getFullYear()}-${date.getMonth() + 1}`;

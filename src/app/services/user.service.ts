@@ -3,7 +3,7 @@ import { toSignal } from "@angular/core/rxjs-interop";
 import { Firestore } from "@angular/fire/firestore";
 import { doc, setDoc, updateDoc } from "firebase/firestore";
 import { docData } from "rxfire/firestore";
-import { Observable, of, switchMap } from "rxjs";
+import { Observable, of, switchMap, take } from "rxjs";
 
 import { User } from "../models/user.model";
 
@@ -17,6 +17,7 @@ export class UserService {
 	authService = inject(AuthService);
 
 	user$ = this.authService.currentUser$.pipe(
+		take(1),
 		switchMap((user) => {
 			if(!user) {
 				return of(null);

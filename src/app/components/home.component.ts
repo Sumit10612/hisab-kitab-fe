@@ -12,11 +12,13 @@ import { UserService } from "../services/user.service";
 import { LayoutComponent } from "./shared/layout.component";
 import { GroupWidgetComponent } from "./widgets/group-widget.component";
 import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
+import { CommonModule } from "@angular/common";
 
 @Component({
 	selector: "app-home",
 	standalone: true,
 	imports: [
+    CommonModule,
 		MatButtonModule, 
 		MatIconModule,
 		MatDividerModule,
@@ -53,7 +55,7 @@ import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
           <mat-card-title>Groups</mat-card-title>          
         </mat-card-header>
           <mat-card-content>
-            @for (item of groupService.$myGroups(); track item) {
+            @for (item of groupService.myGroups$ | async; track item) {
               <app-group-widget [data]="item"></app-group-widget>
             }
           </mat-card-content>

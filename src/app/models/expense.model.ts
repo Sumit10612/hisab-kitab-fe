@@ -1,8 +1,9 @@
 import { Timestamp } from "firebase/firestore";
 
 export interface ExpenseBase {
-	uid?: string;
+	id?: string;
     description: string;
+	where?: string;
     amount: number;
     category?: number;
     paidBy: string;
@@ -23,7 +24,7 @@ export class ExpenseHelper {
 		return {
 			...base,
 			expenseDate: Timestamp.fromDate(expense.expenseDate),
-			timestamp: Timestamp.fromDate(new Date)
+			timestamp: Timestamp.fromDate(new Date())
 		};
 	}
 

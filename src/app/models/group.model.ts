@@ -1,28 +1,18 @@
 import { Image } from "./image.model";
 
-export interface GroupUser {
-	uid: string;
+export interface Group {
+	id?: string;
 	name: string;
-	photoUrl?: string;
+	imageUrl: string;
+	members: GroupMember[];
+	groupTotal: number;
+	monthTotal: Record<string, number>;
+}
+
+export interface GroupMember {
+	id: string;
+	name: string;
 	role?: "admin" | "user";
-}
-
-export interface CreateGroup {
-    name: string;
-    imageUrl: string;
-	groupTotalAmount: number;
-	thisMonthTotal: number;
-}
-
-export interface Group extends CreateGroup {
-    uid?: string;
-	userIds: string[];
-	users: GroupUser[];
-}
-
-export interface GroupExpenses {
-	groupId: string;
-	monthTotal: Record<number, number>;
 }
 
 export const getGroupImage = (alt?: string) => {
