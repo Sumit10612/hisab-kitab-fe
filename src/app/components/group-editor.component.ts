@@ -42,7 +42,7 @@ import { LayoutComponent } from "./shared/layout.component";
 			<form [formGroup]="form" (ngSubmit)="create()">
 				<mat-form-field>
 					<mat-label>Group Name</mat-label>
-					<input matInput [formControl]="form.controls.name" [readonly]="currentUser?.role !== 'admin'" />
+					<input matInput [formControl]="form.controls.name" [readonly]="id && currentUser?.role !== 'admin'" />
 				</mat-form-field>
 
 				<div class="image-container">
@@ -63,7 +63,7 @@ import { LayoutComponent } from "./shared/layout.component";
 		</div>
 
 		<div section="detail" class="detail-section">
-			@if (currentUser?.role === "admin") {
+			@if (currentUser?.role === "admin" || !id) {
 				<button 
 					(click)="id ? update() : create()"
 					mat-raised-button
@@ -78,6 +78,9 @@ import { LayoutComponent } from "./shared/layout.component";
 				<mat-card>
 					<mat-card-header>
 						<mat-card-subtitle>Members:</mat-card-subtitle>
+						<button mat-mini-fab color="primary">
+							<mat-icon>person_add</mat-icon>
+						</button>
 					</mat-card-header>
 					<mat-card-content>
 						@for (member of members; track member) {
@@ -88,9 +91,14 @@ import { LayoutComponent } from "./shared/layout.component";
 								</div>
 								@if (currentUser && isAdmin(currentUser)) {
 									<div class="user-actions">
-										<button mat-button>Delete</button>
-										<button mat-button>
-											Remove
+										<button
+											mat-button
+											[hidden]="isCurrentUser(member)"
+											(click)="toggelAdmin(member)">
+												{{isAdmin(member) ? "Remove" : "Make"}} admin
+										</button>
+										<button mat-button color="warn" [disabled]="isCurrentUser(member)">
+											<mat-icon>person_remove</mat-icon>
 										</button>
 									</div>
 								}
@@ -98,7 +106,14 @@ import { LayoutComponent } from "./shared/layout.component";
 							<mat-divider></mat-divider>
 						}
 					</mat-card-content>
-				</mat-card>				
+				</mat-card>
+
+				<button
+					mat-raised-button
+					color="warn"
+					class="rounded-button">
+						Leave Group
+				</button>		
 			}
 
 			@if (id && currentUser?.role === "admin") {
@@ -156,6 +171,12 @@ import { LayoutComponent } from "./shared/layout.component";
 			width: 100%;
 			height: 250px;
 
+			> mat-card-header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+			}
+
 			> mat-card-content {
 				display: flex;
 				flex-direction: column;
@@ -164,6 +185,7 @@ import { LayoutComponent } from "./shared/layout.component";
 					display: flex;
 					align-items: center;
 					justify-content: space-between;
+					margin: 8px 0;
 				}
 
 				.user-details {
@@ -181,10 +203,8 @@ import { LayoutComponent } from "./shared/layout.component";
 
 					> button {
 						min-width: fit-content;
-					}
-
-					.mat-icon {
-						transform: scale(0.7);
+						font-size: 12px;
+						font-weight: 100;
 					}
 				}
 			}
@@ -260,32 +280,37 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	async update() {
+	update() {
 		const { name } = this.form.value;
 		if(!name || this.selectedIndex == undefined) {
 			return;
 		}
 
-		try {
-			this.notification.showLoading();
-			await this.groupService.update(this.id, name, groupImages[this.selectedIndex].alt);
-			this.navigation.navigateTo(["/group-detail", this.id]);
-		} catch (err) {
-			this.notification.firebaseError(err);
-		} finally {
-			this.notification.hideLoading();
-		}
+		this.notification.showLoading();
+		this.groupService.update$(this.id, name, groupImages[this.selectedIndex].alt).pipe(
+			finalize(() => this.notification.hideLoading())
+		).subscribe({
+			next: () => this.navigation.navigateTo(["/group-detail", this.id]),
+			error: (error) => this.notification.firebaseError(error) 
+		});this.notification.hideLoading();
 	}
 
-	async deleteGroup() {
-		try {
-			this.notification.showLoading();
-			await this.groupService.delete(this.id);
-			this.navigation.navigateTo(["/home"]);
-		} catch (err) {
-			this.notification.firebaseError(err);
-		} finally {
-			this.notification.hideLoading();
-		}
+	toggelAdmin(member: GroupMember) {
+		this.notification.showLoading();
+		this.groupService.updateRole$(this.id, member.id, member.role === "admin" ? "user" : "admin").pipe(
+			finalize(() => this.notification.hideLoading())
+		).subscribe({
+			error: (error) => this.notification.firebaseError(error) 
+		});
+	}
+
+	deleteGroup() {
+		this.notification.showLoading();
+		this.groupService.delete$(this.id).pipe(
+			finalize(() => this.notification.hideLoading())
+		).subscribe({
+			next: () => this.navigation.navigateTo(["/home"]),
+			error: (error) => this.notification.firebaseError(error) 
+		});
 	}
 }

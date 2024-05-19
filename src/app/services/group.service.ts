@@ -19,6 +19,7 @@ import {
 	Observable,
 	switchMap,
 	take,
+	tap,
 } from "rxjs";
 
 import { Group } from "../models/group.model";
@@ -92,29 +93,84 @@ export class GroupService {
 		);
 	}
 
-	update(id: string, name: string, imageUrl: string): Promise<void> {
+	update$(id: string, name: string, imageUrl: string) {
 		const ref = doc(this.firestore, "groups", id);
-		return updateDoc(ref, {
-			name,
-			imageUrl
-		});
+		return this.userService.user$.pipe(
+			take(1),
+			switchMap(user => runTransaction(this.firestore, async (transaction) => {
+				const groupDoc = await transaction.get(ref);
+				if(!groupDoc.exists()) {
+					throw "Group doesnot exists."
+				}
+
+				if(this.isCurrentUserAuthorizedToUpdate(user, groupDoc.data() as Group)) {
+					transaction.update(ref, {
+						name,
+						imageUrl
+					});
+				}
+			}))
+		);
 	}
 
-	delete(id: string): Promise<void> {
+	updateRole$(id: string, memberId: string, roleToUpdate: "admin" | "user") {
+		const ref = doc(this.firestore, "groups", id);
+		return this.userService.user$.pipe(
+			take(1),
+			tap(user => runTransaction(this.firestore, async (transaction) => {
+				const groupDoc = await transaction.get(ref);
+				if(!groupDoc.exists()) {
+					throw "Group not found";
+				}
+
+				const group = groupDoc.data() as Group;
+				if(this.isCurrentUserAuthorizedToUpdate(user, group)) {
+					transaction.update(ref, { 
+						members: group.members.map(
+							member => member.id === memberId ? { ...member, role: roleToUpdate } : member
+						)
+					});
+				}
+			}))
+		)
+	}
+
+	delete$(id: string) {
 		const groupRef = doc(this.firestore, "groups", id);
 		const usersRef = collection(this.firestore, "users");
 		const q = query(usersRef, where("groups", "array-contains", id));
-		return runTransaction(this.firestore, async (transaction) => {
-			const usersSnapshot = await getDocs(q);
-			usersSnapshot.forEach(userDoc => {
-				const userRef = doc(this.firestore, "users", userDoc.id);
-				const groups = (userDoc.data() as User).groups ?? [];
-				transaction.update(userRef, {
-					groups: groups.filter(groupId => id !== groupId)
-				});
-			});
 
-			transaction.delete(groupRef);
-		});
+		return this.userService.user$.pipe(
+			take(1),
+			tap(user => runTransaction(this.firestore, async (transaction) => {
+				const groupDoc = await transaction.get(groupRef);
+				if(!groupDoc.exists()) {
+					throw "Group not found";
+				}
+
+				const group = groupDoc.data() as Group;
+				if(this.isCurrentUserAuthorizedToUpdate(user, group)) {
+					const usersSnapshot = await getDocs(q);
+					usersSnapshot.forEach(userDoc => {
+						const userRef = doc(this.firestore, "users", userDoc.id);
+						const groups = (userDoc.data() as User).groups ?? [];
+						transaction.update(userRef, {
+							groups: groups.filter(groupId => id !== groupId)
+						});
+					});
+		
+					transaction.delete(groupRef);
+				}				
+			}))
+		);
+	}
+
+	private isCurrentUserAuthorizedToUpdate(user: User | null, group: Group) {
+		const currentMember = group.members.find(member => member.id === user?.uid);
+		if(!currentMember || currentMember.role !== "admin") {
+			throw "User is not authorised to perform this action";
+		}
+
+		return true;
 	}
 }
