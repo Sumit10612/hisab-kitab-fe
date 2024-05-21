@@ -62,10 +62,6 @@ export class GroupService {
 		);
 	}
 
-	addCurrentUserToGroup(id: string, otp: number) {
-
-	}
-
 	create$(group: Group): Observable<string> {
 		const ref = doc(collection(this.firestore, "groups"));
 		return this.userService.user$.pipe(

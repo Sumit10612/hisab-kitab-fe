@@ -163,7 +163,7 @@ import { LayoutComponent } from "./shared/layout.component";
 		<div class="add-user-to-group-template">
 			<div class="code">{{groupCode}}</div>
 			<span class="timer">code is valid only for 5 minutes</span>
-			<p>Others can access your group <br/>
+			<p>Others can join this group <br/>
 				using the above code</p>
 		</div>
 	</ng-template>
@@ -361,7 +361,13 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 	}
 
 	joinGroup($event: number) {
-		this.groupService.addCurrentUserToGroup(this.id, $event);
+		this.notification.showLoading();
+		this.groupCodeService.addMemeberToGroup$($event).pipe(
+			finalize(() => this.notification.hideLoading())
+		).subscribe({
+			next: (id) => this.navigation.navigateTo(["/group-detail", id]),
+			error: (error) => this.notification.error(error)
+		})
 		this.joinGroupDialogRef?.close();
 	}
 
@@ -394,7 +400,6 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 		this.groupService.update$(this.id, this.groupName).pipe(
 			finalize(() => this.notification.hideLoading())
 		).subscribe({
-			next: () => this.navigation.navigateTo(["/group-detail", this.id]),
 			error: (error) => this.notification.firebaseError(error) 
 		});this.notification.hideLoading();
 	}
