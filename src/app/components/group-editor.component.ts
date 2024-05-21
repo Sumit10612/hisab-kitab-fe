@@ -3,48 +3,77 @@ import {
 	inject,
 	Input,
 	OnDestroy,
-	OnInit
+	OnInit,
+	TemplateRef,
+	ViewChild
 } from "@angular/core";
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
+import { FormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatCardModule } from "@angular/material/card";
+import { MatDialog, MatDialogRef } from "@angular/material/dialog";
 import { MatDividerModule } from "@angular/material/divider";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatIconModule } from "@angular/material/icon";
 import { MatInputModule } from "@angular/material/input";
-import {MatSlideToggleModule} from "@angular/material/slide-toggle";
-import { finalize, Subscription } from "rxjs";
+import {
+	finalize,
+	interval,
+	map,
+	Subscription,
+	tap
+} from "rxjs";
 
 import { groupImages, GroupMember } from "../models/group.model";
+import { GroupCodeService } from "../services/group-code.service";
 import { GroupService } from "../services/group.service";
 import { NavigationService } from "../services/navigation.service";
 import { NotificationService } from "../services/notification.service";
 
+import { OtpComponent } from "./otp.component";
+import { DialogComponent } from "./shared/dialog.component";
 import { LayoutComponent } from "./shared/layout.component";
 
 @Component({
 	selector: "app-group-editor",
 	standalone: true,
 	imports: [
+		FormsModule,
 		LayoutComponent, 
 		MatButtonModule,
 		MatFormFieldModule,
 		MatInputModule,
 		MatDividerModule,
 		MatCardModule,
-		ReactiveFormsModule,
 		MatIconModule,
-		MatSlideToggleModule
+		OtpComponent
 	],
 	template: `
     <app-layout [showNav]="true" [pageTitle]="id ? 'Settings' : 'Create a group'">
-		<div section="header" class="create-group-section">
-			<form [formGroup]="form" (ngSubmit)="create()">
-				<mat-form-field>
-					<mat-label>Group Name</mat-label>
-					<input matInput [formControl]="form.controls.name" [readonly]="id && currentUser?.role !== 'admin'" />
-				</mat-form-field>
-
+		<div section="header" class="header-section">
+			<mat-form-field>
+				<mat-label>Group Name</mat-label>
+				<input matInput [(ngModel)]="groupName" [readonly]="id && currentUser?.role !== 'admin'" />
+			</mat-form-field>
+			@if (id) {
+				@if (currentUser?.role === "admin") {
+					<div class="btn-group">
+						<button mat-raised-button
+							(click)="update()"
+							class="rounded-button"
+							color="primary"
+							[disabled]="!groupName || oldGroupName === groupName">
+								Update Group Name
+						</button>
+						
+						<button mat-raised-button
+							color="primary"
+							class="rounded-button"
+							(click)="openAddMemberDialog()">
+							Invite Member
+						</button>
+					</div>
+				}
+			} @else {
 				<div class="image-container">
 					@for (item of groupImages; track item) {
 						<div>
@@ -59,28 +88,14 @@ import { LayoutComponent } from "./shared/layout.component";
 						</div>      
 					}
 				</div>
-			</form>
+			}
 		</div>
 
 		<div section="detail" class="detail-section">
-			@if (currentUser?.role === "admin" || !id) {
-				<button 
-					(click)="id ? update() : create()"
-					mat-raised-button
-					class="rounded-button"
-					color="primary"
-					[disabled]="!form.dirty || !(selectedIndex === 0 ? 1 : selectedIndex)">
-						{{ id ? "Update" : "Create" }} Group
-				</button>
-			}
-
 			@if (id) {
 				<mat-card>
 					<mat-card-header>
 						<mat-card-subtitle>Members:</mat-card-subtitle>
-						<button mat-mini-fab color="primary">
-							<mat-icon>person_add</mat-icon>
-						</button>
 					</mat-card-header>
 					<mat-card-content>
 						@for (member of members; track member) {
@@ -114,6 +129,22 @@ import { LayoutComponent } from "./shared/layout.component";
 					class="rounded-button">
 						Leave Group
 				</button>		
+			} @else {
+				<button 
+					(click)="create()"
+					mat-raised-button
+					class="rounded-button"
+					color="primary"
+					[disabled]="!groupName || !(selectedIndex === 0 ? 1 : selectedIndex)">
+						Create Group
+				</button>
+				<span>-- OR --</span>
+				<button (click)="openJoinGroupDialog()"
+					mat-raised-button
+					class="rounded-button"
+					color="primary">
+						Join Group
+				</button>
 			}
 
 			@if (id && currentUser?.role === "admin") {
@@ -127,15 +158,29 @@ import { LayoutComponent } from "./shared/layout.component";
 			}
 		</div>
     </app-layout>
+
+	<ng-template #addUserToGroupDialogTemplate>
+		<div class="add-user-to-group-template">
+			<div class="code">{{groupCode}}</div>
+			<span class="timer">code is valid only for 5 minutes</span>
+			<p>Others can access your group <br/>
+				using the above code</p>
+		</div>
+	</ng-template>
+
+	<ng-template #joinGroupDialogTemplate>
+		<app-otp (onCancel)="closeJoinGroupDialog()" (onSubmit)="joinGroup($event)"></app-otp>
+	</ng-template>
   `,
 	styles:[`
-	.create-group-section {
+	.header-section {
       margin: 16px;
+	  display: flex;
+	  flex-direction: column;
 
       .image-container {
         display: flex;
         overflow-x: auto;
-        margin-bottom: 24px;
         white-space: nowrap;
 
         > div {
@@ -171,12 +216,6 @@ import { LayoutComponent } from "./shared/layout.component";
 			width: 100%;
 			height: 250px;
 
-			> mat-card-header {
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-			}
-
 			> mat-card-content {
 				display: flex;
 				flex-direction: column;
@@ -210,31 +249,59 @@ import { LayoutComponent } from "./shared/layout.component";
 			}
 		}
     }
+
+	.btn-group {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 16px;
+	}
+
+	.add-user-to-group-template {
+		text-align: center;
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+
+		.timer {
+			font-size: 0.6rem;
+		}
+
+		.code {
+			font-size: 2rem;
+			font-weight: 500;
+			letter-spacing: 8px;
+		}
+	}
   `]
 })
 export class GroupEditorComponent implements OnInit, OnDestroy {
 	private readonly notification = inject(NotificationService);
 	private readonly navigation = inject(NavigationService);
 	private readonly groupService = inject(GroupService);
+	private readonly dialog = inject(MatDialog);
+	private readonly groupCodeService = inject(GroupCodeService);
 
 	private groupSubscription$$: Subscription | undefined;
-
-	protected readonly formBuilder = inject(NonNullableFormBuilder);
+	private joinGroupDialogRef: MatDialogRef<DialogComponent, any> | undefined;
 
 	protected  groupImages = groupImages;
 	protected selectedIndex: number | undefined;
-	protected form = this.formBuilder.group({
-		name: ["", [Validators.required]],
-	});
 	protected members: GroupMember[] | undefined;
 	protected currentUser: GroupMember | undefined;
+	protected groupName: string | undefined;
+	protected oldGroupName: string | undefined;
+	protected groupCode: number | undefined;
 
 	@Input() id: string = "";
+	
+	@ViewChild("joinGroupDialogTemplate") joinGroupDialogTemplate: TemplateRef<any> | undefined;
+	@ViewChild("addUserToGroupDialogTemplate") addUserToGroupDialogTemplate: TemplateRef<any> | undefined;
 
 	ngOnInit(): void {
 		if(this.id) {
 			this.groupSubscription$$ = this.groupService.get$(this.id).subscribe(group => {
-				this.form.patchValue({ ...group });
+				this.groupName = this.oldGroupName = group.name;
 				this.selectedIndex = groupImages.findIndex(g => g.alt === group.imageUrl);
 				this.members = group.members;
 				this.currentUser = this.members.find(member => this.isCurrentUser(member));
@@ -256,18 +323,56 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 
 	selectImage(index: number) {
 		this.selectedIndex = index;
-		this.form.markAsDirty();
+	}
+
+	openAddMemberDialog() {
+		const addMemberDialogRef = this.dialog.open(DialogComponent, {
+			data: {
+				template: this.addUserToGroupDialogTemplate
+			}
+		});
+
+		addMemberDialogRef.afterOpened().subscribe(async _ => {
+			this.notification.showLoading();
+			try {
+				this.groupCode = await this.groupCodeService.getCode(this.id);
+			} catch(err) {
+				this.notification.firebaseError(err);
+			} finally {
+				this.notification.hideLoading();
+			}
+
+			setTimeout(() => {
+				addMemberDialogRef.close();
+			}, 300000);
+		});
+	}
+
+	openJoinGroupDialog() {
+		this.joinGroupDialogRef = this.dialog.open(DialogComponent, {
+			data: {
+				template: this.joinGroupDialogTemplate
+			}
+		});
+	}
+
+	closeJoinGroupDialog() {
+		this.joinGroupDialogRef?.close();
+	}
+
+	joinGroup($event: number) {
+		this.groupService.addCurrentUserToGroup(this.id, $event);
+		this.joinGroupDialogRef?.close();
 	}
 
 	create() {
-		const { name } = this.form.value;
-		if(!name || this.selectedIndex == undefined) {
+		if(!this.groupName || this.selectedIndex == undefined) {
 			return;
 		}
 
 		this.notification.showLoading();
 		this.groupService.create$({
-			name,
+			name: this.groupName,
 			imageUrl: groupImages[this.selectedIndex].alt,
 			groupTotal: 0,
 			members: [],
@@ -281,13 +386,12 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 	}
 
 	update() {
-		const { name } = this.form.value;
-		if(!name || this.selectedIndex == undefined) {
+		if(!this.groupName) {
 			return;
 		}
 
 		this.notification.showLoading();
-		this.groupService.update$(this.id, name, groupImages[this.selectedIndex].alt).pipe(
+		this.groupService.update$(this.id, this.groupName).pipe(
 			finalize(() => this.notification.hideLoading())
 		).subscribe({
 			next: () => this.navigation.navigateTo(["/group-detail", this.id]),

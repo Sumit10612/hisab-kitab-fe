@@ -50,7 +50,7 @@ import { LayoutComponent } from "./shared/layout.component";
 	],
 	providers: [provideNativeDateAdapter()],
 	template: `
-    <app-layout [showNav]="true" [pageTitle]="(id ? 'Update' : 'Add') + ' expense'">
+    <app-layout [showNav]="true" [pageTitle]="(id ? 'Update' : 'Add') + ' an expense'">
       <div section="detail" class="detail-section">
         <form [formGroup]="form" (ngSubmit)="submit()">
           <mat-form-field>

@@ -9,7 +9,6 @@ import {
 	getDocs,
 	query,
 	runTransaction,
-	updateDoc,
 	where
 } from "@angular/fire/firestore";
 import {
@@ -63,6 +62,10 @@ export class GroupService {
 		);
 	}
 
+	addCurrentUserToGroup(id: string, otp: number) {
+
+	}
+
 	create$(group: Group): Observable<string> {
 		const ref = doc(collection(this.firestore, "groups"));
 		return this.userService.user$.pipe(
@@ -93,20 +96,19 @@ export class GroupService {
 		);
 	}
 
-	update$(id: string, name: string, imageUrl: string) {
+	update$(id: string, name: string) {
 		const ref = doc(this.firestore, "groups", id);
 		return this.userService.user$.pipe(
 			take(1),
 			switchMap(user => runTransaction(this.firestore, async (transaction) => {
 				const groupDoc = await transaction.get(ref);
 				if(!groupDoc.exists()) {
-					throw "Group doesnot exists."
+					throw "Group doesnot exists.";
 				}
 
 				if(this.isCurrentUserAuthorizedToUpdate(user, groupDoc.data() as Group)) {
 					transaction.update(ref, {
 						name,
-						imageUrl
 					});
 				}
 			}))
@@ -132,7 +134,7 @@ export class GroupService {
 					});
 				}
 			}))
-		)
+		);
 	}
 
 	delete$(id: string) {
