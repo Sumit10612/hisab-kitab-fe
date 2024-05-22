@@ -3,7 +3,7 @@ import { initializeApp, provideFirebaseApp } from "@angular/fire/app";
 import { getAuth, provideAuth } from "@angular/fire/auth";
 import { getFirestore, provideFirestore } from "@angular/fire/firestore";
 import { MatBottomSheetModule } from "@angular/material/bottom-sheet";
-import { MatDialogRef } from "@angular/material/dialog";
+import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
 import { MatSnackBarModule } from "@angular/material/snack-bar";
 import { provideAnimationsAsync } from "@angular/platform-browser/animations/async";
 import { provideRouter, withComponentInputBinding } from "@angular/router";
@@ -40,5 +40,6 @@ export const appConfig: ApplicationConfig = {
 		}),
 		{ provide: APP_INITIALIZER, useFactory: initializer, deps: [PwaService], multi: true },
 		{ provide: MatDialogRef, useValue: {}},
+		{ provide: MAT_DIALOG_DATA, useValue: {}},
 	]
 };

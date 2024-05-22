@@ -8,13 +8,14 @@ import {
 	query
 } from "@angular/fire/firestore";
 import { runTransaction, where } from "firebase/firestore";
+import { Observable, switchMap, take } from "rxjs";
 
 import { GroupCode, isExpired, toFirestore } from "../models/group-code.model";
-import { generateRandomNumber } from "../utilities/common";
-import { AuthService } from "./auth.service";
-import { map, Observable, switchMap, take } from "rxjs";
-import { User } from "../models/user.model";
 import { Group, GroupMember } from "../models/group.model";
+import { User } from "../models/user.model";
+import { generateRandomNumber } from "../utilities/common";
+
+import { AuthService } from "./auth.service";
 
 @Injectable({
 	providedIn: "root"
@@ -68,12 +69,16 @@ export class GroupCodeService {
 					const groupCodeDoc = querySnapshot.docs[0];
 					const groupCode = groupCodeDoc.data() as GroupCode;
 					if(isExpired(groupCode)) {
-						throw "Code expired."
+						throw "Code expired.";
 					} else if(+groupCode.code !== code) {
 						throw "Invalide code";
 					}
 
-					const groups = [...userData.groups ?? [], groupCodeDoc.id]
+					if(userData.groups?.findIndex(groupId => groupId === groupCodeDoc.id) === 1) {
+						return groupCodeDoc.id;
+					}
+
+					const groups = [...userData.groups ?? [], groupCodeDoc.id];
 
 					const groupRef = doc(this.fireStore, "groups", groupCodeDoc.id);
 					const groupSnapshot = await transaction.get(groupRef);
@@ -85,7 +90,7 @@ export class GroupCodeService {
 					const members = [
 						...group.members ?? [],
 						{ id: userData.uid, name: userData.name } as GroupMember
-					]
+					];
 
 					transaction.update(groupRef, { members });
 					transaction.update(userRef, { groups });
@@ -93,6 +98,6 @@ export class GroupCodeService {
 					return groupCodeDoc.id;
 				});
 			})
-		)
+		);
 	}
 }

@@ -50,106 +50,106 @@ import { LayoutComponent } from "./shared/layout.component";
 	],
 	providers: [provideNativeDateAdapter()],
 	template: `
-    <app-layout [showNav]="true" [pageTitle]="(id ? 'Update' : 'Add') + ' an expense'">
-      <div section="detail" class="detail-section">
-        <form [formGroup]="form" (ngSubmit)="submit()">
-          <mat-form-field>
+	<app-layout [showNav]="true" [pageTitle]="(id ? 'Update' : 'Add') + ' an expense'">
+		<div section="detail" class="detail-section">
+		<form [formGroup]="form" (ngSubmit)="submit()">
+			<mat-form-field>
 			<mat-label>Description</mat-label>
-            <input matInput [formControl]="form.controls.description" />
-          </mat-form-field>
-		  <mat-form-field>
-            <mat-label>Where</mat-label>
-            <input matInput [formControl]="form.controls.where" />
-          </mat-form-field>
-          <div class="row">
-            <mat-form-field appearance="fill" floatLabel="always">
-              <mat-label>Amount</mat-label>
-              <span matTextPrefix>&#8377;</span>
-              <input
-                class="amount-input"
-                matInput
-                type="number"
-                placeholder="0.00"
-                min="0"
-                [formControl]="form.controls.amount">
-            </mat-form-field>
-            <mat-form-field>
-              <mat-label>Category</mat-label>
-              <input matInput
-                [formControl]="form.controls.category"
-                (click)="openCategorySheet()"
-                (keyup)="openCategorySheet()" readonly />
-              <mat-icon matSuffix (click)="openCategorySheet()">arrow_drop_down</mat-icon>
-            </mat-form-field>
-          </div>
+			<input matInput [formControl]="form.controls.description" />
+			</mat-form-field>
+			<mat-form-field>
+			<mat-label>Where</mat-label>
+			<input matInput [formControl]="form.controls.where" />
+			</mat-form-field>
+			<div class="row">
+			<mat-form-field appearance="fill" floatLabel="always">
+				<mat-label>Amount</mat-label>
+				<span matTextPrefix>&#8377;</span>
+				<input
+				class="amount-input"
+				matInput
+				type="number"
+				placeholder="0.00"
+				min="0"
+				[formControl]="form.controls.amount">
+			</mat-form-field>
+			<mat-form-field>
+				<mat-label>Category</mat-label>
+				<input matInput
+				[formControl]="form.controls.category"
+				(click)="openCategorySheet()"
+				(keyup)="openCategorySheet()" readonly />
+				<mat-icon matSuffix (click)="openCategorySheet()">arrow_drop_down</mat-icon>
+			</mat-form-field>
+			</div>
 
-          <div class="row">
-            <mat-form-field>
-              <mat-label>Paid by</mat-label>
-              <mat-select [formControl]="form.controls.paidBy">
+			<div class="row">
+			<mat-form-field>
+				<mat-label>Paid by</mat-label>
+				<mat-select [formControl]="form.controls.paidBy">
 				@for (member of (group$ | async)?.members; track member) {
 					<mat-option [value]="member.id">
 						{{member.name}}
 					</mat-option>
 				}
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field>
-              <input matInput [matDatepicker]="dp" [formControl]="form.controls.expenseDate">
-              <mat-hint>MM/DD/YYYY</mat-hint>
-              <mat-datepicker-toggle matIconSuffix [for]="dp"></mat-datepicker-toggle>
-              <mat-datepicker #dp></mat-datepicker>
-            </mat-form-field>
-          </div>
+				</mat-select>
+			</mat-form-field>
+			<mat-form-field>
+				<input matInput [matDatepicker]="dp" [formControl]="form.controls.expenseDate">
+				<mat-hint>MM/DD/YYYY</mat-hint>
+				<mat-datepicker-toggle matIconSuffix [for]="dp"></mat-datepicker-toggle>
+				<mat-datepicker #dp></mat-datepicker>
+			</mat-form-field>
+			</div>
 
-          <div class="button-container">
-            <button
-              type="submit"
-              class="rounded-button"
-              mat-raised-button
-              color="primary"
-              [disabled]="form.invalid || !form.dirty">{{ id ? "Update" : "Submit" }} expense</button>            
-          </div>
-        </form>
+			<div class="button-container">
+			<button
+				type="submit"
+				class="rounded-button"
+				mat-raised-button
+				color="primary"
+				[disabled]="form.invalid || !form.dirty">{{ id ? "Update" : "Submit" }} expense</button>            
+			</div>
+		</form>
 
-        @if (id) {
-          <div class="button-container">
-            <button
-              class="rounded-button button"
-              mat-raised-button
-              color="warn"
-              (click)="deleteExpense()">
-                Delete expense
-            </button>
-          </div>
-        }
-      </div>
-    </app-layout>
-  `,
+		@if (id) {
+			<div class="button-container">
+			<button
+				class="rounded-button button"
+				mat-raised-button
+				color="warn"
+				(click)="deleteExpense()">
+				Delete expense
+			</button>
+			</div>
+		}
+		</div>
+	</app-layout>
+	`,
 	styles: [
 		`
-    .detail-section {
-      margin: 32px 16px;
-    }
+	.detail-section {
+		margin: 32px 16px;
+	}
 
-    .row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-gap: 16px;
-    }
+	.row {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		grid-gap: 16px;
+	}
 
-    .amount-input {
-      text-align: right;
-    }
+	.amount-input {
+		text-align: right;
+	}
 
-    .button-container {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      align-items: center;
-      margin-top: 16px;
-    }
-  `,
+	.button-container {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		align-items: center;
+		margin-top: 16px;
+	}
+	`,
 	],
 })
 export class ExpenseEditorComponent implements OnInit, OnDestroy {
@@ -188,82 +188,82 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
 	protected categoryGroups = categoriesByGroup;
 	protected getCategoryById = getCategoryById;
 
-  @Input() groupId: string = "";
-  @Input() id: string | undefined;
+	@Input() groupId: string = "";
+	@Input() id: string | undefined;
 
-  ngOnInit(): void {
-  	if (this.id) {
-  		this.expenseSubscription$$ = this.expenseService.get$(this.groupId, this.id)
-  			.subscribe((expense) => {
-  				if (expense.category) {
-  					this.selectedCategory = getCategoryById(expense.category);
-  				}
-  				this.form.patchValue({
-  					...expense,
-  					category: this.selectedCategory?.name,
-  				});
-  			});
-  	}
-  }
+	ngOnInit(): void {
+		if (this.id) {
+			this.expenseSubscription$$ = this.expenseService.get$(this.groupId, this.id)
+				.subscribe((expense) => {
+					if (expense.category) {
+						this.selectedCategory = getCategoryById(expense.category);
+					}
+					this.form.patchValue({
+						...expense,
+						category: this.selectedCategory?.name,
+					});
+				});
+		}
+	}
 
-  ngOnDestroy(): void {
-  	this.expenseSubscription$$?.unsubscribe();
-  }
+	ngOnDestroy(): void {
+		this.expenseSubscription$$?.unsubscribe();
+	}
 
-  openCategorySheet() {
-  	this.bottomSheet.open(CategorySelectorComponent)
-	  .afterDismissed()
-	  .subscribe(selectedCategoryId => {
-  			if (selectedCategoryId && typeof selectedCategoryId === "number" && selectedCategoryId > 0) {
-  				this.selectedCategory = getCategoryById(selectedCategoryId);
-  				this.form.controls.category.setValue(this.selectedCategory?.name || "");
-  			}
-	  });
-  }
+	openCategorySheet() {
+		this.bottomSheet.open(CategorySelectorComponent)
+			.afterDismissed()
+			.subscribe(selectedCategoryId => {
+				if (selectedCategoryId && typeof selectedCategoryId === "number" && selectedCategoryId > 0) {
+					this.selectedCategory = getCategoryById(selectedCategoryId);
+					this.form.controls.category.setValue(this.selectedCategory?.name || "");
+				}
+			});
+	}
 
-  async submit() {
-  	const { description, where, amount, expenseDate, paidBy } = this.form.value;
-  	if (!this.form.valid || !this.groupId || !expenseDate || !paidBy || !description) {
-  		return;
-  	}
+	async submit() {
+		const { description, where, amount, expenseDate, paidBy } = this.form.value;
+		if (!this.form.valid || !this.groupId || !expenseDate || !paidBy || !description) {
+			return;
+		}
 
-  	const expense = {
-  		description,
-  		where,
-  		amount: +(amount ?? 0),
-  		category: this.selectedCategory?.id,
-  		expenseDate,
-  		paidBy,
-  	} as Expense;
+		const expense = {
+			description,
+			where,
+			amount: +(amount ?? 0),
+			category: this.selectedCategory?.id,
+			expenseDate,
+			paidBy,
+		} as Expense;
 
-  	try {
-  		this.notification.showLoading();
-  		await (this.id
-		  ? this.expenseService.update(this.groupId, this.id, expense)
-		  : this.expenseService.add(this.groupId, expense)
-  		);
+		try {
+			this.notification.showLoading();
+			await (this.id
+				? this.expenseService.update(this.groupId, this.id, expense)
+				: this.expenseService.add(this.groupId, expense)
+			);
 
-  		this.navigation.navigateBack();
-	  } catch (err) {
-  		this.notification.firebaseError(err);
-	  } finally {
-  		this.notification.hideLoading();
-	  }
-  }
+			this.navigation.navigateBack();
+		} catch (err) {
+			this.notification.firebaseError(err);
+		} finally {
+			this.notification.hideLoading();
+		}
+	}
 
-  async deleteExpense() {
-  	if (!this.groupId || !this.id) {
-  		return;
-  	}
+	async deleteExpense() {
+		if (!this.groupId || !this.id) {
+			return;
+		}
 
-  	try {
-  		this.notification.showLoading();
-  		await this.expenseService.delete(this.groupId, this.id);
-  		this.navigation.navigateBack();
-  	} catch (err) {
-  		this.notification.firebaseError(err);
-  	} finally {
-  		this.notification.hideLoading();
-  	}
-  }
+		try {
+			this.notification.showLoading();
+			await this.expenseService.delete(this.groupId, this.id);
+			this.navigation.navigateBack();
+		} catch (err) {
+			this.notification.firebaseError(err);
+		} finally {
+			this.notification.hideLoading();
+		}
+	}
 }

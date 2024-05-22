@@ -10,27 +10,22 @@ import {
 import { FormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatCardModule } from "@angular/material/card";
-import { MatDialog, MatDialogRef } from "@angular/material/dialog";
 import { MatDividerModule } from "@angular/material/divider";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatIconModule } from "@angular/material/icon";
 import { MatInputModule } from "@angular/material/input";
-import {
-	finalize,
-	interval,
-	map,
-	Subscription,
-	tap
-} from "rxjs";
+import { finalize, Subscription } from "rxjs";
 
+import { DialogButtonType, DialogData } from "../models/dialog.model";
 import { groupImages, GroupMember } from "../models/group.model";
+import { Otp } from "../models/otp.model";
+import { DialogService } from "../services/dialog.service";
 import { GroupCodeService } from "../services/group-code.service";
 import { GroupService } from "../services/group.service";
 import { NavigationService } from "../services/navigation.service";
 import { NotificationService } from "../services/notification.service";
 
 import { OtpComponent } from "./otp.component";
-import { DialogComponent } from "./shared/dialog.component";
 import { LayoutComponent } from "./shared/layout.component";
 
 @Component({
@@ -38,7 +33,7 @@ import { LayoutComponent } from "./shared/layout.component";
 	standalone: true,
 	imports: [
 		FormsModule,
-		LayoutComponent, 
+		LayoutComponent,
 		MatButtonModule,
 		MatFormFieldModule,
 		MatInputModule,
@@ -161,56 +156,60 @@ import { LayoutComponent } from "./shared/layout.component";
 
 	<ng-template #addUserToGroupDialogTemplate>
 		<div class="add-user-to-group-template">
-			<div class="code">{{groupCode}}</div>
-			<span class="timer">code is valid only for 5 minutes</span>
-			<p>Others can join this group <br/>
-				using the above code</p>
+			@if (groupCode) {
+				<div class="code">{{groupCode}}</div>
+				<div class="timer">code is valid only for 5 minutes</div>
+				<p>Others can join this group <br/>
+					using the above code</p>
+			} @else {
+				Please wait, generating new code...
+			}
 		</div>
 	</ng-template>
 
 	<ng-template #joinGroupDialogTemplate>
-		<app-otp (onCancel)="closeJoinGroupDialog()" (onSubmit)="joinGroup($event)"></app-otp>
+		<app-otp-selector></app-otp-selector>
 	</ng-template>
-  `,
-	styles:[`
+	`,
+	styles: [`
 	.header-section {
-      margin: 16px;
-	  display: flex;
-	  flex-direction: column;
+		margin: 16px;
+		display: flex;
+		flex-direction: column;
 
-      .image-container {
-        display: flex;
-        overflow-x: auto;
-        white-space: nowrap;
+		.image-container {
+		display: flex;
+		overflow-x: auto;
+		white-space: nowrap;
 
-        > div {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
+		> div {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
 
-          > img {
-            margin: 8px 8px 0 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-          }
+			> img {
+			margin: 8px 8px 0 8px;
+			cursor: pointer;
+			transition: all 0.3s ease;
+			}
 
-          > span {
-            margin-bottom: 8px;
-          }
+			> span {
+			margin-bottom: 8px;
+			}
 
-          .selected {
-            transform: scale(1.4);
-          }
-        }        
-      }
-    }
+			.selected {
+			transform: scale(1.4);
+			}
+		}
+		}
+	}
 
-    .detail-section {
+	.detail-section {
 		display: flex;
 		flex-direction: column;
 		gap: 16px;
-    	margin: 16px;
-    	align-items: center;
+		margin: 16px;
+		align-items: center;
 
 		> mat-card {
 			width: 100%;
@@ -248,7 +247,7 @@ import { LayoutComponent } from "./shared/layout.component";
 				}
 			}
 		}
-    }
+	}
 
 	.btn-group {
 		display: flex;
@@ -259,33 +258,30 @@ import { LayoutComponent } from "./shared/layout.component";
 
 	.add-user-to-group-template {
 		text-align: center;
-		display: flex;
-		flex-direction: column;
-		gap: 16px;
 
 		.timer {
 			font-size: 0.6rem;
+			margin-top: 8px;
 		}
 
 		.code {
-			font-size: 2rem;
+			font-size: 3rem;
 			font-weight: 500;
-			letter-spacing: 8px;
+			letter-spacing: 12px;
 		}
 	}
-  `]
+	`]
 })
 export class GroupEditorComponent implements OnInit, OnDestroy {
 	private readonly notification = inject(NotificationService);
 	private readonly navigation = inject(NavigationService);
 	private readonly groupService = inject(GroupService);
-	private readonly dialog = inject(MatDialog);
+	private readonly dialog = inject(DialogService);
 	private readonly groupCodeService = inject(GroupCodeService);
 
 	private groupSubscription$$: Subscription | undefined;
-	private joinGroupDialogRef: MatDialogRef<DialogComponent, any> | undefined;
 
-	protected  groupImages = groupImages;
+	protected groupImages = groupImages;
 	protected selectedIndex: number | undefined;
 	protected members: GroupMember[] | undefined;
 	protected currentUser: GroupMember | undefined;
@@ -294,12 +290,12 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 	protected groupCode: number | undefined;
 
 	@Input() id: string = "";
-	
-	@ViewChild("joinGroupDialogTemplate") joinGroupDialogTemplate: TemplateRef<any> | undefined;
-	@ViewChild("addUserToGroupDialogTemplate") addUserToGroupDialogTemplate: TemplateRef<any> | undefined;
+
+	@ViewChild("joinGroupDialogTemplate") joinGroupDialogTemplate: TemplateRef<unknown> | undefined;
+	@ViewChild("addUserToGroupDialogTemplate") addUserToGroupDialogTemplate: TemplateRef<unknown> | undefined;
 
 	ngOnInit(): void {
-		if(this.id) {
+		if (this.id) {
 			this.groupSubscription$$ = this.groupService.get$(this.id).subscribe(group => {
 				this.groupName = this.oldGroupName = group.name;
 				this.selectedIndex = groupImages.findIndex(g => g.alt === group.imageUrl);
@@ -326,9 +322,15 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 	}
 
 	openAddMemberDialog() {
-		const addMemberDialogRef = this.dialog.open(DialogComponent, {
+		const addMemberDialogRef = this.dialog.open({
 			data: {
-				template: this.addUserToGroupDialogTemplate
+				template: this.addUserToGroupDialogTemplate,
+				actionButtons: [
+					{
+						type: DialogButtonType.Close,
+						label: "Close"
+					}
+				]
 			}
 		});
 
@@ -336,7 +338,7 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 			this.notification.showLoading();
 			try {
 				this.groupCode = await this.groupCodeService.getCode(this.id);
-			} catch(err) {
+			} catch (err) {
 				this.notification.firebaseError(err);
 			} finally {
 				this.notification.hideLoading();
@@ -349,30 +351,36 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 	}
 
 	openJoinGroupDialog() {
-		this.joinGroupDialogRef = this.dialog.open(DialogComponent, {
+		this.dialog.open<DialogData<Otp>>({
 			data: {
-				template: this.joinGroupDialogTemplate
+				template: this.joinGroupDialogTemplate,
+				actionButtons: [
+					{
+						type: DialogButtonType.Close,
+						label: "Close"
+					},
+					{
+						type: DialogButtonType.Primary,
+						label: "Join",
+						disabled: data => data?.code1 == null || data.code2 == null || data.code3 == null || data.code4 == null,
+						action: (data) => {
+							const code = +`${data?.code1}${data?.code2}${data?.code3}${data?.code4}`;
+							this.notification.showLoading();
+							this.groupCodeService.addMemeberToGroup$(code).pipe(
+								finalize(() => this.notification.hideLoading())
+							).subscribe({
+								next: () => this.navigation.navigateTo(["/home"]),
+								error: (error) => this.notification.error(error)
+							});
+						}
+					}
+				]
 			}
 		});
 	}
 
-	closeJoinGroupDialog() {
-		this.joinGroupDialogRef?.close();
-	}
-
-	joinGroup($event: number) {
-		this.notification.showLoading();
-		this.groupCodeService.addMemeberToGroup$($event).pipe(
-			finalize(() => this.notification.hideLoading())
-		).subscribe({
-			next: (id) => this.navigation.navigateTo(["/group-detail", id]),
-			error: (error) => this.notification.error(error)
-		})
-		this.joinGroupDialogRef?.close();
-	}
-
 	create() {
-		if(!this.groupName || this.selectedIndex == undefined) {
+		if (!this.groupName || this.selectedIndex == undefined) {
 			return;
 		}
 
@@ -386,13 +394,13 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 		}).pipe(
 			finalize(() => this.notification.hideLoading())
 		).subscribe({
-			next: (id) => this.navigation.navigateTo(["/group-detail", id]), 
-			error: (error) => this.notification.firebaseError(error) 
+			next: (id) => this.navigation.navigateTo(["/group-detail", id]),
+			error: (error) => this.notification.firebaseError(error)
 		});
 	}
 
 	update() {
-		if(!this.groupName) {
+		if (!this.groupName) {
 			return;
 		}
 
@@ -400,8 +408,8 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 		this.groupService.update$(this.id, this.groupName).pipe(
 			finalize(() => this.notification.hideLoading())
 		).subscribe({
-			error: (error) => this.notification.firebaseError(error) 
-		});this.notification.hideLoading();
+			error: (error) => this.notification.firebaseError(error)
+		}); this.notification.hideLoading();
 	}
 
 	toggelAdmin(member: GroupMember) {
@@ -409,17 +417,34 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 		this.groupService.updateRole$(this.id, member.id, member.role === "admin" ? "user" : "admin").pipe(
 			finalize(() => this.notification.hideLoading())
 		).subscribe({
-			error: (error) => this.notification.firebaseError(error) 
+			error: (error) => this.notification.firebaseError(error)
 		});
 	}
 
 	deleteGroup() {
-		this.notification.showLoading();
-		this.groupService.delete$(this.id).pipe(
-			finalize(() => this.notification.hideLoading())
-		).subscribe({
-			next: () => this.navigation.navigateTo(["/home"]),
-			error: (error) => this.notification.firebaseError(error) 
+		this.dialog.open({
+			data: {
+				message: "Are you sure want to delete this group?",
+				actionButtons: [
+					{
+						type: DialogButtonType.Close,
+						label: "Cancel"
+					},
+					{
+						type: DialogButtonType.Primary,
+						label: "Yes",
+						action: () => {
+							this.notification.showLoading();
+							this.groupService.delete$(this.id).pipe(
+								finalize(() => this.notification.hideLoading())
+							).subscribe({
+								next: () => this.navigation.navigateTo(["/home"]),
+								error: (error) => this.notification.firebaseError(error)
+							});
+						}
+					}
+				]
+			}
 		});
 	}
 }

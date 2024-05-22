@@ -48,11 +48,11 @@ import { NavigationService } from "../../services/navigation.service";
 export class PageNavHeaderComponent {
 	private readonly navigation = inject(NavigationService);
 
-  @Input() backRoute: string | undefined;
-  @Input() title: string | undefined;
-  @Input() template: TemplateRef<unknown> | undefined;
+	@Input() backRoute: string | undefined;
+	@Input() title: string | undefined;
+	@Input() template: TemplateRef<unknown> | undefined;
 
-  navigateBack() {
-  	this.navigation.navigateBack();
-  }
+	navigateBack() {
+		this.navigation.navigateBack();
+	}
 }

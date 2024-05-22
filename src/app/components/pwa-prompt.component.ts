@@ -47,10 +47,11 @@ import { MatListModule } from "@angular/material/list";
   `]
 })
 export class PwaPromptComponent {
+	/* eslint-disable @typescript-eslint/no-explicit-any */
 	constructor(
-    @Inject(MAT_BOTTOM_SHEET_DATA) public data: { platform: "ios" | "android"; event?: any },
-    private bottomSheetRef: MatBottomSheetRef<PwaPromptComponent>
-	) {}
+		@Inject(MAT_BOTTOM_SHEET_DATA) public data: { platform: "ios" | "android"; event?: any },
+		private bottomSheetRef: MatBottomSheetRef<PwaPromptComponent>
+	) { }
 
 	installPwa() {
 		this.data.event.prompt();

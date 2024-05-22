@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component, inject, Input } from "@angular/core";
+import { Component, inject, Input, OnInit } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
 import { MatCardModule } from "@angular/material/card";
@@ -262,7 +262,7 @@ import { GroupWidgetComponent } from "./widgets/group-widget.component";
     }
   `]
 })
-export class GroupExpenseDetailComponent {
+export class GroupExpenseDetailComponent implements OnInit {
 	private readonly groupService = inject(GroupService);
 	private readonly expenseService = inject(ExpenseService);
 
@@ -272,37 +272,37 @@ export class GroupExpenseDetailComponent {
 	protected selectedTab: string = "expense";
 	protected getCategory = getCategoryById;
 
-  @Input() id: string = "";
+	@Input() id: string = "";
 
-  ngOnInit() {
-  	this.expenses$ = combineLatest([
-  		this.groupService.get$(this.id),
-  		this.expenseService.getAll$(this.id)
-  	]).pipe(
-  		map(([group, expenses]) => {
-  			this.group = group;
+	ngOnInit() {
+		this.expenses$ = combineLatest([
+			this.groupService.get$(this.id),
+			this.expenseService.getAll$(this.id)
+		]).pipe(
+			map(([group, expenses]) => {
+				this.group = group;
 
-  			const members = group.members.reduce((acc, member) => {
-  				acc[member.id] = member;
-  				return acc;
-  			}, {} as Record<string, GroupMember>);
+				const members = group.members.reduce((acc, member) => {
+					acc[member.id] = member;
+					return acc;
+				}, {} as Record<string, GroupMember>);
 
-  			return expenses.reduce((acc, e) => {
-  				const key = getYearMonth(e.expenseDate);    
-  				acc[key] = acc[key] || [];
-  			  acc[key].push({ ...e, paidBy: members[e.paidBy].name } as Expense);
-  				return acc;
-  			}, {} as Record<string, Expense[]>);
-  		})
-  	);
-  }
+				return expenses.reduce((acc, e) => {
+					const key = getYearMonth(e.expenseDate);
+					acc[key] = acc[key] || [];
+					acc[key].push({ ...e, paidBy: members[e.paidBy].name } as Expense);
+					return acc;
+				}, {} as Record<string, Expense[]>);
+			})
+		);
+	}
 
-  get getCurrentMonthTotal() {
-  	const currentMonth = getYearMonth(new Date());
-  	return this.group?.monthTotal[currentMonth] ?? 0;
-  }
+	get getCurrentMonthTotal() {
+		const currentMonth = getYearMonth(new Date());
+		return this.group?.monthTotal[currentMonth] ?? 0;
+	}
 
-  noSort() {
-  	return 0;
-  }
+	noSort() {
+		return 0;
+	}
 }
