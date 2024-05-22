@@ -1,12 +1,12 @@
 export interface CategoryGroup {
-    name: string;
-    categories: Category[];
+	name: string;
+	categories: Category[];
 }
 
 export interface Category {
-    id: number;
-    name: string;
-    icon: string;
+	id: number;
+	name: string;
+	icon: string;
 }
 
 export const filterCategories = (opt: Category[], value: string): Category[] => {
@@ -50,10 +50,13 @@ export const categoriesByGroup: CategoryGroup[] = [
 		name: "Food & drink",
 		categories: [
 			{ id: 301, name: "Dining", icon: "dining" },
-			{ id: 302, name: "Groceries", icon: "shopping_basket" },
+			{ id: 302, name: "Groceries", icon: "trolley" },
 			{ id: 303, name: "Liquor", icon: "liquor" },
 			{ id: 304, name: "Vegitable", icon: "eco" },
-			{ id: 305, name: "Dairy", icon: "local_drink" }
+			{ id: 305, name: "Dairy", icon: "local_drink" },
+			{ id: 306, name: "Food", icon: "fastfood" },
+			{ id: 307, name: "Beverage", icon: "local_cafe" }
+
 		]
 	},
 	{
