@@ -1,4 +1,7 @@
+import { DocumentData, DocumentSnapshot } from "@angular/fire/firestore";
 import { FirebaseError } from "firebase/app";
+
+import { ErrorCode } from "./error-codes";
 
 export const getFirebaseErrorMessage = (err: unknown): string => {
 	if (err instanceof FirebaseError) {
@@ -13,4 +16,15 @@ export const getFirebaseErrorMessage = (err: unknown): string => {
 	}
 
 	return "An unspecified error occurred. Please contact the system administrator.";
+};
+
+export const throwIfNotFound = (
+	snapshot: DocumentSnapshot<DocumentData, DocumentData>,
+	message?: string
+): DocumentSnapshot<DocumentData, DocumentData> => {
+	if (!snapshot.exists()) {
+		throw `${ErrorCode.NOT_FOUND}: ${message}`;
+	}
+
+	return snapshot;
 };

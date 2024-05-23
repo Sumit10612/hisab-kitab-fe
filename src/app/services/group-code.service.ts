@@ -12,23 +12,23 @@ import { Observable, switchMap, take } from "rxjs";
 
 import { GroupCode, isExpired, toFirestore } from "../models/group-code.model";
 import { Group, GroupMember } from "../models/group.model";
-import { User } from "../models/user.model";
 import { generateRandomNumber } from "../utilities/common";
+import { throwIfNotFound } from "../utilities/firebase-errors";
 
-import { AuthService } from "./auth.service";
+import { UserService } from "./user.service";
 
 @Injectable({
 	providedIn: "root"
 })
 export class GroupCodeService {
 	private readonly fireStore = inject(Firestore);
-	private readonly authService = inject(AuthService);
+	private readonly userService = inject(UserService);
 
 	async getCode(groupId: string): Promise<number> {
 		const collectionRef = collection(this.fireStore, "group_code");
 		return await runTransaction(this.fireStore, async (transaction) => {
 			const groupDoc = await transaction.get(doc(collectionRef, groupId));
-			if(!groupDoc.exists() || isExpired(groupDoc.data() as GroupCode)) {
+			if (!groupDoc.exists() || isExpired(groupDoc.data() as GroupCode)) {
 				let newCode;
 				do {
 					newCode = generateRandomNumber();
@@ -43,57 +43,41 @@ export class GroupCodeService {
 	}
 
 	addMemeberToGroup$(code: number): Observable<string> {
-		return this.authService.currentUser$.pipe(
+		const collectionRef = collection(this.fireStore, "group_code");
+		return this.userService.user$.pipe(
 			take(1),
-			switchMap(async currentUser => {
-				if(!currentUser) {
-					throw "User not found";
-				}
-
-				const userRef = doc(this.fireStore, "users", currentUser?.uid);
-				const collectionRef = collection(this.fireStore, "group_code");
-
+			switchMap(async user => {
 				return await runTransaction(this.fireStore, async transaction => {
-					const userDoc = await transaction.get(userRef);
-					if(!userDoc.exists()) {
-						throw "User not available";
-					}
-
-					const userData = userDoc.data() as User;
-
 					const querySnapshot = await getDocs(query(collectionRef, where("code", "==", code), limit(1)));
-					if(querySnapshot.empty) {
+					if (querySnapshot.empty) {
 						throw "Invalide code";
 					}
 
 					const groupCodeDoc = querySnapshot.docs[0];
 					const groupCode = groupCodeDoc.data() as GroupCode;
-					if(isExpired(groupCode)) {
+					if (isExpired(groupCode)) {
 						throw "Code expired.";
-					} else if(+groupCode.code !== code) {
+					} else if (+groupCode.code !== code) {
 						throw "Invalide code";
 					}
 
-					if(userData.groups?.findIndex(groupId => groupId === groupCodeDoc.id) === 1) {
+					if (user.groups?.findIndex(groupId => groupId === groupCodeDoc.id) === 1) {
 						return groupCodeDoc.id;
 					}
 
-					const groups = [...userData.groups ?? [], groupCodeDoc.id];
+					const groups = [...user.groups ?? [], groupCodeDoc.id];
 
 					const groupRef = doc(this.fireStore, "groups", groupCodeDoc.id);
 					const groupSnapshot = await transaction.get(groupRef);
-					if(!groupSnapshot.exists()) {
-						throw "Group doesnot exists";
-					}
+					const group = throwIfNotFound(groupSnapshot).data() as Group;
 
-					const group = groupSnapshot.data() as Group;
 					const members = [
 						...group.members ?? [],
-						{ id: userData.uid, name: userData.name } as GroupMember
+						{ id: user.uid, name: user.name } as GroupMember
 					];
 
 					transaction.update(groupRef, { members });
-					transaction.update(userRef, { groups });
+					transaction.update(doc(this.fireStore, "users", user.uid), { groups });
 
 					return groupCodeDoc.id;
 				});

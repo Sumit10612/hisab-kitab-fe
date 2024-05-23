@@ -18,11 +18,13 @@ import {
 	Observable,
 	switchMap,
 	take,
-	tap,
+	tap
 } from "rxjs";
 
 import { Group } from "../models/group.model";
 import { User } from "../models/user.model";
+import { ErrorCode } from "../utilities/error-codes";
+import { throwIfNotFound } from "../utilities/firebase-errors";
 
 import { UserService } from "./user.service";
 
@@ -30,50 +32,38 @@ import { UserService } from "./user.service";
 	providedIn: "root"
 })
 export class GroupService {
-	private firestore = inject(Firestore);
-	private userService = inject(UserService);
+	private readonly firestore = inject(Firestore);
+	private readonly userService = inject(UserService);
 
-	myGroups$ = this.userService.user$.pipe(
+	private readonly collectionRef = () => collection(this.firestore, "groups");
+	private readonly docRef = (id: string) => doc(this.firestore, "groups", id);
+
+	myGroups$: Observable<Group[]> = this.userService.user$.pipe(
 		filter(user => !!user),
 		switchMap(user => {
-			const ref = collection(this.firestore, "groups");
-			const q = query(ref, where(documentId(), "in", user?.groups));
+			const q = query(this.collectionRef(), where(documentId(), "in", user?.groups));
 			return collectionData(q, { idField: "id" }) as Observable<Group[]>;
 		})
 	);
 
-	get$(id: string): Observable<Group> {
-		return this.userService.user$.pipe(
-			switchMap(user => {
-				if(!user) {
-					throw "User not found";
-				}
-
-				const ref = doc(this.firestore, "groups", id);
-				return (docData(ref, { idField: "id" }) as Observable<Group>).pipe(
-					map(group => {
-						return {
-							...group,
-							members: group.members.map(member => member.id === user.uid ? { ...member, name: "You" } : member)
-						} as Group;
-					})
-				);
-			})
+	get$(groupId: string): Observable<Group> {
+		return this.userService.authService.currentUser$.pipe(
+			switchMap(user => (docData(this.docRef(groupId), { idField: "id" }) as Observable<Group>).pipe(
+				map(group => {
+					return {
+						...group,
+						members: group.members.map(member => member.id === user.uid ? { ...member, name: "You" } : member)
+					} as Group;
+				})
+			))
 		);
 	}
 
 	create$(group: Group): Observable<string> {
-		const ref = doc(collection(this.firestore, "groups"));
+		const ref = doc(this.collectionRef());
 		return this.userService.user$.pipe(
 			take(1),
 			concatMap(user => runTransaction(this.firestore, async (transction) => {
-				if(!user) {
-					throw new Error("user not found");
-				}
-
-				const userDocRef = doc(this.firestore, "users", user.uid);
-				const userGroups = ((await transction.get(userDocRef)).data() as User).groups ?? [];
-
 				transction.set(ref, {
 					...group,
 					members: [{
@@ -82,9 +72,9 @@ export class GroupService {
 						role: "admin",
 					}]
 				} as Group);
-				
-				transction.update(userDocRef, {
-					groups: [...userGroups, ref.id]
+
+				transction.update(doc(this.firestore, "users", user.uid), {
+					groups: [...user?.groups ?? [], ref.id]
 				});
 
 				return ref.id;
@@ -92,17 +82,14 @@ export class GroupService {
 		);
 	}
 
-	update$(id: string, name: string) {
-		const ref = doc(this.firestore, "groups", id);
-		return this.userService.user$.pipe(
+	update$(groupId: string, name: string): Observable<void> {
+		const ref = this.docRef(groupId);
+		return this.userService.authService.currentUser$.pipe(
 			take(1),
 			switchMap(user => runTransaction(this.firestore, async (transaction) => {
-				const groupDoc = await transaction.get(ref);
-				if(!groupDoc.exists()) {
-					throw "Group doesnot exists.";
-				}
-
-				if(this.isCurrentUserAuthorizedToUpdate(user, groupDoc.data() as Group)) {
+				const sanapshot = await transaction.get(ref);
+				const groupDoc = throwIfNotFound(sanapshot).data() as Group;
+				if (this.isCurrentUserAuthorizedToUpdate(user.uid, groupDoc)) {
 					transaction.update(ref, {
 						name,
 					});
@@ -111,20 +98,16 @@ export class GroupService {
 		);
 	}
 
-	updateRole$(id: string, memberId: string, roleToUpdate: "admin" | "user") {
-		const ref = doc(this.firestore, "groups", id);
-		return this.userService.user$.pipe(
+	updateRole$(groupId: string, memberId: string, roleToUpdate: "admin" | "user") {
+		const ref = this.docRef(groupId);
+		return this.userService.authService.currentUser$.pipe(
 			take(1),
 			tap(user => runTransaction(this.firestore, async (transaction) => {
-				const groupDoc = await transaction.get(ref);
-				if(!groupDoc.exists()) {
-					throw "Group not found";
-				}
-
-				const group = groupDoc.data() as Group;
-				if(this.isCurrentUserAuthorizedToUpdate(user, group)) {
-					transaction.update(ref, { 
-						members: group.members.map(
+				const sanapshot = await transaction.get(ref);
+				const groupDoc = throwIfNotFound(sanapshot).data() as Group;
+				if (this.isCurrentUserAuthorizedToUpdate(user.uid, groupDoc)) {
+					transaction.update(ref, {
+						members: groupDoc.members.map(
 							member => member.id === memberId ? { ...member, role: roleToUpdate } : member
 						)
 					});
@@ -133,39 +116,74 @@ export class GroupService {
 		);
 	}
 
-	delete$(id: string) {
-		const groupRef = doc(this.firestore, "groups", id);
-		const usersRef = collection(this.firestore, "users");
-		const q = query(usersRef, where("groups", "array-contains", id));
-
-		return this.userService.user$.pipe(
+	removeMember$(groupId: string, memberId?: string) {
+		const groupRef = this.docRef(groupId);
+		return this.userService.authService.currentUser$.pipe(
 			take(1),
-			tap(user => runTransaction(this.firestore, async (transaction) => {
-				const groupDoc = await transaction.get(groupRef);
-				if(!groupDoc.exists()) {
-					throw "Group not found";
+			switchMap(user => runTransaction(this.firestore, async transaction => {
+				const snapshot = await transaction.get(groupRef);
+				const groupDoc = throwIfNotFound(snapshot).data() as Group;
+				if (memberId && !this.isCurrentUserAuthorizedToUpdate(user.uid, groupDoc)) {
+					throw new Error(ErrorCode.INVALID_PERMISSION);
 				}
 
-				const group = groupDoc.data() as Group;
-				if(this.isCurrentUserAuthorizedToUpdate(user, group)) {
-					const usersSnapshot = await getDocs(q);
-					usersSnapshot.forEach(userDoc => {
-						const userRef = doc(this.firestore, "users", userDoc.id);
-						const groups = (userDoc.data() as User).groups ?? [];
-						transaction.update(userRef, {
-							groups: groups.filter(groupId => id !== groupId)
-						});
-					});
-		
-					transaction.delete(groupRef);
-				}				
+				memberId = memberId ?? user.uid;
+				const member = groupDoc.members.find(member => member.id === memberId);
+				if (!member) {
+					throw ErrorCode.USER_DOESNOT_BELONG_TO_GROUP;
+				}
+
+				if (member.role === "admin" &&
+					groupDoc.members.filter(m => m.role === "admin").length === 1) {
+					throw new Error(ErrorCode.NO_OTHER_ADMIN_FOUND);
+				}
+
+				const userRef = doc(this.firestore, "users", memberId);
+				const userSnapshot = await transaction.get(userRef);
+				const userDoc = throwIfNotFound(userSnapshot).data() as User;
+				const filterGroups = userDoc.groups?.filter(id => id !== groupId);
+
+				const members = groupDoc.members.filter(m => m.id !== memberId);
+
+				transaction.update(userRef, { groups: filterGroups });
+				transaction.update(groupRef, { members });
+
 			}))
 		);
 	}
 
-	private isCurrentUserAuthorizedToUpdate(user: User | null, group: Group) {
-		const currentMember = group.members.find(member => member.id === user?.uid);
-		if(!currentMember || currentMember.role !== "admin") {
+	delete$(groupId: string) {
+		const groupRef = this.docRef(groupId);
+		const q = query(collection(this.firestore, "users"), where("groups", "array-contains", groupId));
+
+		return this.userService.authService.currentUser$.pipe(
+			take(1),
+			switchMap(user => runTransaction(this.firestore, async (transaction) => {
+				const groupSnapshot = await transaction.get(groupRef);
+				const groupDoc = throwIfNotFound(groupSnapshot).data() as Group;
+				if (!this.isCurrentUserAuthorizedToUpdate(user.uid, groupDoc)) {
+					throw ErrorCode.INVALID_PERMISSION;
+				}
+
+				const usersSnapshot = await getDocs(q);
+				usersSnapshot.forEach(userDoc => {
+					const userRef = doc(this.firestore, "users", userDoc.id);
+					const groups = (userDoc.data() as User).groups ?? [];
+					transaction.update(userRef, {
+						groups: groups.filter(id => id !== groupId)
+					});
+				});
+
+				transaction.delete(doc(this.firestore, "group_code", groupId));
+				transaction.delete(doc(collection(this.firestore, "groups", groupId, "expenses")));
+				transaction.delete(groupRef);
+			}))
+		);
+	}
+
+	private isCurrentUserAuthorizedToUpdate(userId: string | null, group: Group) {
+		const currentMember = group.members.find(member => member.id === userId);
+		if (!currentMember || currentMember.role !== "admin") {
 			throw "User is not authorised to perform this action";
 		}
 

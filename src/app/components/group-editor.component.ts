@@ -24,6 +24,7 @@ import { GroupCodeService } from "../services/group-code.service";
 import { GroupService } from "../services/group.service";
 import { NavigationService } from "../services/navigation.service";
 import { NotificationService } from "../services/notification.service";
+import { ErrorCode } from "../utilities/error-codes";
 
 import { OtpComponent } from "./otp.component";
 import { LayoutComponent } from "./shared/layout.component";
@@ -43,7 +44,7 @@ import { LayoutComponent } from "./shared/layout.component";
 		OtpComponent
 	],
 	template: `
-    <app-layout [showNav]="true" [pageTitle]="id ? 'Settings' : 'Create a group'">
+	<app-layout [showNav]="true" [pageTitle]="id ? 'Settings' : 'Create a group'">
 		<div section="header" class="header-section">
 			<mat-form-field>
 				<mat-label>Group Name</mat-label>
@@ -80,7 +81,7 @@ import { LayoutComponent } from "./shared/layout.component";
 							[alt]="item.alt"
 							(click)="selectImage($index)" />
 							<span>{{item.alt}}</span>
-						</div>      
+						</div>
 					}
 				</div>
 			}
@@ -107,7 +108,7 @@ import { LayoutComponent } from "./shared/layout.component";
 											(click)="toggelAdmin(member)">
 												{{isAdmin(member) ? "Remove" : "Make"}} admin
 										</button>
-										<button mat-button color="warn" [disabled]="isCurrentUser(member)">
+										<button mat-button color="warn" [disabled]="isCurrentUser(member)" (click)="removeMember(member.id)">
 											<mat-icon>person_remove</mat-icon>
 										</button>
 									</div>
@@ -121,9 +122,10 @@ import { LayoutComponent } from "./shared/layout.component";
 				<button
 					mat-raised-button
 					color="warn"
-					class="rounded-button">
+					class="rounded-button"
+					(click)="removeMember()">
 						Leave Group
-				</button>		
+				</button>
 			} @else {
 				<button 
 					(click)="create()"
@@ -152,7 +154,7 @@ import { LayoutComponent } from "./shared/layout.component";
 				</button>
 			}
 		</div>
-    </app-layout>
+	</app-layout>
 
 	<ng-template #addUserToGroupDialogTemplate>
 		<div class="add-user-to-group-template">
@@ -418,6 +420,24 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 			finalize(() => this.notification.hideLoading())
 		).subscribe({
 			error: (error) => this.notification.firebaseError(error)
+		});
+	}
+
+	removeMember(memberId?: string) {
+		this.notification.showLoading();
+		this.groupService.removeMember$(this.id, memberId).pipe(
+			finalize(() => this.notification.hideLoading())
+		).subscribe({
+			next: () => {
+				if (!memberId) {
+					this.navigation.navigateTo(["/home"]);
+				}
+			},
+			error: err => {
+				if (err.message === ErrorCode.NO_OTHER_ADMIN_FOUND) {
+					this.notification.error("Cannot leave, you are the only admin here.");
+				}
+			}
 		});
 	}
 

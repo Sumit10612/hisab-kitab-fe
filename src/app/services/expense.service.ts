@@ -13,6 +13,7 @@ import { map, Observable } from "rxjs";
 import { Expense, ExpenseHelper, FirestoreExpense } from "../models/expense.model";
 import { Group } from "../models/group.model";
 import { getYearMonth } from "../utilities/date";
+import { throwIfNotFound } from "../utilities/firebase-errors";
 
 @Injectable({
 	providedIn: "root"
@@ -20,38 +21,35 @@ import { getYearMonth } from "../utilities/date";
 export class ExpenseService {
 	private firestore = inject(Firestore);
 
+	private readonly docRef = (groupId: string, id: string) => doc(this.firestore, "groups", groupId, "expenses", id);
+	private readonly collectionRef = (groupId: string) => collection(this.firestore, "groups", groupId, "expenses");
+
 	get$ = (groupId: string, id: string): Observable<Expense> => {
-		const ref = doc(this.firestore, "groups", groupId, "expenses", id);
-		return (docData(ref) as Observable<FirestoreExpense>).pipe(
+		return (docData(this.docRef(groupId, id)) as Observable<FirestoreExpense>).pipe(
 			map(expense => ExpenseHelper.toModel(expense))
 		);
 	};
 
 	getAll$(groupId: string): Observable<Expense[]> {
-		const ref = collection(this.firestore, "groups", groupId, "expenses");
-		const q = query(ref, orderBy("expenseDate", "desc"));
+		const q = query(this.collectionRef(groupId), orderBy("expenseDate", "desc"));
 		return (collectionData(q, { idField: "id" }) as Observable<FirestoreExpense[]>).pipe(
 			map(expenses => expenses.map(expense => ExpenseHelper.toModel(expense)))
 		);
 	}
-  
+
 	add(groupId: string, expense: Expense): Promise<void> {
-		const ref = doc(collection(this.firestore, "groups", groupId, "expenses"));
+		const ref = doc(this.collectionRef(groupId));
 		const groupRef = doc(this.firestore, "groups", groupId);
 
 		return runTransaction(this.firestore, async (transaction) => {
-			const groupDoc = await transaction.get(groupRef);
-			if(!groupDoc.exists()) {
-				throw "Group does not exist!";
-			}
-
-			const group = groupDoc.data() as Group;
+			const groupSnapshot = await transaction.get(groupRef);
+			const groupDoc = throwIfNotFound(groupSnapshot).data() as Group;
 
 			// add new expense amount to group total
-			const groupTotal = +(group.groupTotal ?? 0) + expense.amount;
+			const groupTotal = +(groupDoc.groupTotal ?? 0) + expense.amount;
 
 			// add new expense to the corresponding month for which the expense is created
-			const monthTotal = group.monthTotal ?? {};
+			const monthTotal = groupDoc.monthTotal ?? {};
 			const monthKey = getYearMonth(expense.expenseDate);
 			monthTotal[monthKey] = +(monthTotal[monthKey] ?? 0) + expense.amount;
 
@@ -61,32 +59,27 @@ export class ExpenseService {
 	}
 
 	update(groupId: string, id: string, updateExpense: Expense): Promise<void> {
-		const ref = doc(collection(this.firestore, "groups", groupId, "expenses"), id);
+		const ref = doc(this.collectionRef(groupId), id);
 		const groupRef = doc(this.firestore, "groups", groupId);
 
 		return runTransaction(this.firestore, async (transaction) => {
-			const expenseDoc = await transaction.get(ref);
-			const groupDoc = await transaction.get(groupRef);
-			if(!groupDoc.exists()) {
-				throw "Group does not exist!";
-			}
+			const expenseSnapshot = await transaction.get(ref);
+			const expenseDoc = throwIfNotFound(expenseSnapshot).data() as FirestoreExpense;
 
-			if(!expenseDoc.exists()) {
-				throw "Expense does not exists";
-			}
+			const groupSnapshot = await transaction.get(groupRef);
+			const groupDoc = throwIfNotFound(groupSnapshot).data() as Group;
 
-			const group = groupDoc.data() as Group;
-			const expense = ExpenseHelper.toModel(expenseDoc.data() as FirestoreExpense);
+			const expense = ExpenseHelper.toModel(expenseDoc);
 
 			const oldKey = getYearMonth(expense.expenseDate);
 			const newKey = getYearMonth(updateExpense.expenseDate);
 
 			// update the group total & month total
-			if(expense.amount !== updateExpense.amount || oldKey !== newKey) {
-				const groupTotal = +group.groupTotal - +expense.amount + updateExpense.amount;
+			if (expense.amount !== updateExpense.amount || oldKey !== newKey) {
+				const groupTotal = +groupDoc.groupTotal - +expense.amount + updateExpense.amount;
 
-				const monthTotal = group.monthTotal ?? [];				
-				monthTotal[oldKey] = monthTotal[oldKey] - expense.amount;				
+				const monthTotal = groupDoc.monthTotal ?? [];
+				monthTotal[oldKey] = monthTotal[oldKey] - expense.amount;
 				monthTotal[newKey] = +(monthTotal[newKey] ?? 0) + updateExpense.amount;
 
 				transaction.update(groupRef, { groupTotal, monthTotal });
@@ -97,28 +90,22 @@ export class ExpenseService {
 	}
 
 	delete(groupId: string, id: string): Promise<void> {
-		const ref = doc(collection(this.firestore, "groups", groupId, "expenses"), id);
+		const ref = doc(this.collectionRef(groupId), id);
 		const groupRef = doc(this.firestore, "groups", groupId);
 
 		return runTransaction(this.firestore, async (transaction) => {
-			const expenseDoc = await transaction.get(ref);
-			const groupDoc = await transaction.get(groupRef);
-			
-			if(!groupDoc.exists()) {
-				throw "Group does not exist!";
-			}
+			const expenseSnapshot = await transaction.get(ref);
+			const expenseDoc = throwIfNotFound(expenseSnapshot).data() as FirestoreExpense;
 
-			if(!expenseDoc.exists()) {
-				throw "Expense does not exists";
-			}
+			const groupSnapshot = await transaction.get(groupRef);
+			const groupDoc = throwIfNotFound(groupSnapshot).data() as Group;
 
-			const group = groupDoc.data() as Group;
-			const expense = ExpenseHelper.toModel(expenseDoc.data() as FirestoreExpense);
+			const expense = ExpenseHelper.toModel(expenseDoc);
 
 			const key = getYearMonth(expense.expenseDate);
 
-			const groupTotal = group.groupTotal - expense.amount;
-			const monthTotal = group.monthTotal ?? [];
+			const groupTotal = groupDoc.groupTotal - expense.amount;
+			const monthTotal = groupDoc.monthTotal ?? [];
 			monthTotal[key] = monthTotal[key] - expense.amount;
 
 			transaction.update(groupRef, { groupTotal, monthTotal });
