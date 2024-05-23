@@ -371,7 +371,7 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 							this.groupCodeService.addMemeberToGroup$(code).pipe(
 								finalize(() => this.notification.hideLoading())
 							).subscribe({
-								next: () => this.navigation.navigateTo(["/home"]),
+								next: () => this.navigation.navigateToHome(),
 								error: (error) => this.notification.error(error)
 							});
 						}
@@ -396,7 +396,7 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 		}).pipe(
 			finalize(() => this.notification.hideLoading())
 		).subscribe({
-			next: (id) => this.navigation.navigateTo(["/group-detail", id]),
+			next: (id) => this.navigation.navigateToHome(),
 			error: (error) => this.notification.firebaseError(error)
 		});
 	}
@@ -430,7 +430,7 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 		).subscribe({
 			next: () => {
 				if (!memberId) {
-					this.navigation.navigateTo(["/home"]);
+					this.navigation.navigateToHome();
 				}
 			},
 			error: err => {
@@ -458,7 +458,7 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 							this.groupService.delete$(this.id).pipe(
 								finalize(() => this.notification.hideLoading())
 							).subscribe({
-								next: () => this.navigation.navigateTo(["/home"]),
+								next: () => this.navigation.navigateToHome(),
 								error: (error) => this.notification.firebaseError(error)
 							});
 						}
