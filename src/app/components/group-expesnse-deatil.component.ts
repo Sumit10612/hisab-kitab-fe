@@ -86,7 +86,7 @@ import { GroupWidgetComponent } from "./widgets/group-widget.component";
                     <div class="expense-record-container">
                       <div class="month-group">{{ kvp.key | date: "MMMM yyyy" | uppercase }}</div>
                       @for (expense of kvp.value; track expense) {
-                        <a class="expense-record" [routerLink]="['/group', group?.id, 'expense', expense.id]">
+                        <a class="expense-record" [routerLink]="['/group', group?.id, 'expense', expense.id]" [skipLocationChange]="true">
                           <span class="expense-date">
                             <span class="expense-date-month">{{expense.expenseDate | date: "MMM" | uppercase}}</span>
                             <span class="expense-date-date">{{expense.expenseDate | date: "dd"}}</span>
@@ -122,6 +122,7 @@ import { GroupWidgetComponent } from "./widgets/group-widget.component";
       <a mat-fab color="warn"
         role="button"
         [routerLink]="['/group', group?.id, 'expense']"
+		[skipLocationChange]="true"
         [disabled]="!group?.id">
           <mat-icon>add</mat-icon>
       </a>
@@ -131,6 +132,7 @@ import { GroupWidgetComponent } from "./widgets/group-widget.component";
         <a role="button" 
           mat-icon-button
           [routerLink]="['/group', group?.id]"
+		  [skipLocationChange]="true"
           [disabled]="!group?.id">
             <mat-icon>tune</mat-icon>
         </a>

@@ -14,7 +14,7 @@ export class NavigationService {
 			filter(e => e instanceof NavigationEnd),
 			map(e => (e as NavigationEnd).urlAfterRedirects)
 		).subscribe(curUrl => {
-			if(curUrl === "/" || curUrl === "/home") {
+			if (curUrl === "/" || curUrl === "/home") {
 				this.clearRouteHistory();
 			}
 
@@ -25,13 +25,13 @@ export class NavigationService {
 	}
 
 	navigateBack() {
-		this.history.pop(); 
+		this.history.pop();
 		const backUrl = this.history.length > 0 ? this.history[this.history.length - 1] : "/";
-		this.router.navigate([backUrl]);
+		this.router.navigate([backUrl], { skipLocationChange: true });
 	}
 
 	navigateTo(route: string[]) {
-		this.router.navigate(route);
+		this.router.navigate(route, { skipLocationChange: true });
 	}
 
 	clearRouteHistory() {

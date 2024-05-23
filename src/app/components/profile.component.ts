@@ -40,7 +40,7 @@ import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
             <span>{{userService.currentUser()?.name}}</span>
             <span>{{userService.currentUser()?.email}}</span>
 
-            <a role="button" mat-mini-fab color="secondary" routerLink="/edit-profile">
+            <a role="button" mat-mini-fab color="secondary" routerLink="/edit-profile" [skipLocationChange]="true">
               <mat-icon>edit</mat-icon>
             </a>
           }
@@ -90,7 +90,7 @@ export class ProfileComponent {
 	private router = inject(Router);
 	private readonly authService = inject(AuthService);
 	private readonly notificationService = inject(NotificationService);
-  
+
 	protected readonly userService = inject(UserService);
 
 	protected getUserImage = getUserImage;
@@ -103,7 +103,7 @@ export class ProfileComponent {
 
 	async onThemeChange($event: MatRadioChange) {
 		const user = this.userService.currentUser();
-		if(user) {
+		if (user) {
 			const { uid, ...data } = user;
 			data.preferences = {
 				theme: $event.value

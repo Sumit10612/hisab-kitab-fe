@@ -19,7 +19,7 @@ import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
 	standalone: true,
 	imports: [
 		CommonModule,
-		MatButtonModule, 
+		MatButtonModule,
 		MatIconModule,
 		MatDividerModule,
 		MatCardModule,
@@ -32,7 +32,7 @@ import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
     <app-layout>
       <div section="header" class="header-section">
         <div class="profile-section">
-          <a routerLink="/profile">
+          <a routerLink="/profile" [skipLocationChange]="true">
             <img
               width="55" 
               height="55"
@@ -63,7 +63,7 @@ import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
     </app-layout>
 
     <div class="create-group-button">
-      <a mat-fab routerLink="/group" color="warn">
+      <a mat-fab routerLink="/group" color="warn" [skipLocationChange]="true">
         <mat-icon>group_add</mat-icon>
       </a>
     </div>

@@ -10,7 +10,7 @@ import { getGroupImage, Group } from "../../models/group.model";
 	standalone: true,
 	imports: [MatCardModule, MatIconModule, RouterLink],
 	template: `
-  <mat-card [routerLink]="['/group-detail', data?.id]">
+  <mat-card [routerLink]="['/group-detail', data?.id]" [skipLocationChange]="true">
     <mat-card-content>
       <img
         width="66"
@@ -51,5 +51,5 @@ import { getGroupImage, Group } from "../../models/group.model";
 export class GroupWidgetComponent {
 	protected getGroupImage = getGroupImage;
 
-  @Input() data: Group | undefined;
+	@Input() data: Group | undefined;
 }

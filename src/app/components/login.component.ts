@@ -14,13 +14,13 @@ import { getFirebaseErrorMessage } from "../utilities/firebase-errors";
 	selector: "app-login",
 	standalone: true,
 	imports: [
-		MatFormFieldModule, 
-		MatInputModule, 
-		MatButtonModule, 
-		ReactiveFormsModule, 
+		MatFormFieldModule,
+		MatInputModule,
+		MatButtonModule,
+		ReactiveFormsModule,
 		RouterLink,
 	],
-	template:`
+	template: `
     <div class="container">
       <button class="gsi-material-button" (click)="googleSignIn()">
         <div class="gsi-material-button-state"></div>
@@ -65,7 +65,7 @@ import { getFirebaseErrorMessage } from "../utilities/firebase-errors";
         </div>
 
         <div class="section-footer">
-          <a role="button" mat mat-flat-button routerLink="/sign-up">Create Account</a>
+          <a role="button" mat mat-flat-button routerLink="/sign-up" [skipLocationChange]="true">Create Account</a>
           <button mat-flat-button (click)="forgotPassword()">Forget password?</button>
         </div>
       </form>
@@ -217,7 +217,7 @@ export class LoginComponent {
 	async login() {
 		const { email, password } = this.loginForm.value;
 
-		if(!this.loginForm.valid || !email || !password) {
+		if (!this.loginForm.valid || !email || !password) {
 			return;
 		}
 
@@ -233,12 +233,12 @@ export class LoginComponent {
 			this.notificationService.hideLoading();
 		}
 	}
-  
+
 	async googleSignIn() {
 		try {
 			this.notificationService.showLoading();
 			const newUser = await this.authService.googleSignIn();
-			if(newUser) {
+			if (newUser) {
 				await this.userService.addUser(newUser);
 			}
 
@@ -249,10 +249,10 @@ export class LoginComponent {
 			this.notificationService.hideLoading();
 		}
 	}
-  
+
 	async forgotPassword() {
 		const { email } = this.loginForm.value;
-		if(!email) {
+		if (!email) {
 			this.notificationService.error("Please enter a valid email address.");
 			return;
 		}
