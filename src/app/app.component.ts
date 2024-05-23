@@ -14,7 +14,7 @@ import { SwUpdate } from "@angular/service-worker";
 
 import { NavigationService } from "./services/navigation.service";
 import { NotificationService } from "./services/notification.service";
-import { UserService } from "./services/user.service";
+import { ThemeService } from "./services/theme.service";
 
 @Component({
 	selector: "app-root",
@@ -52,12 +52,12 @@ export class AppComponent implements OnInit {
 	private readonly renderer = inject(Renderer2);
 	private readonly navigation = inject(NavigationService);
 
-	protected readonly userService = inject(UserService);
+	protected readonly themeService = inject(ThemeService);
 	protected readonly notificationService = inject(NotificationService);
 
 	constructor() {
 		effect(() => {
-			this.userService.currentUser()?.preferences?.theme === "dark" ?
+			this.themeService.$theme() === "dark" ?
 				this.renderer.addClass(document.body, "dark-theme") :
 				this.renderer.removeClass(document.body, "dark-theme");
 		});
@@ -65,12 +65,12 @@ export class AppComponent implements OnInit {
 
 	ngOnInit() {
 		this.navigation.clearRouteHistory();
-		
+
 		// Checking service worker based update
-		if(this.swUpdate.isEnabled) {
+		if (this.swUpdate.isEnabled) {
 			this.swUpdate.checkForUpdate();
 			this.swUpdate.versionUpdates.subscribe(update => {
-				if(update.type === "VERSION_READY") {
+				if (update.type === "VERSION_READY") {
 					const sb = this.snackBar.open("New version of an app is available", "Install now", { duration: 50000 });
 					sb.onAction().subscribe(() => {
 						location.reload();

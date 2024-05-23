@@ -396,7 +396,7 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 		}).pipe(
 			finalize(() => this.notification.hideLoading())
 		).subscribe({
-			next: (id) => this.navigation.navigateToHome(),
+			next: () => this.navigation.navigateToHome(),
 			error: (error) => this.notification.firebaseError(error)
 		});
 	}

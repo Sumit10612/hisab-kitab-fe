@@ -52,7 +52,7 @@ import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
       </div>
       <div section="detail" class="group-widget-container">
         <mat-card-header>
-          <mat-card-title>Groups</mat-card-title>          
+          <mat-card-title>Groups</mat-card-title>
         </mat-card-header>
           <mat-card-content>
             @for (item of groupService.myGroups$ | async; track item) {
