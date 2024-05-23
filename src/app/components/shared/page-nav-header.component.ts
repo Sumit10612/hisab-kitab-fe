@@ -13,7 +13,7 @@ import { NavigationService } from "../../services/navigation.service";
 	template: `
     <div class="page-section">
       @if (backRoute) {
-        <a role="button" mat-icon-button [routerLink]="backRoute" [skipLocationChange]="true">
+        <a role="button" mat-icon-button [routerLink]="backRoute">
           <mat-icon>arrow_back_ios</mat-icon>
         </a>
       } @else {

@@ -32,7 +32,7 @@ import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
     <app-layout>
       <div section="header" class="header-section">
         <div class="profile-section">
-          <a routerLink="/profile" [skipLocationChange]="true">
+          <a routerLink="/profile">
             <img
               width="55" 
               height="55"
@@ -63,7 +63,7 @@ import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
     </app-layout>
 
     <div class="create-group-button">
-      <a mat-fab routerLink="/group" color="warn" [skipLocationChange]="true">
+      <a mat-fab routerLink="/group" color="warn">
         <mat-icon>group_add</mat-icon>
       </a>
     </div>

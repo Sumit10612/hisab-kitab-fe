@@ -40,7 +40,7 @@ import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
             <span>{{userService.currentUser()?.name}}</span>
             <span>{{userService.currentUser()?.email}}</span>
 
-            <a role="button" mat-mini-fab color="secondary" routerLink="/edit-profile" [skipLocationChange]="true">
+            <a role="button" mat-mini-fab color="secondary" routerLink="/edit-profile">
               <mat-icon>edit</mat-icon>
             </a>
           }

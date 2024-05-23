@@ -6,7 +6,6 @@ import { filter, map } from "rxjs";
 	providedIn: "root"
 })
 export class NavigationService {
-
 	private history: string[] = [];
 
 	constructor(private router: Router) {
@@ -27,11 +26,11 @@ export class NavigationService {
 	navigateBack() {
 		this.history.pop();
 		const backUrl = this.history.length > 0 ? this.history[this.history.length - 1] : "/";
-		this.router.navigate([backUrl], { skipLocationChange: true });
+		this.router.navigate([backUrl]);
 	}
 
 	navigateTo(route: string[]) {
-		this.router.navigate(route, { skipLocationChange: true });
+		this.router.navigate(route);
 	}
 
 	clearRouteHistory() {

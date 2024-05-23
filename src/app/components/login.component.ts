@@ -65,7 +65,7 @@ import { getFirebaseErrorMessage } from "../utilities/firebase-errors";
         </div>
 
         <div class="section-footer">
-          <a role="button" mat mat-flat-button routerLink="/sign-up" [skipLocationChange]="true">Create Account</a>
+          <a role="button" mat mat-flat-button routerLink="/sign-up" >Create Account</a>
           <button mat-flat-button (click)="forgotPassword()">Forget password?</button>
         </div>
       </form>

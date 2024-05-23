@@ -10,7 +10,7 @@ import { getGroupImage, Group } from "../../models/group.model";
 	standalone: true,
 	imports: [MatCardModule, MatIconModule, RouterLink],
 	template: `
-  <mat-card [routerLink]="['/group-detail', data?.id]" [skipLocationChange]="true">
+  <mat-card [routerLink]="['/group-detail', data?.id]">
     <mat-card-content>
       <img
         width="66"
