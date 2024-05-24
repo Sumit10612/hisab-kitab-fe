@@ -27,6 +27,7 @@ import { ErrorCode } from "../utilities/error-codes";
 import { throwIfNotFound } from "../utilities/firebase-errors";
 
 import { UserService } from "./user.service";
+import { round } from "lodash";
 
 @Injectable({
 	providedIn: "root"
@@ -42,7 +43,17 @@ export class GroupService {
 		filter(user => !!user),
 		switchMap(user => {
 			const q = query(this.collectionRef(), where(documentId(), "in", user?.groups));
-			return collectionData(q, { idField: "id" }) as Observable<Group[]>;
+			return (collectionData(q, { idField: "id" }) as Observable<Group[]>).pipe(
+				map(groups => groups.map(group => {
+					return {
+						...group,
+						groupTotal: round(group.groupTotal, 2),
+						monthTotal: Object.fromEntries(
+							Object.entries(group.monthTotal).map(([key, value]) => [key, round(value, 2)])
+						),
+					}
+				}))
+			);
 		})
 	);
 
@@ -52,6 +63,10 @@ export class GroupService {
 				map(group => {
 					return {
 						...group,
+						groupTotal: Math.ceil(group.groupTotal),
+						monthTotal: Object.fromEntries(
+							Object.entries(group.monthTotal).map(([key, value]) => [key, round(value, 2)])
+						),
 						members: group.members.map(member => member.id === user.uid ? { ...member, name: "You" } : member)
 					} as Group;
 				})
