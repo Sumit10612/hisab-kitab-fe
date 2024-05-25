@@ -1,13 +1,15 @@
 import { inject, Injectable } from "@angular/core";
 import {
 	collection,
-	collectionData,
 	docData,
 	Firestore,
+	getDocs,
+	limit,
 	orderBy,
-	query
+	query,
+	startAfter
 } from "@angular/fire/firestore";
-import { doc, runTransaction } from "firebase/firestore";
+import { doc, DocumentData, runTransaction } from "firebase/firestore";
 import { map, Observable } from "rxjs";
 
 import { Expense, ExpenseHelper, FirestoreExpense } from "../models/expense.model";
@@ -21,6 +23,9 @@ import { throwIfNotFound } from "../utilities/firebase-errors";
 export class ExpenseService {
 	private firestore = inject(Firestore);
 
+	private lastRetrievedDoc: DocumentData | null = null;
+	private lastPageRetrieved = false;
+
 	private readonly docRef = (groupId: string, id: string) => doc(this.firestore, "groups", groupId, "expenses", id);
 	private readonly collectionRef = (groupId: string) => collection(this.firestore, "groups", groupId, "expenses");
 
@@ -30,11 +35,37 @@ export class ExpenseService {
 		);
 	};
 
-	getAll$(groupId: string): Observable<Expense[]> {
-		const q = query(this.collectionRef(groupId), orderBy("expenseDate", "desc"));
-		return (collectionData(q, { idField: "id" }) as Observable<FirestoreExpense[]>).pipe(
-			map(expenses => expenses.map(expense => ExpenseHelper.toModel(expense)))
-		);
+	async getAll(groupId: string, initialGet = false): Promise<Expense[]> {
+		if(initialGet) {
+			this.lastRetrievedDoc = null;
+			this.lastPageRetrieved = false;
+		}
+
+		if(this.lastPageRetrieved) {
+			return [];
+		}
+
+		let queryRef = query(this.collectionRef(groupId), orderBy("expenseDate", "desc"), limit(25));
+		if(this.lastRetrievedDoc) {
+			queryRef = query(
+				this.collectionRef(groupId),
+				orderBy("expenseDate", "desc"),
+				startAfter(this.lastRetrievedDoc),
+				limit(25)
+			);
+		}
+
+		const documentSnapshots = await getDocs(queryRef);
+		this.lastRetrievedDoc = documentSnapshots.docs[documentSnapshots.docs.length - 1];
+		if(documentSnapshots.empty) {
+			this.lastPageRetrieved = true;
+		}
+
+		return documentSnapshots.docs.map(doc => {
+			const expense = ExpenseHelper.toModel(doc.data() as FirestoreExpense);
+			expense.id = doc.id;
+			return expense;
+		});
 	}
 
 	add(groupId: string, expense: Expense): Promise<void> {

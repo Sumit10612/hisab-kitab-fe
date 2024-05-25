@@ -11,6 +11,7 @@ import {
 	runTransaction,
 	where
 } from "@angular/fire/firestore";
+import { round } from "lodash";
 import {
 	concatMap,
 	filter,
@@ -27,7 +28,6 @@ import { ErrorCode } from "../utilities/error-codes";
 import { throwIfNotFound } from "../utilities/firebase-errors";
 
 import { UserService } from "./user.service";
-import { round } from "lodash";
 
 @Injectable({
 	providedIn: "root"
@@ -51,7 +51,7 @@ export class GroupService {
 						monthTotal: Object.fromEntries(
 							Object.entries(group.monthTotal).map(([key, value]) => [key, round(value, 2)])
 						),
-					}
+					};
 				}))
 			);
 		})
