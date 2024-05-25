@@ -1,5 +1,10 @@
 import { Image } from "./image.model";
 
+export enum GroupType {
+	ExpenseTracker,
+	SpiltExpense
+}
+
 export interface Group {
 	id?: string;
 	name: string;
@@ -7,6 +12,7 @@ export interface Group {
 	members: GroupMember[];
 	groupTotal: number;
 	monthTotal: Record<string, number>;
+	groupType?: GroupType;
 }
 
 export interface GroupMember {
@@ -16,10 +22,10 @@ export interface GroupMember {
 }
 
 export const getGroupImage = (alt?: string) => {
-	if(!alt) {
+	if (!alt) {
 		alt = "avatar_0";
 	}
-    
+
 	return groupImages.filter(img => img.alt === alt)[0];
 };
 

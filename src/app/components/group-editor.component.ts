@@ -14,10 +14,11 @@ import { MatDividerModule } from "@angular/material/divider";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatIconModule } from "@angular/material/icon";
 import { MatInputModule } from "@angular/material/input";
+import { MatRadioModule } from "@angular/material/radio";
 import { finalize, Subscription } from "rxjs";
 
 import { DialogButtonType, DialogData } from "../models/dialog.model";
-import { groupImages, GroupMember } from "../models/group.model";
+import { groupImages, GroupMember, GroupType } from "../models/group.model";
 import { Otp } from "../models/otp.model";
 import { DialogService } from "../services/dialog.service";
 import { GroupCodeService } from "../services/group-code.service";
@@ -41,6 +42,7 @@ import { LayoutComponent } from "./shared/layout.component";
 		MatDividerModule,
 		MatCardModule,
 		MatIconModule,
+		MatRadioModule,
 		OtpComponent
 	],
 	template: `
@@ -127,6 +129,11 @@ import { LayoutComponent } from "./shared/layout.component";
 						Leave Group
 				</button>
 			} @else {
+				<mat-radio-group labelPosition="after" name="groupType" [(ngModel)]="selectedGroupType">
+					<mat-radio-button [value]="groupType.ExpenseTracker">Track Expenses</mat-radio-button>
+					<mat-radio-button [value]="groupType.SpiltExpense" disabled>Split Bills</mat-radio-button>
+				</mat-radio-group>
+
 				<button 
 					(click)="create()"
 					mat-raised-button
@@ -290,6 +297,8 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 	protected groupName: string | undefined;
 	protected oldGroupName: string | undefined;
 	protected groupCode: number | undefined;
+	protected groupType = GroupType;
+	protected selectedGroupType: GroupType = GroupType.ExpenseTracker;
 
 	@Input() id: string = "";
 
@@ -392,7 +401,8 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 			imageUrl: groupImages[this.selectedIndex].alt,
 			groupTotal: 0,
 			members: [],
-			monthTotal: {}
+			monthTotal: {},
+			groupType: this.selectedGroupType,
 		}).pipe(
 			finalize(() => this.notification.hideLoading())
 		).subscribe({
