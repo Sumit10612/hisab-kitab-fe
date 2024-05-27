@@ -48,6 +48,7 @@ import { getYearMonth } from "../../utilities/date";
 		
 		.mat-mdc-card {
 			border-radius: 32px;
+			padding: 0 16px;
 
 			.mat-mdc-card-content {
 				display: flex;
