@@ -3,7 +3,9 @@ import { MatCardModule } from "@angular/material/card";
 import { MatIconModule } from "@angular/material/icon";
 import { RouterLink } from "@angular/router";
 
-import { getGroupImage, Group } from "../../models/group.model";
+import { getGroupImage, Group, GroupType } from "../../models/group.model";
+import { getYearMonth } from "../../utilities/date";
+import { round } from "lodash";
 
 @Component({
 	selector: "app-group-widget",
@@ -13,43 +15,56 @@ import { getGroupImage, Group } from "../../models/group.model";
   <mat-card [routerLink]="['/group-detail', data?.id]">
     <mat-card-content>
       <img
-        width="66"
-        height="66"
+        width="50"
+        height="50"
         [src]="getGroupImage(data?.imageUrl).src"
         [alt]="getGroupImage(data?.imageUrl).alt" />
 
-      <div class="details-container">
-        <div class="group-name">{{data?.name}}</div>
-        <span>Total balance &#8377;{{data?.groupTotal ?? 0}}</span>
+      <div class="group-info">
+        <div class="group-info-name">{{data?.name}}</div>
+		@if (data?.groupType === groupType.SpiltExpense) {
+        	<span>Total balance &#8377;{{data?.groupTotal ?? 0}}</span>
+		} @else {
+			<span class="group-info-total">This month: &#8377;{{currentMonthTotal}}</span>
+		}
       </div>
     </mat-card-content>
   </mat-card>
   `,
 	styles: [`
-    .mat-mdc-card-content {
-      display: flex;
-      align-items: center;
-      padding: 8px;
-    }
+		.mat-mdc-card-content {
+			display: flex;
+			align-items: center;
+			padding: 8px;
+			gap: 24px;
+		}
 
-    .details-container {
-      flex: 80%;
-      margin-left: 24px;
+		.group-info {
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
 
-      .group-name {
-        font-size: 16px;
-        font-weight: 500;
-      }
-    }
+			&-name {
+				font-size: 1.2rem;
+				font-weight: 500;
+			}
 
-    .mat-icon {
-      vertical-align: middle;
-      transform: scale(0.6);
-    }
-  `]
+			&-total {
+				font-size: 1.05rem;
+			}
+		}
+	`]
 })
 export class GroupWidgetComponent {
 	protected getGroupImage = getGroupImage;
+	protected groupType = GroupType;
 
 	@Input() data: Group | undefined;
+
+	get currentMonthTotal(): number {
+		const currMonth = getYearMonth(new Date());
+		const total = this.data?.monthTotal[currMonth] ?? 0;
+
+		return round(+total, 2);
+	}
 }
