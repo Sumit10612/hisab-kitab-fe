@@ -1,70 +1,127 @@
-import { Component } from "@angular/core";
+import { Component, Input } from "@angular/core";
 import { MatCardModule } from "@angular/material/card";
 import { MatDividerModule } from "@angular/material/divider";
 import { MatIconModule } from "@angular/material/icon";
+import { Group, GroupType } from "../../models/group.model";
+import { round } from "lodash";
+import { getYearMonth } from "../../utilities/date";
 
 @Component({
 	selector: "app-overview-widget",
 	standalone: true,
 	imports: [MatCardModule, MatIconModule, MatDividerModule],
 	template: `
-  <div class="overview-widget mat-elevation-z20">
-    <mat-card>
-      <mat-card-content>
-        <div class="overview-widget-header">
-          <h3>Total Balance</h3>
-          <h2>
-            <mat-icon>currency_rupee</mat-icon>
-            <span>0</span>
-          </h2>
-        </div>
-        <mat-divider></mat-divider>
-        <div class="overview-widget-content">
-          <div>
-            <span style="color: red; font-weight: 700;">--</span>
-            <span>you owe</span>
-          </div>
-          <div>
-            <span style="color: green; font-weight: 700;">--</span>
-            <span>you are owed</span>
-          </div>
-        </div>
-      </mat-card-content>
-    </mat-card>
-  </div>
+	<div class="overview-widget mat-elevation-z20">
+		<mat-card>
+			<mat-card-content>
+			<div class="split-expenses">
+				<div class="split-expenses-header">
+					<span class="split-expenses-header-total">&#8377; 0</span>
+					<span class="split-expenses-header-text">total balance</span>
+				</div>
+				<mat-divider></mat-divider>
+				<div class="split-expenses-detail">
+					<div>
+						<span class="split-expenses-detail-owe">&#8377; 0</span>
+						<span>you owe</span>
+					</div>
+					<div>
+						<span class="split-expenses-detail-owed">&#8377; 0</span>
+						<span>you are owed</span>
+					</div>
+				</div>
+			</div>
+			<mat-divider vertical></mat-divider>
+			<div class="expense-tracker">
+				<div class="expense-tracker-header">
+					<span class="expense-tracker-header-total">&#8377; {{expnseTrackerTotal}}</span>
+					<span class="expense-tracker-header-text">this month</span>
+				</div>
+			</div>
+			</mat-card-content>
+		</mat-card>
+	</div>
   `,
 	styles: [`
-    .overview-widget {
-      border-radius: 32px;
-      
-      .mat-mdc-card {
-        border-radius: 32px;
-        padding: 0 16px;
-      }
+	.overview-widget {
+		border-radius: 32px;
+		
+		.mat-mdc-card {
+			border-radius: 32px;
 
-      &-header {
-        display: flex;
-        justify-content: space-between;
-      }
+			.mat-mdc-card-content {
+				display: flex;
+				justify-content: space-between;
+			}
+		}
+	}
 
-      &-content {
-        margin-top: 8px;
-        display: flex;
-        justify-content: space-between;
+	.split-expenses {
+		display: flex;
+		flex-direction: column;
 
-        > div {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-        }
-      }      
+		&-header {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 4px;
+			margin-bottom: 8px;
 
-      .mat-icon {
-        vertical-align: middle;
-      }
-    }
-  `]
+			&-total {
+				font-size: 1.5rem;
+				font-weight: 500;
+			}
+		}
+
+		&-detail {
+			display: flex;
+			flex-direction: column;
+			margin-top: 8px;
+
+			&-owe {
+				margin-right: 4px;
+				font-weight: 500;
+				font-size: 1.1rem;
+				color: red;
+			}
+
+			&-owed {
+				margin-right: 4px;
+				font-weight: 500;
+				font-size: 1.1rem;
+				color: green;
+			}
+		}
+	}
+
+	.expense-tracker {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+
+		&-header {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 4px;
+
+			&-total {
+				font-size: 1.5rem;
+				font-weight: 500;
+			}
+		}
+	}
+	`]
 })
 export class OverviewWidgetComponent {
+	@Input() groups: Group[] | null = [];
 
+	get expnseTrackerTotal(): number {
+		const currMonth = getYearMonth(new Date());
+		const total = (this.groups || [])
+			.filter(group => group.groupType !== GroupType.SpiltExpense)
+			.reduce((acc, group) => acc + (+group.monthTotal[currMonth] || 0), 0);
+
+		return round(total);
+	}
 }
