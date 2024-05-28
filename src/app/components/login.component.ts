@@ -225,7 +225,7 @@ export class LoginComponent {
 
 		try {
 			await this.authService.login(email, password);
-
+			window.location.reload();
 			this.router.navigate(["/home"]);
 		} catch (error) {
 			this.notificationService.error(getFirebaseErrorMessage(error));
@@ -241,7 +241,7 @@ export class LoginComponent {
 			if (newUser) {
 				await this.userService.addUser(newUser);
 			}
-
+			window.location.reload();
 			this.router.navigate(["/home"]);
 		} catch (error) {
 			this.notificationService.error(getFirebaseErrorMessage(error));
