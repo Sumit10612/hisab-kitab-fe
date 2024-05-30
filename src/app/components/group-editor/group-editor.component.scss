@@ -1,0 +1,98 @@
+.header-section {
+	margin: 16px;
+	display: flex;
+	flex-direction: column;
+
+	.image-container {
+	display: flex;
+	overflow-x: auto;
+	white-space: nowrap;
+
+	> div {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+
+		> img {
+		margin: 8px 8px 0 8px;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		}
+
+		> span {
+		margin-bottom: 8px;
+		}
+
+		.selected {
+		transform: scale(1.4);
+		}
+	}
+	}
+}
+
+.detail-section {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	margin: 16px;
+	align-items: center;
+
+	> mat-card {
+		width: 100%;
+		height: 250px;
+
+		> mat-card-content {
+			display: flex;
+			flex-direction: column;
+
+			.user-info {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				margin: 8px 0;
+			}
+
+			.user-details {
+				display: flex;
+				align-items: center;
+
+				> span:first-child {
+					margin-right: 8px;
+				}
+			}
+
+			.user-actions {
+				display: flex;
+				gap: 8px;
+
+				> button {
+					min-width: fit-content;
+					font-size: 12px;
+					font-weight: 100;
+				}
+			}
+		}
+	}
+}
+
+.btn-group {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 16px;
+}
+
+.add-user-to-group-template {
+	text-align: center;
+
+	.timer {
+		font-size: 0.6rem;
+		margin-top: 8px;
+	}
+
+	.code {
+		font-size: 3rem;
+		font-weight: 500;
+		letter-spacing: 12px;
+	}
+}

@@ -66,12 +66,11 @@ import { LayoutComponent } from "./shared/layout.component";
 				<mat-label>Amount</mat-label>
 				<span matTextPrefix>&#8377;</span>
 				<input
-				class="amount-input"
-				matInput
-				type="number"
-				placeholder="0.00"
-				min="0"
-				[formControl]="form.controls.amount">
+					class="amount-input"
+					matInput
+					type="number"
+					placeholder="0.00"
+					[formControl]="form.controls.amount">
 			</mat-form-field>
 			<mat-form-field>
 				<mat-label>Category</mat-label>

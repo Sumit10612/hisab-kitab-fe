@@ -15,20 +15,20 @@ import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatIconModule } from "@angular/material/icon";
 import { MatInputModule } from "@angular/material/input";
 import { MatRadioModule } from "@angular/material/radio";
+import { MatSlideToggleModule } from "@angular/material/slide-toggle";
 import { finalize, Subscription } from "rxjs";
 
-import { DialogButtonType, DialogData } from "../models/dialog.model";
-import { groupImages, GroupMember, GroupType } from "../models/group.model";
-import { Otp } from "../models/otp.model";
-import { DialogService } from "../services/dialog.service";
-import { GroupCodeService } from "../services/group-code.service";
-import { GroupService } from "../services/group.service";
-import { NavigationService } from "../services/navigation.service";
-import { NotificationService } from "../services/notification.service";
-import { ErrorCode } from "../utilities/error-codes";
-
-import { OtpComponent } from "./otp.component";
-import { LayoutComponent } from "./shared/layout.component";
+import { DialogButtonType, DialogData } from "../../models/dialog.model";
+import { groupImages, GroupMember, GroupType } from "../../models/group.model";
+import { Otp } from "../../models/otp.model";
+import { DialogService } from "../../services/dialog.service";
+import { GroupCodeService } from "../../services/group-code.service";
+import { GroupService } from "../../services/group.service";
+import { NavigationService } from "../../services/navigation.service";
+import { NotificationService } from "../../services/notification.service";
+import { ErrorCode } from "../../utilities/error-codes";
+import { OtpComponent } from "../otp.component";
+import { LayoutComponent } from "../shared/layout.component";
 
 @Component({
 	selector: "app-group-editor",
@@ -43,243 +43,11 @@ import { LayoutComponent } from "./shared/layout.component";
 		MatCardModule,
 		MatIconModule,
 		MatRadioModule,
+		MatSlideToggleModule,
 		OtpComponent
 	],
-	template: `
-	<app-layout [showNav]="true" [pageTitle]="id ? 'Settings' : 'Create a group'">
-		<div section="header" class="header-section">
-			<mat-form-field>
-				<mat-label>Group Name</mat-label>
-				<input matInput [(ngModel)]="groupName" [readonly]="id && currentUser?.role !== 'admin'" />
-			</mat-form-field>
-			@if (id) {
-				@if (currentUser?.role === "admin") {
-					<div class="btn-group">
-						<button mat-raised-button
-							(click)="update()"
-							class="rounded-button"
-							color="primary"
-							[disabled]="!groupName || oldGroupName === groupName">
-								Update Group Name
-						</button>
-						
-						<button mat-raised-button
-							color="primary"
-							class="rounded-button"
-							(click)="openAddMemberDialog()">
-							Invite Member
-						</button>
-					</div>
-				}
-			} @else {
-				<div class="image-container">
-					@for (item of groupImages; track item) {
-						<div>
-							<img
-							width="48"
-							height="48"
-							[class.selected]="selectedIndex === $index"
-							[src]="item.src"
-							[alt]="item.alt"
-							(click)="selectImage($index)" />
-							<span>{{item.alt}}</span>
-						</div>
-					}
-				</div>
-			}
-		</div>
-
-		<div section="detail" class="detail-section">
-			@if (id) {
-				<mat-card>
-					<mat-card-header>
-						<mat-card-subtitle>Members:</mat-card-subtitle>
-					</mat-card-header>
-					<mat-card-content>
-						@for (member of members; track member) {
-							<div class="user-info">
-								<div class="user-details">
-									<span>{{ member.name }}</span>
-									@if (isAdmin(member)) { <span class="role">(admin)</span> }
-								</div>
-								@if (currentUser && isAdmin(currentUser)) {
-									<div class="user-actions">
-										<button
-											mat-button
-											[hidden]="isCurrentUser(member)"
-											(click)="toggelAdmin(member)">
-												{{isAdmin(member) ? "Remove" : "Make"}} admin
-										</button>
-										<button mat-button color="warn" [disabled]="isCurrentUser(member)" (click)="removeMember(member.id)">
-											<mat-icon>person_remove</mat-icon>
-										</button>
-									</div>
-								}
-							</div>
-							<mat-divider></mat-divider>
-						}
-					</mat-card-content>
-				</mat-card>
-
-				<button
-					mat-raised-button
-					color="warn"
-					class="rounded-button"
-					(click)="removeMember()">
-						Leave Group
-				</button>
-			} @else {
-				<mat-radio-group labelPosition="after" name="groupType" [(ngModel)]="selectedGroupType">
-					<mat-radio-button [value]="groupType.ExpenseTracker">Track Expenses</mat-radio-button>
-					<mat-radio-button [value]="groupType.SpiltExpense" disabled>Split Bills</mat-radio-button>
-				</mat-radio-group>
-
-				<button 
-					(click)="create()"
-					mat-raised-button
-					class="rounded-button"
-					color="primary"
-					[disabled]="!groupName || !(selectedIndex === 0 ? 1 : selectedIndex)">
-						Create Group
-				</button>
-				<span>-- OR --</span>
-				<button (click)="openJoinGroupDialog()"
-					mat-raised-button
-					class="rounded-button"
-					color="primary">
-						Join Group
-				</button>
-			}
-
-			@if (id && currentUser?.role === "admin") {
-				<button 
-					mat-raised-button
-					class="rounded-button"
-					color="warn"
-					(click)="deleteGroup()">
-						Delete Group
-				</button>
-			}
-		</div>
-	</app-layout>
-
-	<ng-template #addUserToGroupDialogTemplate>
-		<div class="add-user-to-group-template">
-			@if (groupCode) {
-				<div class="code">{{groupCode}}</div>
-				<div class="timer">code is valid only for 5 minutes</div>
-				<p>Others can join this group <br/>
-					using the above code</p>
-			} @else {
-				Please wait, generating new code...
-			}
-		</div>
-	</ng-template>
-
-	<ng-template #joinGroupDialogTemplate>
-		<app-otp-selector></app-otp-selector>
-	</ng-template>
-	`,
-	styles: [`
-	.header-section {
-		margin: 16px;
-		display: flex;
-		flex-direction: column;
-
-		.image-container {
-		display: flex;
-		overflow-x: auto;
-		white-space: nowrap;
-
-		> div {
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-
-			> img {
-			margin: 8px 8px 0 8px;
-			cursor: pointer;
-			transition: all 0.3s ease;
-			}
-
-			> span {
-			margin-bottom: 8px;
-			}
-
-			.selected {
-			transform: scale(1.4);
-			}
-		}
-		}
-	}
-
-	.detail-section {
-		display: flex;
-		flex-direction: column;
-		gap: 16px;
-		margin: 16px;
-		align-items: center;
-
-		> mat-card {
-			width: 100%;
-			height: 250px;
-
-			> mat-card-content {
-				display: flex;
-				flex-direction: column;
-
-				.user-info {
-					display: flex;
-					align-items: center;
-					justify-content: space-between;
-					margin: 8px 0;
-				}
-
-				.user-details {
-					display: flex;
-					align-items: center;
-
-					> span:first-child {
-						margin-right: 8px;
-					}
-				}
-
-				.user-actions {
-					display: flex;
-					gap: 8px;
-
-					> button {
-						min-width: fit-content;
-						font-size: 12px;
-						font-weight: 100;
-					}
-				}
-			}
-		}
-	}
-
-	.btn-group {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 16px;
-	}
-
-	.add-user-to-group-template {
-		text-align: center;
-
-		.timer {
-			font-size: 0.6rem;
-			margin-top: 8px;
-		}
-
-		.code {
-			font-size: 3rem;
-			font-weight: 500;
-			letter-spacing: 12px;
-		}
-	}
-	`]
+	templateUrl: "./group-editor.component.html",
+	styleUrls: ["./group-editor.component.scss"]
 })
 export class GroupEditorComponent implements OnInit, OnDestroy {
 	private readonly notification = inject(NotificationService);
@@ -299,6 +67,7 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 	protected groupCode: number | undefined;
 	protected groupType = GroupType;
 	protected selectedGroupType: GroupType = GroupType.ExpenseTracker;
+	protected excludeTotal = false;
 
 	@Input() id: string = "";
 
@@ -312,6 +81,7 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 				this.selectedIndex = groupImages.findIndex(g => g.alt === group.imageUrl);
 				this.members = group.members;
 				this.currentUser = this.members.find(member => this.isCurrentUser(member));
+				this.excludeTotal = group.excludeTotal ?? false;
 			});
 		}
 	}
@@ -403,6 +173,7 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 			members: [],
 			monthTotal: {},
 			groupType: this.selectedGroupType,
+			excludeTotal: this.excludeTotal,
 		}).pipe(
 			finalize(() => this.notification.hideLoading())
 		).subscribe({

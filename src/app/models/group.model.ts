@@ -13,6 +13,7 @@ export interface Group {
 	groupTotal: number;
 	monthTotal: Record<string, number>;
 	groupType?: GroupType;
+	excludeTotal?: boolean;
 }
 
 export interface GroupMember {

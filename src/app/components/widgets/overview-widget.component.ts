@@ -2,8 +2,9 @@ import { Component, Input } from "@angular/core";
 import { MatCardModule } from "@angular/material/card";
 import { MatDividerModule } from "@angular/material/divider";
 import { MatIconModule } from "@angular/material/icon";
-import { Group, GroupType } from "../../models/group.model";
 import { round } from "lodash";
+
+import { Group, GroupType } from "../../models/group.model";
 import { getYearMonth } from "../../utilities/date";
 
 @Component({
@@ -120,7 +121,7 @@ export class OverviewWidgetComponent {
 	get expnseTrackerTotal(): number {
 		const currMonth = getYearMonth(new Date());
 		const total = (this.groups || [])
-			.filter(group => group.groupType !== GroupType.SpiltExpense)
+			.filter(group => group.groupType !== GroupType.SpiltExpense && !group.excludeTotal)
 			.reduce((acc, group) => acc + (+group.monthTotal[currMonth] || 0), 0);
 
 		return round(total);
