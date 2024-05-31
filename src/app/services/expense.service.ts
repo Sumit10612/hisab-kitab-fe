@@ -10,7 +10,7 @@ import {
 	startAfter
 } from "@angular/fire/firestore";
 import { doc, DocumentData, runTransaction } from "firebase/firestore";
-import { map, Observable } from "rxjs";
+import { map, Observable, take } from "rxjs";
 
 import { Expense, ExpenseHelper, FirestoreExpense } from "../models/expense.model";
 import { Group } from "../models/group.model";
@@ -31,6 +31,7 @@ export class ExpenseService {
 
 	get$ = (groupId: string, id: string): Observable<Expense> => {
 		return (docData(this.docRef(groupId, id)) as Observable<FirestoreExpense>).pipe(
+			take(1),
 			map(expense => ExpenseHelper.toModel(expense))
 		);
 	};

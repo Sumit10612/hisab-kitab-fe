@@ -169,6 +169,8 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
 				tap(group => {
 					const member = group.members.find(m => m.name === "You") as GroupMember;
 					this.form.controls.paidBy.setValue(member.id);
+
+					group.members = group.members.filter(m => m.active !== false);
 				})
 			)
 		)

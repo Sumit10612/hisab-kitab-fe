@@ -22,7 +22,6 @@ import { DialogButtonType, DialogData } from "../../models/dialog.model";
 import { groupImages, GroupMember, GroupType } from "../../models/group.model";
 import { Otp } from "../../models/otp.model";
 import { DialogService } from "../../services/dialog.service";
-import { GroupCodeService } from "../../services/group-code.service";
 import { GroupService } from "../../services/group.service";
 import { NavigationService } from "../../services/navigation.service";
 import { NotificationService } from "../../services/notification.service";
@@ -54,7 +53,6 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 	private readonly navigation = inject(NavigationService);
 	private readonly groupService = inject(GroupService);
 	private readonly dialog = inject(DialogService);
-	private readonly groupCodeService = inject(GroupCodeService);
 
 	private groupSubscription$$: Subscription | undefined;
 
@@ -79,7 +77,7 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 			this.groupSubscription$$ = this.groupService.get$(this.id).subscribe(group => {
 				this.groupName = this.oldGroupName = group.name;
 				this.selectedIndex = groupImages.findIndex(g => g.alt === group.imageUrl);
-				this.members = group.members;
+				this.members = group.members.filter(m => m.active !== false);
 				this.currentUser = this.members.find(member => this.isCurrentUser(member));
 				this.excludeTotal = group.excludeTotal ?? false;
 			});
@@ -118,7 +116,7 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 		addMemberDialogRef.afterOpened().subscribe(async _ => {
 			this.notification.showLoading();
 			try {
-				this.groupCode = await this.groupCodeService.getCode(this.id);
+				this.groupCode = await this.groupService.getCode(this.id);
 			} catch (err) {
 				this.notification.firebaseError(err);
 			} finally {
@@ -147,7 +145,7 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 						action: (data) => {
 							const code = +`${data?.code1}${data?.code2}${data?.code3}${data?.code4}`;
 							this.notification.showLoading();
-							this.groupCodeService.addMemeberToGroup$(code).pipe(
+							this.groupService.addMemeberToGroup$(code).pipe(
 								finalize(() => this.notification.hideLoading())
 							).subscribe({
 								next: () => this.navigation.navigateToHome(),

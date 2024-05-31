@@ -7,6 +7,7 @@ import {
 	documentId,
 	Firestore,
 	getDocs,
+	limit,
 	query,
 	runTransaction,
 	where
@@ -22,12 +23,13 @@ import {
 	tap
 } from "rxjs";
 
-import { Group } from "../models/group.model";
+import { Group, GroupCode, isExpired, toFirestore } from "../models/group.model";
 import { GroupOrder, User } from "../models/user.model";
 import { ErrorCode } from "../utilities/error-codes";
 import { throwIfNotFound } from "../utilities/firebase-errors";
 
 import { UserService } from "./user.service";
+import { generateRandomNumber } from "../utilities/common";
 
 @Injectable({
 	providedIn: "root"
@@ -90,13 +92,11 @@ export class GroupService {
 						id: user.uid,
 						name: user.name,
 						role: "admin",
+						active: true,
 					}]
 				} as Group);
 
-				transction.update(doc(this.firestore, "users", user.uid), {
-					groupIds: [...user.groupIds ?? [], ref.id] as string[],
-					groups: [...user.groups ?? [], { id: ref.id, order: Number.MAX_SAFE_INTEGER }] as GroupOrder[]
-				});
+				transction.update(doc(this.firestore, "users", user.uid), this.addGroupToUser(user, ref.id));
 
 				return ref.id;
 			}))
@@ -163,7 +163,13 @@ export class GroupService {
 				const userSnapshot = await transaction.get(userRef);
 				const userDoc = throwIfNotFound(userSnapshot).data() as User;
 
-				const members = groupDoc.members.filter(m => m.id !== memberId);
+				const members = groupDoc.members.map(m => {
+					if (m.id === memberId) {
+						m.active = false;
+						m.role = "user";
+					}
+					return m;
+				});
 
 				transaction.update(userRef, this.filterUserGroups(userDoc, groupId));
 				transaction.update(groupRef, { members });
@@ -198,6 +204,71 @@ export class GroupService {
 		);
 	}
 
+	async getCode(groupId: string): Promise<number> {
+		const collectionRef = collection(this.firestore, "group_code");
+		return await runTransaction(this.firestore, async (transaction) => {
+			const groupDoc = await transaction.get(doc(collectionRef, groupId));
+			if (!groupDoc.exists() || isExpired(groupDoc.data() as GroupCode)) {
+				let newCode;
+				do {
+					newCode = generateRandomNumber();
+				} while (!(await getDocs(query(collectionRef, where("code", "==", newCode)))).empty);
+
+				transaction.set(doc(collectionRef, groupId), toFirestore(newCode));
+				return newCode;
+			}
+
+			return (groupDoc.data() as GroupCode).code;
+		});
+	}
+
+	addMemeberToGroup$(code: number): Observable<string> {
+		const collectionRef = collection(this.firestore, "group_code");
+		return this.userService.user$.pipe(
+			take(1),
+			switchMap(async user => {
+				return await runTransaction(this.firestore, async transaction => {
+					const querySnapshot = await getDocs(query(collectionRef, where("code", "==", code), limit(1)));
+					if (querySnapshot.empty) {
+						throw "Invalide code";
+					}
+
+					const groupCodeDoc = querySnapshot.docs[0];
+					const groupCode = groupCodeDoc.data() as GroupCode;
+					if (isExpired(groupCode)) {
+						throw "Code expired.";
+					} else if (+groupCode.code !== code) {
+						throw "Invalide code";
+					}
+
+					if (user.groupIds?.findIndex(groupId => groupId === groupCodeDoc.id) === 1) {
+						return groupCodeDoc.id;
+					}
+
+					const groupRef = doc(this.firestore, "groups", groupCodeDoc.id);
+					const groupSnapshot = await transaction.get(groupRef);
+					const group = throwIfNotFound(groupSnapshot).data() as Group;
+					
+					const memberExists = group.members.find(member => member.id === user.uid);
+					if (memberExists) {
+						memberExists.active = true;
+					} else {
+						group.members.push({
+							id: user.uid,
+							name: user.name ?? "",
+							active: true,
+						})
+					}
+
+					transaction.update(groupRef, { members: group.members });
+					transaction.update(doc(this.firestore, "users", user.uid), this.addGroupToUser(user, groupCodeDoc.id));
+
+					return groupCodeDoc.id;
+				});
+			})
+		);
+	}
+
 	private isCurrentUserAuthorizedToUpdate(userId: string | null, group: Group) {
 		const currentMember = group.members.find(member => member.id === userId);
 		if (!currentMember || currentMember.role !== "admin") {
@@ -212,5 +283,12 @@ export class GroupService {
 			groupIds: user.groupIds?.filter(id => id !== groupId) as string[],
 			groups: user.groups?.filter(g => g.id !== groupId) as GroupOrder[],
 		};
+	}
+
+	private addGroupToUser(user: User, groupId: string) {
+		return { 
+			groupIds: [...user.groupIds ?? [], groupId] as string[],
+			groups: [...user.groups ?? [], { id: groupId, order: Number.MAX_SAFE_INTEGER }] as GroupOrder[],
+		}
 	}
 }
