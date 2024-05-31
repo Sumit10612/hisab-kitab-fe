@@ -78,14 +78,14 @@ import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
 
 		.detail-section {
 			padding: 16px;
-			height: calc(100vh - 332px);
+			height: calc(100vh - 262px);
 			overflow-y: auto;
 		}
 
 		.create-group-button {
 			position: absolute;
-			right: 24px;
-			bottom: 24px;
+			right: 16px;
+			bottom: 16px;
 		}
 	`]
 })
