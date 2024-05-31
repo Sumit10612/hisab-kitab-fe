@@ -94,7 +94,7 @@ export class GroupService {
 				} as Group);
 
 				transction.update(doc(this.firestore, "users", user.uid), {
-					groupsIds: [...user.groupIds ?? [], ref.id] as string[],
+					groupIds: [...user.groupIds ?? [], ref.id] as string[],
 					groups: [...user.groups ?? [], { id: ref.id, order: Number.MAX_SAFE_INTEGER }] as GroupOrder[]
 				});
 
