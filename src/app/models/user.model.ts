@@ -1,16 +1,22 @@
 import { Image } from "./image.model";
 
 export interface User {
-    uid: string;
-    name?: string;
-    email?: string;
-    photoUrl?: string;
-    preferences?: UserPreferences;
-    groups?: string[];
+	uid: string;
+	name?: string;
+	email?: string;
+	photoUrl?: string;
+	preferences?: UserPreferences;
+	groupIds?: string[];
+	groups?: GroupOrder[];
 }
 
 export interface UserPreferences {
-    theme?: string;
+	theme?: string;
+}
+
+export interface GroupOrder {
+	id: string;
+	order: number;
 }
 
 export const getUserImage = (alt?: string) => {

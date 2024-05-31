@@ -3,7 +3,6 @@ import { NonNullableFormBuilder, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
-import { Router } from "@angular/router";
 
 import { avatars } from "../models/user.model";
 import { NavigationService } from "../services/navigation.service";
@@ -12,7 +11,6 @@ import { UserService } from "../services/user.service";
 import { getFirebaseErrorMessage } from "../utilities/firebase-errors";
 
 import { LayoutComponent } from "./shared/layout.component";
-import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
 
 @Component({
 	selector: "app-edit-profile",
@@ -22,7 +20,6 @@ import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
 		MatFormFieldModule,
 		MatInputModule,
 		MatButtonModule,
-		PageNavHeaderComponent,
 		LayoutComponent
 	],
 	template: `
@@ -84,7 +81,6 @@ import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
 export class EditProfileComponent {
 	private readonly userService = inject(UserService);
 	private readonly notificationService = inject(NotificationService);
-	private readonly router = inject(Router);  
 	protected readonly formBuilder = inject(NonNullableFormBuilder);
 	private readonly navigation = inject(NavigationService);
 

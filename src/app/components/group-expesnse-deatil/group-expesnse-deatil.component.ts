@@ -25,7 +25,6 @@ import { GroupService } from "../../services/group.service";
 import { getYearMonth } from "../../utilities/date";
 import { LayoutComponent } from "../shared/layout.component";
 import { PageNavHeaderComponent } from "../shared/page-nav-header.component";
-import { GroupWidgetComponent } from "../widgets/group-widget.component";
 
 @Component({
 	selector: "app-group-expesnse-detail",
@@ -37,7 +36,6 @@ import { GroupWidgetComponent } from "../widgets/group-widget.component";
 		MatIconModule,
 		MatButtonModule,
 		PageNavHeaderComponent,
-		GroupWidgetComponent,
 		LayoutComponent,
 		RouterLink,
 		MatDividerModule,

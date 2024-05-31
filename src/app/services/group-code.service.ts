@@ -12,6 +12,7 @@ import { Observable, switchMap, take } from "rxjs";
 
 import { GroupCode, isExpired, toFirestore } from "../models/group-code.model";
 import { Group, GroupMember } from "../models/group.model";
+import { GroupOrder } from "../models/user.model";
 import { generateRandomNumber } from "../utilities/common";
 import { throwIfNotFound } from "../utilities/firebase-errors";
 
@@ -61,11 +62,9 @@ export class GroupCodeService {
 						throw "Invalide code";
 					}
 
-					if (user.groups?.findIndex(groupId => groupId === groupCodeDoc.id) === 1) {
+					if (user.groupIds?.findIndex(groupId => groupId === groupCodeDoc.id) === 1) {
 						return groupCodeDoc.id;
 					}
-
-					const groups = [...user.groups ?? [], groupCodeDoc.id];
 
 					const groupRef = doc(this.fireStore, "groups", groupCodeDoc.id);
 					const groupSnapshot = await transaction.get(groupRef);
@@ -77,7 +76,10 @@ export class GroupCodeService {
 					];
 
 					transaction.update(groupRef, { members });
-					transaction.update(doc(this.fireStore, "users", user.uid), { groups });
+					transaction.update(doc(this.fireStore, "users", user.uid), { 
+						groupIds: [...user.groupIds ?? [], groupCodeDoc.id] as string[],
+						groups: [...user.groups ?? [], { id: groupCodeDoc.id, order: Number.MAX_SAFE_INTEGER }] as GroupOrder[],
+					});
 
 					return groupCodeDoc.id;
 				});

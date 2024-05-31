@@ -11,7 +11,7 @@ import {
 	runTransaction,
 	where
 } from "@angular/fire/firestore";
-import { round } from "lodash";
+import { keyBy, round, sortBy } from "lodash";
 import {
 	concatMap,
 	filter,
@@ -23,7 +23,7 @@ import {
 } from "rxjs";
 
 import { Group } from "../models/group.model";
-import { User } from "../models/user.model";
+import { GroupOrder, User } from "../models/user.model";
 import { ErrorCode } from "../utilities/error-codes";
 import { throwIfNotFound } from "../utilities/firebase-errors";
 
@@ -42,17 +42,22 @@ export class GroupService {
 	myGroups$: Observable<Group[]> = this.userService.user$.pipe(
 		filter(user => !!user),
 		switchMap(user => {
-			const q = query(this.collectionRef(), where(documentId(), "in", user?.groups));
+			const q = query(this.collectionRef(), where(documentId(), "in", user.groupIds));
 			return (collectionData(q, { idField: "id" }) as Observable<Group[]>).pipe(
-				map(groups => groups.map(group => {
-					return {
-						...group,
-						groupTotal: round(group.groupTotal, 2),
-						monthTotal: Object.fromEntries(
-							Object.entries(group.monthTotal).map(([key, value]) => [key, round(value, 2)])
-						),
-					};
-				}))
+				map(groupDocs => {
+					const groups = groupDocs.map(group => {
+						return {
+							...group,
+							groupTotal: round(group.groupTotal, 2),
+							monthTotal: Object.fromEntries(
+								Object.entries(group.monthTotal).map(([key, value]) => [key, round(value, 2)])
+							),
+						};
+					});
+
+					const orderMap = keyBy(user.groups, g => g.id);
+					return sortBy(groups, g => g.id ? orderMap[g.id].order : Number.MAX_SAFE_INTEGER);
+				})
 			);
 		})
 	);
@@ -89,7 +94,8 @@ export class GroupService {
 				} as Group);
 
 				transction.update(doc(this.firestore, "users", user.uid), {
-					groups: [...user?.groups ?? [], ref.id]
+					groupsIds: [...user.groupIds ?? [], ref.id] as string[],
+					groups: [...user.groups ?? [], { id: ref.id, order: Number.MAX_SAFE_INTEGER }] as GroupOrder[]
 				});
 
 				return ref.id;
@@ -156,20 +162,18 @@ export class GroupService {
 				const userRef = doc(this.firestore, "users", memberId);
 				const userSnapshot = await transaction.get(userRef);
 				const userDoc = throwIfNotFound(userSnapshot).data() as User;
-				const filterGroups = userDoc.groups?.filter(id => id !== groupId);
 
 				const members = groupDoc.members.filter(m => m.id !== memberId);
 
-				transaction.update(userRef, { groups: filterGroups });
+				transaction.update(userRef, this.filterUserGroups(userDoc, groupId));
 				transaction.update(groupRef, { members });
-
 			}))
 		);
 	}
 
 	delete$(groupId: string) {
 		const groupRef = this.docRef(groupId);
-		const q = query(collection(this.firestore, "users"), where("groups", "array-contains", groupId));
+		const q = query(collection(this.firestore, "users"), where("groupIds", "array-contains", groupId));
 
 		return this.userService.authService.currentUser$.pipe(
 			take(1),
@@ -181,12 +185,10 @@ export class GroupService {
 				}
 
 				const usersSnapshot = await getDocs(q);
-				usersSnapshot.forEach(userDoc => {
-					const userRef = doc(this.firestore, "users", userDoc.id);
-					const groups = (userDoc.data() as User).groups ?? [];
-					transaction.update(userRef, {
-						groups: groups.filter(id => id !== groupId)
-					});
+				usersSnapshot.forEach(userSanpshot => {
+					const userRef = doc(this.firestore, "users", userSanpshot.id);
+					const userDoc = userSanpshot.data() as User;
+					transaction.update(userRef, this.filterUserGroups(userDoc, groupId));
 				});
 
 				transaction.delete(doc(this.firestore, "group_code", groupId));
@@ -203,5 +205,12 @@ export class GroupService {
 		}
 
 		return true;
+	}
+
+	private filterUserGroups(user: User, groupId: string) {
+		return {
+			groupIds: user.groupIds?.filter(id => id !== groupId) as string[],
+			groups: user.groups?.filter(g => g.id !== groupId) as GroupOrder[],
+		};
 	}
 }
