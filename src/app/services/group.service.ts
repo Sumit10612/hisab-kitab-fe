@@ -25,11 +25,11 @@ import {
 
 import { Group, GroupCode, isExpired, toFirestore } from "../models/group.model";
 import { GroupOrder, User } from "../models/user.model";
+import { generateRandomNumber } from "../utilities/common";
 import { ErrorCode } from "../utilities/error-codes";
 import { throwIfNotFound } from "../utilities/firebase-errors";
 
 import { UserService } from "./user.service";
-import { generateRandomNumber } from "../utilities/common";
 
 @Injectable({
 	providedIn: "root"
@@ -257,7 +257,7 @@ export class GroupService {
 							id: user.uid,
 							name: user.name ?? "",
 							active: true,
-						})
+						});
 					}
 
 					transaction.update(groupRef, { members: group.members });
@@ -289,6 +289,6 @@ export class GroupService {
 		return { 
 			groupIds: [...user.groupIds ?? [], groupId] as string[],
 			groups: [...user.groups ?? [], { id: groupId, order: Number.MAX_SAFE_INTEGER }] as GroupOrder[],
-		}
+		};
 	}
 }

@@ -1,5 +1,6 @@
-import { Image } from "./image.model";
 import { Timestamp } from "@angular/fire/firestore";
+
+import { Image } from "./image.model";
 
 export enum GroupType {
 	ExpenseTracker,
