@@ -15,9 +15,9 @@ import {
 import { keyBy, round, sortBy } from "lodash";
 import {
 	concatMap,
-	filter,
 	map,
 	Observable,
+	of,
 	switchMap,
 	take,
 	tap
@@ -42,8 +42,11 @@ export class GroupService {
 	private readonly docRef = (id: string) => doc(this.firestore, "groups", id);
 
 	myGroups$: Observable<Group[]> = this.userService.user$.pipe(
-		filter(user => !!user),
 		switchMap(user => {
+			if(!user) {
+				return of([]);
+			}
+
 			const q = query(this.collectionRef(), where(documentId(), "in", user.groupIds));
 			return (collectionData(q, { idField: "id" }) as Observable<Group[]>).pipe(
 				map(groupDocs => {

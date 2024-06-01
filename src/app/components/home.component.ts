@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component, inject } from "@angular/core";
+import { Component, inject, OnDestroy, OnInit } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { MatIconModule } from "@angular/material/icon";
 import { RouterLink } from "@angular/router";
@@ -12,6 +12,7 @@ import { UserService } from "../services/user.service";
 import { LayoutComponent } from "./shared/layout.component";
 import { GroupListWidgetComponent } from "./widgets/group-list-widget.component";
 import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
+import { Subscription } from "rxjs";
 
 @Component({
 	selector: "app-home",
@@ -44,14 +45,14 @@ import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
 				</div>
 
 				<div class="header-section-overview">
-					<app-overview-widget [groups]="groupService.myGroups$ | async"></app-overview-widget>
+					<app-overview-widget [groups]="groups"></app-overview-widget>
 				</div>
 			</div>
 			
 			<div section="detail" class="detail-section">
 				My Groups
 				<app-group-list-selector
-					[groups]="groupService.myGroups$ | async"
+					[groups]="groups"
 					(reorderedGroupList)="reorderGroups($event)">
 				</app-group-list-selector>
 			</div>
@@ -89,11 +90,25 @@ import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
 		}
 	`]
 })
-export class HomeComponent {
+export class HomeComponent implements OnInit, OnDestroy {
+	private readonly groupService = inject(GroupService);
+
+	private subscription$$?: Subscription;
+
 	protected readonly userService = inject(UserService);
-	protected readonly groupService = inject(GroupService);
 
 	protected getUserImage = getUserImage;
+	protected groups: Group[] = [];
+
+	ngOnInit(): void {
+		this.subscription$$ = this.groupService.myGroups$.subscribe(
+			groups => this.groups = groups
+		);
+	}
+
+	ngOnDestroy(): void {
+		this.subscription$$?.unsubscribe();
+	}
 
 	async reorderGroups($event: Group[]) {
 		const user = this.userService.currentUser();
