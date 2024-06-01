@@ -17,8 +17,6 @@ import { NotificationService } from "../services/notification.service";
 import { UserService } from "../services/user.service";
 import { getFirebaseErrorMessage } from "../utilities/firebase-errors";
 
-import { PageNavHeaderComponent } from "./shared/page-nav-header.component";
-
 export function passwordsMatchValidator(): ValidatorFn {
 	return (control: AbstractControl): ValidationErrors | null => {
 		const password = control.get("password")?.value;
@@ -40,10 +38,8 @@ export function passwordsMatchValidator(): ValidatorFn {
 		MatInputModule, 
 		MatButtonModule, 
 		ReactiveFormsModule,
-		PageNavHeaderComponent,
 	],
 	template: `
-		<app-page-nav-header backRoute="/login"></app-page-nav-header>
 		<form class="container" [formGroup]="signUpForm" (ngSubmit)="submit()">
 			<mat-form-field>
 			<mat-label>Name</mat-label>

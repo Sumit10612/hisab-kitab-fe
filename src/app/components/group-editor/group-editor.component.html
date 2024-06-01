@@ -1,84 +1,57 @@
-<app-layout [showNav]="true" [pageTitle]="id ? 'Settings' : 'Create a group'">
-	<div section="header" class="header-section">
+<app-layout headerHeight="224px" [pageTitle]="id ? 'Settings' : 'Create a group'">
+	<div section="header">
 		<mat-form-field>
 			<mat-label>Group Name</mat-label>
 			<input matInput [(ngModel)]="groupName" [readonly]="id && currentUser?.role !== 'admin'" />
 		</mat-form-field>
-		@if (id) {
-			@if (currentUser?.role === "admin") {
-				<div class="btn-group">
-					<button mat-raised-button
-						(click)="update()"
-						class="rounded-button"
-						color="primary"
-						[disabled]="!groupName || oldGroupName === groupName">
-							Update Group Name
-					</button>
-					
-					<button mat-raised-button
-						color="primary"
-						class="rounded-button"
-						(click)="openAddMemberDialog()">
-						Invite Member
-					</button>
-				</div>
-			}
-		} @else {
-			<div class="image-container">
-				@for (item of groupImages; track item) {
-					<div>
-						<img
-						width="48"
-						height="48"
-						[class.selected]="selectedIndex === $index"
-						[src]="item.src"
-						[alt]="item.alt"
-						(click)="selectImage($index)" />
-						<span>{{item.alt}}</span>
-					</div>
-				}
+		<div class="image-container">
+			@for (item of groupImages; track item) {
+			<div>
+				<img width="48" height="48" [class.selected]="selectedIndex === $index" [src]="item.src"
+					[alt]="item.alt" (click)="selectImage($index)" />
+				<span>{{item.alt}}</span>
 			</div>
-		}
+			}
+		</div>
 	</div>
 
 	<div section="detail" class="detail-section">
 		@if (id) {
+			@if (currentUser?.role === "admin") {
+				<button mat-raised-button color="primary" class="rounded-button" (click)="openAddMemberDialog()">
+					Invite Member
+				</button>
+			}
 			<mat-card>
 				<mat-card-header>
 					<mat-card-subtitle>Members:</mat-card-subtitle>
 				</mat-card-header>
 				<mat-card-content>
 					@for (member of members; track member) {
-						<div class="user-info">
-							<div class="user-details">
-								<span>{{ member.name }}</span>
-								@if (isAdmin(member)) { <span class="role">(admin)</span> }
-							</div>
-							@if (currentUser && isAdmin(currentUser)) {
-								<div class="user-actions">
-									<button
-										mat-button
-										[hidden]="isCurrentUser(member)"
-										(click)="toggelAdmin(member)">
-											{{isAdmin(member) ? "Remove" : "Make"}} admin
-									</button>
-									<button mat-button color="warn" [disabled]="isCurrentUser(member)" (click)="removeMember(member.id)">
-										<mat-icon>person_remove</mat-icon>
-									</button>
-								</div>
-							}
+					<div class="user-info">
+						<div class="user-details">
+							<span>{{ member.name }}</span>
+							@if (isAdmin(member)) { <span class="role">(admin)</span> }
 						</div>
-						<mat-divider></mat-divider>
+						@if (currentUser && isAdmin(currentUser)) {
+						<div class="user-actions">
+							<button mat-button [hidden]="isCurrentUser(member)" (click)="toggelAdmin(member)">
+								{{isAdmin(member) ? "Remove" : "Make"}} admin
+							</button>
+							<button mat-button color="warn" [disabled]="isCurrentUser(member)"
+								(click)="removeMember(member.id)">
+								<mat-icon>person_remove</mat-icon>
+							</button>
+						</div>
+						}
+					</div>
+					<mat-divider></mat-divider>
 					}
 				</mat-card-content>
 			</mat-card>
 
-			<button
-				mat-raised-button
-				color="warn"
-				class="rounded-button"
-				(click)="removeMember()">
-					Leave Group
+			<button mat-raised-button color="warn" class="rounded-button" (click)="removeMember()">
+				Leave Group
 			</button>
 		} @else {
 			<mat-radio-group labelPosition="after" name="groupType" [(ngModel)]="selectedGroupType">
@@ -89,32 +62,6 @@
 			@if (selectedGroupType === groupType.ExpenseTracker) {
 				<mat-slide-toggle [(ngModel)]="excludeTotal">&nbsp;&nbsp;exclude from combined total</mat-slide-toggle>
 			}
-
-			<button 
-				(click)="create()"
-				mat-raised-button
-				class="rounded-button"
-				color="primary"
-				[disabled]="!groupName || !(selectedIndex === 0 ? 1 : selectedIndex)">
-					Create Group
-			</button>
-			<span>-- OR --</span>
-			<button (click)="openJoinGroupDialog()"
-				mat-raised-button
-				class="rounded-button"
-				color="primary">
-					Join Group
-			</button>
-		}
-
-		@if (id && currentUser?.role === "admin") {
-			<button 
-				mat-raised-button
-				class="rounded-button"
-				color="warn"
-				(click)="deleteGroup()">
-					Delete Group
-			</button>
 		}
 	</div>
 </app-layout>
@@ -122,12 +69,12 @@
 <ng-template #addUserToGroupDialogTemplate>
 	<div class="add-user-to-group-template">
 		@if (groupCode) {
-			<div class="code">{{groupCode}}</div>
-			<div class="timer">code is valid only for 5 minutes</div>
-			<p>Others can join this group <br/>
-				using the above code</p>
+		<div class="code">{{groupCode}}</div>
+		<div class="timer">code is valid only for 5 minutes</div>
+		<p>Others can join this group <br />
+			using the above code</p>
 		} @else {
-			Please wait, generating new code...
+		Please wait, generating new code...
 		}
 	</div>
 </ng-template>

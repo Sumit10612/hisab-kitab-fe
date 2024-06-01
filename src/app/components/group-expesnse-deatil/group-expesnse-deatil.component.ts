@@ -8,9 +8,7 @@ import {
 	OnInit,
 	ViewChild
 } from "@angular/core";
-import { MatButtonModule } from "@angular/material/button";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
-import { MatCardModule } from "@angular/material/card";
 import { MatDividerModule } from "@angular/material/divider";
 import { MatIconModule } from "@angular/material/icon";
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
@@ -20,22 +18,20 @@ import { Subscription } from "rxjs";
 import { getCategoryById } from "../../models/category.model";
 import { Expense } from "../../models/expense.model";
 import { getGroupImage, Group, GroupMember } from "../../models/group.model";
+import { ToolbarButtonType } from "../../models/toolbar.model";
 import { ExpenseService } from "../../services/expense.service";
 import { GroupService } from "../../services/group.service";
+import { ToolbarConfigurationService } from "../../services/toolbar-configuration.service";
 import { getYearMonth } from "../../utilities/date";
 import { LayoutComponent } from "../shared/layout.component";
-import { PageNavHeaderComponent } from "../shared/page-nav-header.component";
 
 @Component({
 	selector: "app-group-expesnse-detail",
 	standalone: true,
 	imports: [
 		CommonModule,
-		MatCardModule,
 		MatButtonToggleModule,
 		MatIconModule,
-		MatButtonModule,
-		PageNavHeaderComponent,
 		LayoutComponent,
 		RouterLink,
 		MatDividerModule,
@@ -46,12 +42,13 @@ import { PageNavHeaderComponent } from "../shared/page-nav-header.component";
 })
 export class GroupExpenseDetailComponent implements OnInit, OnDestroy {
 	@ViewChild("scrollContainer", { static: false }) scrollContainer: ElementRef | undefined;
-	
+
 	private readonly groupService = inject(GroupService);
 	private readonly expenseService = inject(ExpenseService);
+	private readonly toolbar = inject(ToolbarConfigurationService);
 
 	private expenses: Expense[] = [];
-	private subscription?: Subscription;
+	private subscription$$?: Subscription;
 
 	protected groupedExpenses?: Record<string, Expense[]>;
 	protected group: Group | undefined;
@@ -63,11 +60,29 @@ export class GroupExpenseDetailComponent implements OnInit, OnDestroy {
 	@Input() id: string = "";
 
 	ngOnInit() {
+		this.toolbar.configure({
+			back: { visible: true },
+			actionBtns: [
+				{
+					type: ToolbarButtonType.Secondary,
+					icon: "settings",
+					disabled: () => !this.id,
+					redirectTo: ["/group", this.id]
+				},
+				{
+					type: ToolbarButtonType.Primary,
+					label: "Add expense",
+					disabled: () => !this.id,
+					redirectTo: ["/group", this.id, "expense"]
+				}
+			]
+		});
+
 		this.getNextExpenses(true);
 	}
 
 	ngOnDestroy(): void {
-		this.subscription?.unsubscribe();
+		this.subscription$$?.unsubscribe();
 	}
 
 	protected get getCurrentMonthTotal() {
@@ -92,7 +107,7 @@ export class GroupExpenseDetailComponent implements OnInit, OnDestroy {
 
 	private getNextExpenses(initialGet = false) {
 		this.loading = true;
-		this.subscription = this.groupService.get$(this.id).subscribe(async group => {
+		this.subscription$$ = this.groupService.get$(this.id).subscribe(async group => {
 			this.group = group;
 			const expenseDocs = await this.expenseService.getAll(this.id, initialGet);
 			this.expenses = this.expenses.concat(expenseDocs);

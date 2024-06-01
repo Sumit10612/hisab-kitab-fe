@@ -21,10 +21,12 @@ import { finalize, Subscription } from "rxjs";
 import { DialogButtonType, DialogData } from "../../models/dialog.model";
 import { groupImages, GroupMember, GroupType } from "../../models/group.model";
 import { Otp } from "../../models/otp.model";
+import { ToolbarButtonType } from "../../models/toolbar.model";
 import { DialogService } from "../../services/dialog.service";
 import { GroupService } from "../../services/group.service";
 import { NavigationService } from "../../services/navigation.service";
 import { NotificationService } from "../../services/notification.service";
+import { ToolbarConfigurationService } from "../../services/toolbar-configuration.service";
 import { ErrorCode } from "../../utilities/error-codes";
 import { OtpComponent } from "../otp.component";
 import { LayoutComponent } from "../shared/layout.component";
@@ -53,6 +55,7 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 	private readonly navigation = inject(NavigationService);
 	private readonly groupService = inject(GroupService);
 	private readonly dialog = inject(DialogService);
+	private readonly toolbar = inject(ToolbarConfigurationService);
 
 	private groupSubscription$$: Subscription | undefined;
 
@@ -73,6 +76,7 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 	@ViewChild("addUserToGroupDialogTemplate") addUserToGroupDialogTemplate: TemplateRef<unknown> | undefined;
 
 	ngOnInit(): void {
+
 		if (this.id) {
 			this.groupSubscription$$ = this.groupService.get$(this.id).subscribe(group => {
 				this.groupName = this.oldGroupName = group.name;
@@ -82,6 +86,30 @@ export class GroupEditorComponent implements OnInit, OnDestroy {
 				this.excludeTotal = group.excludeTotal ?? false;
 			});
 		}
+
+		this.toolbar.configure({
+			back: { visible: true },
+			actionBtns: [
+				{
+					type: ToolbarButtonType.Primary,
+					label: "Join",
+					visible: () => !this.id,
+					action: () => this.openJoinGroupDialog()
+				},
+				{
+					type: ToolbarButtonType.Warn,
+					label: "Delete",
+					visible: () => !!this.id && this.currentUser?.role === "admin",
+					action: () => this.deleteGroup()
+				},
+				{
+					type: ToolbarButtonType.Primary,
+					label: this.id ? "Update" : "Create",
+					disabled: () => !this.groupName || !(this.selectedIndex === 0 ? 1 : this.selectedIndex),
+					action: () => this.id ? this.update() : this.create()
+				}
+			]
+		});
 	}
 
 	ngOnDestroy(): void {

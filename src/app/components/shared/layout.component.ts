@@ -1,46 +1,60 @@
 import { CommonModule } from "@angular/common";
 import { Component, Input } from "@angular/core";
-import { MatCardModule } from "@angular/material/card";
-
-import { PageNavHeaderComponent } from "./page-nav-header.component";
 
 @Component({
 	selector: "app-layout",
 	standalone: true,
-	imports: [CommonModule, MatCardModule, PageNavHeaderComponent],
+	imports: [CommonModule],
 	template: `
-    <div class="container">      
-      <div class="container-header-section">
-        @if (showNav) {
-          <app-page-nav-header [title]="pageTitle"></app-page-nav-header>
-        }
-        <ng-content select="[section='header']"></ng-content>
-      </div>
-      <mat-card class="container-detail-section">
-        <ng-content select="[section='detail']"></ng-content>
-      </mat-card>
-    </div>
+		<div class="container" [ngStyle]="getHeaderHeight">
+			@if (pageTitle) {
+				<h2>{{pageTitle}}</h2>
+			}
+			<ng-content select="[section='header']"></ng-content>
+		</div>
+		<ng-content select="[section='detail']"></ng-content>
   `,
 	styles: [`
-    .container {
-      display: flex;
-      flex-direction: column;
-      background-color: #964b04;
-      height: 100vh;
+		.container {
+			background: #964b04;
+			position: relative;
+			padding: 16px 16px 0 16px;
 
-      &-header-section {
-        height: 250px;
-        padding: 16px;
-      }
+			> h2 {
+				text-align: center;
+			}
+		}
 
-      &-detail-section {
-        flex: 1;
-        border-radius: 32px 32px 0 0;
-      }
-    }
-  `]
+		.container::before,
+		.container::after {
+			content: '';
+			position: absolute;
+			bottom: -48px;
+			height: 48px;
+			width: 24px;
+			background-color: transparent;
+		}
+
+		.container::before {
+			left: 0;
+			border-radius: 24px 0;
+			box-shadow: 0 -24px 0 0 #964b04;
+		}
+
+		.container::after {
+			right: 0;
+			border-radius: 0 24px;
+			box-shadow: 0 -24px 0 0 #964b04;
+		}
+	`]
 })
 export class LayoutComponent {
-  @Input() showNav: boolean = false;
-  @Input() pageTitle: string | undefined;
+	@Input() pageTitle: string = "";
+	@Input() headerHeight = "154px";
+
+	protected get getHeaderHeight() {
+		return {
+			height: this.headerHeight
+		};
+	}
 }

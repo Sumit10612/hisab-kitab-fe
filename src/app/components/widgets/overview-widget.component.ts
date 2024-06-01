@@ -12,7 +12,7 @@ import { getYearMonth } from "../../utilities/date";
 	standalone: true,
 	imports: [MatCardModule, MatIconModule, MatDividerModule],
 	template: `
-	<div class="overview-widget mat-elevation-z20">
+	<div class="overview-widget">
 		<mat-card>
 			<mat-card-content>
 			<div class="split-expenses">

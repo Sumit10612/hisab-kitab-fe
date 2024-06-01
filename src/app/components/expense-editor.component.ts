@@ -8,7 +8,6 @@ import {
 } from "@angular/core";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { MatBottomSheet } from "@angular/material/bottom-sheet";
-import { MatButtonModule } from "@angular/material/button";
 import { provideNativeDateAdapter } from "@angular/material/core";
 import { MatDatepickerModule } from "@angular/material/datepicker";
 import { MatFormFieldModule } from "@angular/material/form-field";
@@ -25,10 +24,12 @@ import {
 import { categoriesByGroup, getCategoryById } from "../models/category.model";
 import { Expense } from "../models/expense.model";
 import { GroupMember } from "../models/group.model";
+import { ToolbarButtonType } from "../models/toolbar.model";
 import { ExpenseService } from "../services/expense.service";
 import { GroupService } from "../services/group.service";
 import { NavigationService } from "../services/navigation.service";
 import { NotificationService } from "../services/notification.service";
+import { ToolbarConfigurationService } from "../services/toolbar-configuration.service";
 
 import { CategorySelectorComponent } from "./category-selector.component";
 import { LayoutComponent } from "./shared/layout.component";
@@ -39,7 +40,6 @@ import { LayoutComponent } from "./shared/layout.component";
 	imports: [
 		CommonModule,
 		MatIconModule,
-		MatButtonModule,
 		MatFormFieldModule,
 		ReactiveFormsModule,
 		MatInputModule,
@@ -50,104 +50,74 @@ import { LayoutComponent } from "./shared/layout.component";
 	],
 	providers: [provideNativeDateAdapter()],
 	template: `
-	<app-layout [showNav]="true" [pageTitle]="(id ? 'Update' : 'Add') + ' an expense'">
+	<app-layout [pageTitle]="(id ? 'Update' : 'Add') + ' an expense'">
 		<div section="detail" class="detail-section">
-		<form [formGroup]="form" (ngSubmit)="submit()">
-			<mat-form-field>
-			<mat-label>Description</mat-label>
-			<input matInput [formControl]="form.controls.description" />
-			</mat-form-field>
-			<mat-form-field>
-			<mat-label>Where</mat-label>
-			<input matInput [formControl]="form.controls.where" />
-			</mat-form-field>
-			<div class="row">
-			<mat-form-field appearance="fill" floatLabel="always">
-				<mat-label>Amount</mat-label>
-				<span matTextPrefix>&#8377;</span>
-				<input
-					class="amount-input"
-					matInput
-					type="number"
-					placeholder="0.00"
-					[formControl]="form.controls.amount">
-			</mat-form-field>
-			<mat-form-field>
-				<mat-label>Category</mat-label>
-				<input matInput
-				[formControl]="form.controls.category"
-				(click)="openCategorySheet()"
-				(keyup)="openCategorySheet()" readonly />
-				<mat-icon matSuffix (click)="openCategorySheet()">arrow_drop_down</mat-icon>
-			</mat-form-field>
-			</div>
+			<form [formGroup]="form" (ngSubmit)="submit()">
+				<mat-form-field>
+					<mat-label>Description</mat-label>
+					<input matInput [formControl]="form.controls.description" />
+				</mat-form-field>
+				<mat-form-field>
+					<mat-label>Paid at</mat-label>
+					<input matInput [formControl]="form.controls.where" />
+				</mat-form-field>
+				<div class="row">
+					<mat-form-field appearance="fill" floatLabel="always">
+						<mat-label>Amount</mat-label>
+						<span matTextPrefix>&#8377;</span>
+						<input
+							class="amount-input"
+							matInput
+							type="number"
+							placeholder="0.00"
+							[formControl]="form.controls.amount">
+					</mat-form-field>
+					<mat-form-field>
+						<mat-label>Category</mat-label>
+						<input matInput
+						[formControl]="form.controls.category"
+						(click)="openCategorySheet()"
+						(keyup)="openCategorySheet()" readonly />
+						<mat-icon matSuffix (click)="openCategorySheet()">arrow_drop_down</mat-icon>
+					</mat-form-field>
+				</div>
 
-			<div class="row">
-			<mat-form-field>
-				<mat-label>Paid by</mat-label>
-				<mat-select [formControl]="form.controls.paidBy">
-				@for (member of (group$ | async)?.members; track member) {
-					<mat-option [value]="member.id">
-						{{member.name}}
-					</mat-option>
-				}
-				</mat-select>
-			</mat-form-field>
-			<mat-form-field>
-				<input matInput [matDatepicker]="dp" [formControl]="form.controls.expenseDate">
-				<mat-hint>MM/DD/YYYY</mat-hint>
-				<mat-datepicker-toggle matIconSuffix [for]="dp"></mat-datepicker-toggle>
-				<mat-datepicker #dp></mat-datepicker>
-			</mat-form-field>
-			</div>
-
-			<div class="button-container">
-			<button
-				type="submit"
-				class="rounded-button"
-				mat-raised-button
-				color="primary"
-				[disabled]="form.invalid || !form.dirty">{{ id ? "Update" : "Submit" }} expense</button>            
-			</div>
-		</form>
-
-		@if (id) {
-			<div class="button-container">
-			<button
-				class="rounded-button button"
-				mat-raised-button
-				color="warn"
-				(click)="deleteExpense()">
-				Delete expense
-			</button>
-			</div>
-		}
+				<div class="row">
+					<mat-form-field>
+						<mat-label>Paid by</mat-label>
+						<mat-select [formControl]="form.controls.paidBy">
+							@for (member of (group$ | async)?.members; track member) {
+								<mat-option [value]="member.id">
+									{{member.name}}
+								</mat-option>
+							}
+						</mat-select>
+					</mat-form-field>
+					<mat-form-field>
+						<input matInput [matDatepicker]="dp" [formControl]="form.controls.expenseDate">
+						<mat-hint>MM/DD/YYYY</mat-hint>
+						<mat-datepicker-toggle matIconSuffix [for]="dp"></mat-datepicker-toggle>
+						<mat-datepicker #dp></mat-datepicker>
+					</mat-form-field>
+				</div>
+			</form>
 		</div>
 	</app-layout>
 	`,
-	styles: [
-		`
-	.detail-section {
-		margin: 32px 16px;
-	}
+	styles: [`
+		.detail-section {
+			margin: 32px 16px;
+		}
 
-	.row {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		grid-gap: 16px;
-	}
+		.row {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			grid-gap: 16px;
+		}
 
-	.amount-input {
-		text-align: right;
-	}
-
-	.button-container {
-		display: flex;
-		flex-direction: column;
-		gap: 16px;
-		align-items: center;
-		margin-top: 16px;
-	}
+		.amount-input {
+			text-align: right;
+		}
 	`,
 	],
 })
@@ -159,6 +129,7 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
 	private readonly notification = inject(NotificationService);
 	private readonly navigation = inject(NavigationService);
 	private readonly route = inject(ActivatedRoute);
+	private readonly toolbar = inject(ToolbarConfigurationService);
 
 	private selectedCategory = getCategoryById(101);
 	private expenseSubscription$$: Subscription | undefined;
@@ -205,6 +176,24 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
 					});
 				});
 		}
+
+		this.toolbar.configure({
+			back: { visible: true },
+			actionBtns: [
+				{
+					type: ToolbarButtonType.Warn,
+					label: "Delete",
+					visible: () => !!this.id,
+					action: () => this.deleteExpense()
+				},
+				{
+					type: ToolbarButtonType.Primary,
+					label: this.id ? "Update" : "Submit",
+					disabled: () => this.form.invalid || !this.form.dirty,
+					action: () => this.submit()
+				}
+			]
+		});
 	}
 
 	ngOnDestroy(): void {

@@ -1,61 +1,45 @@
-.header-section {
-	margin: -16px;
-	padding: 16px 16px 0 16px;
+.header-section-group-info {
+	display: flex;
+	gap: 16px;
+	justify-content: space-between;
 
-	&-group-info {
-		margin: 0 16px;
+	&-month {
 		display: flex;
-		gap: 16px;
+		flex-direction: column;
 
-		&-month {
-			display: flex;
-			flex-direction: column;
-			text-align: center;
-			margin: auto;
-			gap: 8px;
-
-			&-amount {
-				font-size: 24px;
-			}
-
-			&-label {
-				font-size: 12px;
-			}
-		}
-
-		&-total {
-			display: flex;
-			flex-direction: column;
-			text-align: center;
-			margin-left: auto;
-
-			&-label {
-				font-size: 12px;
-			}
-
-			&-amount {
-				font-size: 16px;
-			}
+		&-amount {
+			font-size: 1.4rem;
 		}
 	}
 
-	&-tab {
-		margin-top: 16px;
-		text-align: center;
+	&-total {
+		display: flex;
+		flex-direction: column;
+
+		&-amount {
+			font-size: 1.1rem;
+		}
 	}
+
+	.label {
+		font-size: 0.75rem;
+	}
+}
+
+.header-section-tab {
+	margin-top: 16px;
+	text-align: center;
 }
 
 .detail-section {
-	height: calc(100vh - 176px);
+	height: calc(100vh - 248px);
 	overflow-y: auto;
-}
-
-.mat-button-toggle-group {
-	border-radius: 16px;
+	padding: 0 16px;
 }
 
 .mat-button-toggle-group {
 	height: 32px;
+	border-radius: 16px;
 	align-items: center;
 }
 
@@ -68,7 +52,7 @@
 		margin: 8px 0;
 	}
 
-	> mat-divider {
+	>mat-divider {
 		margin: 8px 16px;
 	}
 
@@ -88,11 +72,11 @@
 			align-items: center;
 
 			&-month {
-			font-size: 0.6rem;
+				font-size: 0.6rem;
 			}
 
 			&-date {
-			font-size: 1.1rem
+				font-size: 1.1rem
 			}
 		}
 
@@ -101,7 +85,7 @@
 			flex-direction: column;
 
 			&-where {
-			font-size: 0.6rem;
+				font-size: 0.6rem;
 			}
 		}
 
@@ -125,10 +109,4 @@
 	&-text {
 		font-size: 0.6rem;
 	}
-}
-
-.add-expense-button {
-	position: absolute;
-	right: 16px;
-	bottom: 16px;
 }
