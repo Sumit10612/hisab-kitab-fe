@@ -1,13 +1,27 @@
-<app-layout headerHeight="160px" [pageTitle]="group?.name ?? ''">
+<app-layout headerHeight="160px">
 	<div section="header" class="header-section">
-		<div class="header-section-group-info">
-			@if (group) {
+		@if(group) {
+			<div class="header-section-page-info">
 				<img width="50" height="50" [src]="getGroupImage(group.imageUrl).src"
 					[alt]="getGroupImage(group.imageUrl).alt" />
+				
+				<span class="header-section-page-info-name">{{group.name}}</span>
+
+				<a mat-icon-button [routerLink]="['/group', id]">
+					<mat-icon>settings</mat-icon>
+				</a>
+			</div>
+			<div class="header-section-group-info">
+				<div class="header-section-group-info-total">
+					<span class="header-section-group-info-total-amount">
+						&#8377; {{lastMonthTotal}}
+					</span>
+					<span class="label">last month</span>
+				</div>
 
 				<div class="header-section-group-info-month">
 					<span class="header-section-group-info-month-amount">
-						&#8377; {{getCurrentMonthTotal}}
+						&#8377; {{currentMonthTotal}}
 					</span>
 					<span class="label">this month</span>
 				</div>
@@ -18,8 +32,8 @@
 					</span>
 					<span class="label">total</span>
 				</div>
-			}
-		</div>
+			</div>
+		}
 
 		<div class="header-section-tab">
 			<mat-button-toggle-group [(value)]="selectedTab" hideSingleSelectionIndicator="true">

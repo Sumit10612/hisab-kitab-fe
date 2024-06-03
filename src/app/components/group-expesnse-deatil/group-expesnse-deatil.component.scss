@@ -1,34 +1,49 @@
-.header-section-group-info {
+.header-section {
 	display: flex;
+	flex-direction: column;
 	gap: 16px;
 	justify-content: space-between;
 
-	&-month {
+	&-page-info {
 		display: flex;
-		flex-direction: column;
+		gap: 16px;
+		justify-content: space-between;
+		text-align: center;
 
-		&-amount {
+		&-name {
 			font-size: 1.4rem;
 		}
 	}
-
-	&-total {
+	
+	&-group-info {
 		display: flex;
-		flex-direction: column;
+		gap: 16px;
+		justify-content: space-between;
 
-		&-amount {
-			font-size: 1.1rem;
+		&-month {
+			display: flex;
+			flex-direction: column;
+			text-align: center;
+
+			&-amount {
+				font-size: 1.4rem;
+			}
+		}
+
+		&-total {
+			display: flex;
+			flex-direction: column;
+			text-align: center;
+		}
+
+		.label {
+			font-size: 0.75rem;
 		}
 	}
 
-	.label {
-		font-size: 0.75rem;
+	&-tab {
+		text-align: center;
 	}
-}
-
-.header-section-tab {
-	margin-top: 16px;
-	text-align: center;
 }
 
 .detail-section {

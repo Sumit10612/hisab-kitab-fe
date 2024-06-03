@@ -8,6 +8,7 @@ import {
 	OnInit,
 	ViewChild
 } from "@angular/core";
+import { MatButtonModule } from "@angular/material/button";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
 import { MatDividerModule } from "@angular/material/divider";
 import { MatIconModule } from "@angular/material/icon";
@@ -22,7 +23,7 @@ import { ToolbarButtonType } from "../../models/toolbar.model";
 import { ExpenseService } from "../../services/expense.service";
 import { GroupService } from "../../services/group.service";
 import { ToolbarConfigurationService } from "../../services/toolbar-configuration.service";
-import { getYearMonth } from "../../utilities/date";
+import { getPreviousMonth, getYearMonth } from "../../utilities/date";
 import { LayoutComponent } from "../shared/layout.component";
 
 @Component({
@@ -31,6 +32,7 @@ import { LayoutComponent } from "../shared/layout.component";
 	imports: [
 		CommonModule,
 		MatButtonToggleModule,
+		MatButtonModule,
 		MatIconModule,
 		LayoutComponent,
 		RouterLink,
@@ -64,12 +66,6 @@ export class GroupExpenseDetailComponent implements OnInit, OnDestroy {
 			back: { visible: true },
 			actionBtns: [
 				{
-					type: ToolbarButtonType.Secondary,
-					icon: "settings",
-					disabled: () => !this.id,
-					redirectTo: ["/group", this.id]
-				},
-				{
 					type: ToolbarButtonType.Primary,
 					label: "Add expense",
 					disabled: () => !this.id,
@@ -85,9 +81,14 @@ export class GroupExpenseDetailComponent implements OnInit, OnDestroy {
 		this.subscription$$?.unsubscribe();
 	}
 
-	protected get getCurrentMonthTotal() {
+	protected get currentMonthTotal() {
 		const currentMonth = getYearMonth(new Date());
 		return this.group?.monthTotal[currentMonth] ?? 0;
+	}
+
+	protected get lastMonthTotal() {
+		const lastMonth = getPreviousMonth(new Date());
+		return this.group?.monthTotal[getYearMonth(lastMonth)] ?? 0;
 	}
 
 	protected noSort() {
