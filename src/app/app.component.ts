@@ -15,7 +15,7 @@ import { MatToolbarModule } from "@angular/material/toolbar";
 import { RouterLink, RouterOutlet } from "@angular/router";
 import { SwUpdate } from "@angular/service-worker";
 
-import { ToolbarActionButton, ToolbarButtonType } from "./models/toolbar.model";
+import { ToolbarButtonType } from "./models/toolbar.model";
 import { getUserImage } from "./models/user.model";
 import { NavigationService } from "./services/navigation.service";
 import { NotificationService } from "./services/notification.service";
@@ -45,7 +45,7 @@ import { UserService } from "./services/user.service";
 				<mat-toolbar>
 					@if (toolbar.config.back?.visible) {
 						<button mat-icon-button (click)="navigation.navigateBack()">
-							<mat-icon>arrow_back_ios</mat-icon>
+							<mat-icon>arrow_back</mat-icon>
 						</button>
 					}
 
@@ -59,19 +59,8 @@ import { UserService } from "./services/user.service";
 						</a>
 					}
 
-					@for (iconBtn of filterIconBtns(toolbar.config.actionBtns ?? []); track iconBtn) {
-						<button mat-icon-button
-							[color]="getColor(iconBtn.type)"
-							[disabled]="iconBtn.disabled?.()"
-							[hidden]="!(iconBtn.visible?.() ?? true)"
-							[routerLink]="iconBtn.redirectTo"
-							(click)="iconBtn.action?.()">
-								<mat-icon>{{iconBtn.icon}}</mat-icon>
-						</button>
-					}
-
 					<div class="btn-group">
-						@for (actionBtn of filterActionBtns(toolbar.config.actionBtns ?? []); track actionBtn) {
+						@for (actionBtn of toolbar.config.actionBtns; track actionBtn) {
 							<button mat-raised-button
 								[color]="getColor(actionBtn.type)"
 								[disabled]="actionBtn.disabled?.()"
@@ -170,14 +159,6 @@ export class AppComponent implements OnInit {
 				}
 			});
 		}
-	}
-
-	filterIconBtns(btns: ToolbarActionButton[]) {
-		return btns.filter(btn => btn.icon && !btn.label);
-	}
-
-	filterActionBtns(btns: ToolbarActionButton[]) {
-		return btns.filter(btn => !(btn.icon && !btn.label));
 	}
 
 	getColor(type: ToolbarButtonType) {

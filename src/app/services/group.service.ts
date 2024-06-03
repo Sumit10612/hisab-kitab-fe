@@ -23,7 +23,13 @@ import {
 	tap
 } from "rxjs";
 
-import { Group, GroupCode, isExpired, toFirestore } from "../models/group.model";
+import {
+	Group,
+	GroupCode,
+	isExpired,
+	toFirestore,
+	UpsertGroup
+} from "../models/group.model";
 import { GroupOrder, User } from "../models/user.model";
 import { generateRandomNumber } from "../utilities/common";
 import { ErrorCode } from "../utilities/error-codes";
@@ -70,6 +76,7 @@ export class GroupService {
 	get$(groupId: string): Observable<Group> {
 		return this.userService.authService.currentUser$.pipe(
 			switchMap(user => (docData(this.docRef(groupId), { idField: "id" }) as Observable<Group>).pipe(
+				take(1),
 				map(group => {
 					return {
 						...group,
@@ -84,13 +91,15 @@ export class GroupService {
 		);
 	}
 
-	create$(group: Group): Observable<string> {
+	create$(groupToCreate: UpsertGroup): Observable<string> {
 		const ref = doc(this.collectionRef());
 		return this.userService.user$.pipe(
 			take(1),
 			concatMap(user => runTransaction(this.firestore, async (transction) => {
 				transction.set(ref, {
-					...group,
+					...groupToCreate,
+					groupTotal: 0,
+					monthTotal: {},
 					members: [{
 						id: user.uid,
 						name: user.name,
@@ -106,7 +115,7 @@ export class GroupService {
 		);
 	}
 
-	update$(groupId: string, name: string): Observable<void> {
+	update$(groupId: string, groupToUpdate: UpsertGroup): Observable<void> {
 		const ref = this.docRef(groupId);
 		return this.userService.authService.currentUser$.pipe(
 			take(1),
@@ -114,9 +123,7 @@ export class GroupService {
 				const sanapshot = await transaction.get(ref);
 				const groupDoc = throwIfNotFound(sanapshot).data() as Group;
 				if (this.isCurrentUserAuthorizedToUpdate(user.uid, groupDoc)) {
-					transaction.update(ref, {
-						name,
-					});
+					transaction.update(ref, { ...groupToUpdate });
 				}
 			}))
 		);

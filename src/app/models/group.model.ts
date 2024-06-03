@@ -7,15 +7,18 @@ export enum GroupType {
 	SpiltExpense
 }
 
-export interface Group {
-	id?: string;
+export interface UpsertGroup {
 	name: string;
 	imageUrl: string;
+	groupType?: GroupType;
+	excludeTotal?: boolean;
+}
+
+export interface Group extends UpsertGroup {
+	id?: string;
 	members: GroupMember[];
 	groupTotal: number;
 	monthTotal: Record<string, number>;
-	groupType?: GroupType;
-	excludeTotal?: boolean;
 }
 
 export interface GroupMember {
