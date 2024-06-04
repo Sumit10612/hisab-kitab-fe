@@ -7,32 +7,31 @@ export interface ExpenseBase {
     amount: number;
     category?: number;
     paidBy: string;
+	usersShare: Record<string, number>;
 }
 
 export interface Expense extends ExpenseBase {
-    expenseDate: Date;
+	expenseDate: Date;
 }
 
 export interface FirestoreExpense extends ExpenseBase {
-    expenseDate: Timestamp;
-    timestamp: Timestamp;
+	expenseDate: Timestamp;
+	timestamp: Timestamp;
 }
 
-export class ExpenseHelper {
-	static toFireStoreModel(expense: Expense): FirestoreExpense {
-		const base: ExpenseBase = expense;
-		return {
-			...base,
-			expenseDate: Timestamp.fromDate(expense.expenseDate),
-			timestamp: Timestamp.fromDate(new Date())
-		};
+export const toFirestoreModel = (expense: Expense): FirestoreExpense => {
+	const base: ExpenseBase = expense;
+	return {
+		...base,
+		expenseDate: Timestamp.fromDate(expense.expenseDate),
+		timestamp: Timestamp.now()
 	}
+}
 
-	static toModel(expense: FirestoreExpense): Expense {
-		const base = expense;
-		return {
-			...base,
-			expenseDate: expense.expenseDate.toDate()
-		};
-	}
+export const fromFirestoreModel = (expense: FirestoreExpense): Expense => {
+	const base = expense;
+	return {
+		...base,
+		expenseDate: expense.expenseDate.toDate()
+	};
 }
