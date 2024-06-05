@@ -31,12 +31,12 @@ export class ExpenseService {
 	private readonly collectionRef = (groupId: string) => collection(this.groupRef(groupId), "expenses");
 	private readonly docCollectionRef = (groupId: string, id: string) => doc(this.collectionRef(groupId), id);
 
-	get$ = (groupId: string, id: string): Observable<Expense> => {
+	get$(groupId: string, id: string): Observable<Expense> {
 		return (docData(this.docRef(groupId, id)) as Observable<FirestoreExpense>).pipe(
 			take(1),
 			map(expense => fromFirestoreModel(expense))
 		);
-	};
+	}
 
 	async getAll(groupId: string, initialGet = false): Promise<Expense[]> {
 		if(initialGet) {
@@ -130,7 +130,7 @@ export class ExpenseService {
 		transaction: Transaction,
 		groupId: string,
 		expenseId: string
-	): Promise<{ groupDoc: Group; expenseDoc: Expense; }> {
+	): Promise<{ groupDoc: Group; expenseDoc: Expense }> {
 		const groupSnapshot = await transaction.get(this.groupRef(groupId));
 		const groupDoc = throwIfNotFound(groupSnapshot).data() as Group;
 

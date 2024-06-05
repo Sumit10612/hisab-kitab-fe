@@ -3,7 +3,7 @@ import { Routes } from "@angular/router";
 
 import { ExpenseEditorComponent } from "./components/expense-editor.component";
 import { GroupEditorComponent } from "./components/group-editor.component";
-import { GroupExpenseDetailComponent } from "./components/group-expesnse-deatil/group-expesnse-deatil.component";
+import { GroupExpenseDetailComponent } from "./components/group-expesnse-deatil.component";
 import { HomeComponent } from "./components/home.component";
 import { LoginComponent } from "./components/login.component";
 import { ProfileEditorComponent } from "./components/profile-editor.component";

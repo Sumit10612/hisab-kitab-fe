@@ -25,8 +25,8 @@ export const toFirestoreModel = (expense: Expense): FirestoreExpense => {
 		...base,
 		expenseDate: Timestamp.fromDate(expense.expenseDate),
 		timestamp: Timestamp.now()
-	}
-}
+	};
+};
 
 export const fromFirestoreModel = (expense: FirestoreExpense): Expense => {
 	const base = expense;
@@ -34,4 +34,4 @@ export const fromFirestoreModel = (expense: FirestoreExpense): Expense => {
 		...base,
 		expenseDate: expense.expenseDate.toDate()
 	};
-}
+};
