@@ -145,7 +145,7 @@
         "@ngrx/avoid-mapping-selectors": "off",
         "@ngrx/no-store-subscription": "off",
         "@ngrx/avoid-dispatching-multiple-actions-sequentially": "off",
-		    "@ngrx/avoid-combining-selectors": "off"
+        "@ngrx/avoid-combining-selectors": "off"
       },
       "settings": {
         "import/parsers": {
@@ -171,6 +171,14 @@
         "plugin:@angular-eslint/template/recommended"
       ],
       "rules": {}
+    },
+    {
+      "files": [
+        "*.ts"
+      ],
+      "extends": [
+        "plugin:@ngrx/recommended-requiring-type-checking"
+      ]
     }
   ]
 }

@@ -1,17 +1,19 @@
-import { Component, effect, OnInit } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { Component, inject, OnInit } from "@angular/core";
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
 import { MatRadioChange, MatRadioModule } from "@angular/material/radio";
+import { Store } from "@ngrx/store";
+import { tap } from "rxjs";
 
 import { ToolbarButtonType } from "../models/toolbar.model";
-import { avatars } from "../models/user.model";
+import { avatars, User } from "../models/user.model";
 import { AuthService } from "../services/auth.service";
 import { NavigationService } from "../services/navigation.service";
-import { NotificationService } from "../services/notification.service";
 import { ToolbarConfigurationService } from "../services/toolbar-configuration.service";
-import { UserService } from "../services/user.service";
-import { getFirebaseErrorMessage } from "../utilities/firebase-errors";
+import { UserAction } from "../store/user/user.action";
+import { UserSelector } from "../store/user/user.selector";
 
 import { LayoutComponent } from "./shared/layout.component";
 
@@ -19,6 +21,7 @@ import { LayoutComponent } from "./shared/layout.component";
 	selector: "app-profile-editor",
 	standalone: true,
 	imports: [
+		CommonModule,
 		LayoutComponent,
 		MatInputModule,
 		MatFormFieldModule,
@@ -28,7 +31,7 @@ import { LayoutComponent } from "./shared/layout.component";
 	template: `
 		<app-layout headerHeight="320px" pageTitle="Profile">
 			<div section="header">
-				<form [formGroup]="form">
+				<form [formGroup]="form" *ngIf="user$ | async">
 					<mat-form-field>
 						<mat-label>Name</mat-label>
 						<input matInput [formControl]="form.controls.name"/>
@@ -55,7 +58,7 @@ import { LayoutComponent } from "./shared/layout.component";
 					<mat-radio-group
 						name="themeSelector"
 						color="warn"
-						[value]="userService.currentUser()?.preferences?.theme ?? 'light'"
+						[value]="user?.preferences?.theme ?? 'light'"
 						(change)="onThemeChange($event)" >
 							<mat-radio-button value="light">Light</mat-radio-button>
 							<mat-radio-button value="dark">Dark</mat-radio-button>
@@ -92,30 +95,30 @@ import { LayoutComponent } from "./shared/layout.component";
 	`]
 })
 export class ProfileEditorComponent implements OnInit {
+	private readonly fb = inject(NonNullableFormBuilder);
+	private readonly navigation = inject(NavigationService);
+	private readonly toolbar = inject(ToolbarConfigurationService);
+	private readonly authService = inject(AuthService);
+	private store = inject(Store);
+
 	protected form = this.fb.group({
-		uid: "",
+		uid: ["", [Validators.required]],
 		name: ["", [Validators.required]],
-		email: "",
-		photoUrl: "",
+		email: ["", [Validators.required]],
+		photoUrl: ["", [Validators.required]]
 	});
 	protected avatars = avatars;
 	protected selectedIndex: number | undefined;
-
-	constructor(
-		private notification: NotificationService,
-		private fb: NonNullableFormBuilder,
-		private navigation: NavigationService,
-		private toolbar: ToolbarConfigurationService,
-		private authService: AuthService,
-		protected userService: UserService,
-	) {
-		effect(() => {
-			this.form.patchValue({ ...userService.currentUser() });
-			this.selectedIndex = avatars.findIndex(
-				avatar => avatar.alt === userService.currentUser()?.photoUrl
-			);
-		});
-	}
+	protected user?: User;
+	protected user$ = this.store.select(UserSelector.select).pipe(
+		tap(user => {
+			if(user) {
+				this.user = user;
+				this.form.patchValue({ ...user });
+				this.selectedIndex = avatars.findIndex(avatar => avatar.alt === user?.photoUrl);
+			}
+		})
+	);
 
 	ngOnInit(): void {
 		this.toolbar.configure({
@@ -132,7 +135,7 @@ export class ProfileEditorComponent implements OnInit {
 				{
 					type: ToolbarButtonType.Primary,
 					label: "Update",
-					disabled: () => !this.form.dirty || !(this.selectedIndex === 0 ? 1 : this.selectedIndex),
+					disabled: () => !this.form.dirty || !this.form.valid,
 					action: () => this.update()
 				}
 			]
@@ -145,37 +148,19 @@ export class ProfileEditorComponent implements OnInit {
 		this.form.markAsDirty();
 	}
 
-	async onThemeChange($event: MatRadioChange) {
-		const user = this.userService.currentUser();
-		if (user) {
-			const { uid, ...data } = user;
-			data.preferences = {
+	onThemeChange($event: MatRadioChange) {
+		if (this.user) {
+			const preferences = {
 				theme: $event.value
 			};
 
-			try {
-				await this.userService.updateUser({ uid, ...data });
-			} catch (err) {
-				this.notification.error(getFirebaseErrorMessage(err));
-			}
+			this.store.dispatch(UserAction.update({ user: { ...this.user, preferences} }));
 		}
 	}
 
-	async update() {
-		const { uid, ...data } = this.form.value;
-
-		if (!uid) {
-			return;
-		}
-
-		try {
-			this.notification.showLoading();
-			await this.userService.updateUser({ uid, ...data });
-			this.navigation.navigateBack();
-		} catch (err) {
-			this.notification.error(getFirebaseErrorMessage(err));
-		} finally {
-			this.notification.hideLoading();
-		}
+	update() {
+		const { ...data } = this.form.value;
+		this.store.dispatch(UserAction.update({ user: { ...data } as User }));
+		this.form.markAsPristine();
 	}
 }

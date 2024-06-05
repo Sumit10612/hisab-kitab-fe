@@ -14,6 +14,7 @@ import { MatSnackBar } from "@angular/material/snack-bar";
 import { MatToolbarModule } from "@angular/material/toolbar";
 import { RouterLink, RouterOutlet } from "@angular/router";
 import { SwUpdate } from "@angular/service-worker";
+import { Store } from "@ngrx/store";
 
 import { ToolbarButtonType } from "./models/toolbar.model";
 import { getUserImage } from "./models/user.model";
@@ -22,6 +23,7 @@ import { NotificationService } from "./services/notification.service";
 import { ThemeService } from "./services/theme.service";
 import { ToolbarConfigurationService } from "./services/toolbar-configuration.service";
 import { UserService } from "./services/user.service";
+import { UserAction } from "./store/user/user.action";
 
 @Component({
 	selector: "app-root",
@@ -127,6 +129,7 @@ export class AppComponent implements OnInit {
 	private readonly snackBar = inject(MatSnackBar);
 	private readonly swUpdate = inject(SwUpdate);
 	private readonly renderer = inject(Renderer2);
+	private readonly store = inject(Store);
 
 	protected readonly navigation = inject(NavigationService);
 	protected readonly theme = inject(ThemeService);
@@ -146,6 +149,7 @@ export class AppComponent implements OnInit {
 
 	ngOnInit() {
 		this.navigation.clearRouteHistory();
+		this.store.dispatch(UserAction.get());
 
 		// Checking service worker based update
 		if (this.swUpdate.isEnabled) {

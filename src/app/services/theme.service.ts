@@ -7,7 +7,7 @@ import { UserService } from "./user.service";
 })
 export class ThemeService {
 	constructor(private userServive: UserService) {
-		userServive.user$.subscribe(user => {
+		userServive.get$.subscribe(user => {
 			const themeFromUser = user.preferences?.theme ?? "";
 			if (themeFromUser !== this.$theme()) {
 				localStorage.setItem("theme", themeFromUser);

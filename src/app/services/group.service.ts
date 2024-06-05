@@ -17,7 +17,6 @@ import {
 	concatMap,
 	map,
 	Observable,
-	of,
 	switchMap,
 	take,
 	tap
@@ -47,31 +46,25 @@ export class GroupService {
 	private readonly collectionRef = () => collection(this.firestore, "groups");
 	private readonly docRef = (id: string) => doc(this.firestore, "groups", id);
 
-	myGroups$: Observable<Group[]> = this.userService.user$.pipe(
-		switchMap(user => {
-			if(!user) {
-				return of([]);
-			}
+	getGroups$(ids: string[], groupOrders: GroupOrder[]): Observable<Group[]> {
+		const q = query(this.collectionRef(), where(documentId(), "in", ids));
+		return (collectionData(q, { idField: "id" }) as Observable<Group[]>).pipe(
+			map(groupDocs => {
+				const groups = groupDocs.map(group => {
+					return {
+						...group,
+						groupTotal: round(group.groupTotal, 2),
+						monthTotal: Object.fromEntries(
+							Object.entries(group.monthTotal).map(([key, value]) => [key, round(value, 2)])
+						),
+					};
+				});
 
-			const q = query(this.collectionRef(), where(documentId(), "in", user.groupIds));
-			return (collectionData(q, { idField: "id" }) as Observable<Group[]>).pipe(
-				map(groupDocs => {
-					const groups = groupDocs.map(group => {
-						return {
-							...group,
-							groupTotal: round(group.groupTotal, 2),
-							monthTotal: Object.fromEntries(
-								Object.entries(group.monthTotal).map(([key, value]) => [key, round(value, 2)])
-							),
-						};
-					});
-
-					const orderMap = keyBy(user.groups, g => g.id);
-					return sortBy(groups, g => g.id ? orderMap[g.id].order : Number.MAX_SAFE_INTEGER);
-				})
-			);
-		})
-	);
+				const orderMap = keyBy(groupOrders, g => g.id);
+				return sortBy(groups, g => g.id ? orderMap[g.id].order : Number.MAX_SAFE_INTEGER);
+			})
+		);
+	}
 
 	get$(groupId: string): Observable<Group> {
 		return this.userService.authService.currentUser$.pipe(
@@ -93,7 +86,7 @@ export class GroupService {
 
 	create$(groupToCreate: UpsertGroup): Observable<string> {
 		const ref = doc(this.collectionRef());
-		return this.userService.user$.pipe(
+		return this.userService.get$.pipe(
 			take(1),
 			concatMap(user => runTransaction(this.firestore, async (transction) => {
 				transction.set(ref, {
@@ -234,7 +227,7 @@ export class GroupService {
 
 	addMemeberToGroup$(code: number): Observable<string> {
 		const collectionRef = collection(this.firestore, "group_code");
-		return this.userService.user$.pipe(
+		return this.userService.get$.pipe(
 			take(1),
 			switchMap(async user => {
 				return await runTransaction(this.firestore, async transaction => {
