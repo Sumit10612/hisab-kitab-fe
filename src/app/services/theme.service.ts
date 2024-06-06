@@ -6,7 +6,7 @@ import { UserService } from "./user.service";
 	providedIn: "root"
 })
 export class ThemeService {
-	constructor(private userServive: UserService) {
+	constructor(userServive: UserService) {
 		userServive.get$.subscribe(user => {
 			const themeFromUser = user.preferences?.theme ?? "";
 			if (themeFromUser !== this.$theme()) {

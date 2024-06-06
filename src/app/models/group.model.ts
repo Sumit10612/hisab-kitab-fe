@@ -15,7 +15,7 @@ export interface UpsertGroup {
 }
 
 export interface Group extends UpsertGroup {
-	id?: string;
+	id: string;
 	members: GroupMember[];
 	groupTotal: number;
 	monthTotal: Record<string, number>;

@@ -4,14 +4,15 @@ import { MatButtonModule } from "@angular/material/button";
 import { MatIconModule } from "@angular/material/icon";
 import { RouterLink } from "@angular/router";
 import { Store } from "@ngrx/store";
-import { of, Subscription, switchMap } from "rxjs";
+import { filter, Subscription, switchMap, tap } from "rxjs";
 
 import { Group } from "../models/group.model";
 import { ToolbarButtonType } from "../models/toolbar.model";
-import { GroupOrder } from "../models/user.model";
-import { GroupService } from "../services/group.service";
+import { GroupOrder, User } from "../models/user.model";
 import { ToolbarConfigurationService } from "../services/toolbar-configuration.service";
-import { UserService } from "../services/user.service";
+import { GroupAction } from "../store/group/group.action";
+import { GroupSelector } from "../store/group/group.selector";
+import { UserAction } from "../store/user/user.action";
 import { UserSelector } from "../store/user/user.selector";
 
 import { LayoutComponent } from "./shared/layout.component";
@@ -60,26 +61,15 @@ import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
 	`]
 })
 export class HomeComponent implements OnInit, OnDestroy {
-	private readonly groupService = inject(GroupService);
-	private readonly userService = inject(UserService);
 	private readonly toolbar = inject(ToolbarConfigurationService);
 	private readonly store = inject(Store);
 
+	private user?: User;
 	private subscription$$?: Subscription;
 
-	protected groups: Group[] = [];
+	protected groups: Group[] = []; 
 
 	ngOnInit(): void {
-		this.subscription$$ = this.store.select(UserSelector.select).pipe(
-			switchMap(user => {
-				if(user?.groupIds?.length && user?.groups?.length) {
-					return this.groupService.getGroups$(user.groupIds, user.groups);
-				} else {
-					return of([]);
-				}
-			})
-		).subscribe(groups => this.groups = groups);
-
 		this.toolbar.configure({
 			profile: { visible: true },
 			actionBtns: [
@@ -90,20 +80,33 @@ export class HomeComponent implements OnInit, OnDestroy {
 				}
 			]
 		});
+
+		this.subscription$$ = this.store.select(UserSelector.select).pipe(
+			tap(user => this.user = user),
+			filter(user => !!(user?.groupIds?.length && user.groups?.length)),
+			switchMap(user => this.store.select(GroupSelector.selectGroups()).pipe(
+				tap(groups => {
+					if(!groups.length) {
+						this.store.dispatch(GroupAction.getAll({
+							ids: user?.groupIds ?? [],
+							groups: user?.groups ?? []
+						}));
+					}
+				}))
+			)
+		).subscribe(groups => this.groups = groups);
 	}
 
 	ngOnDestroy(): void {
 		this.subscription$$?.unsubscribe();
 	}
 
-	async reorderGroups($event: Group[]) {
-		const user = this.userService.currentUser();
-		if (!user || !$event.length) {
+	reorderGroups($event: Group[]) {
+		if (!this.user || !$event.length) {
 			return;
 		}
 
-		user.groups = $event.map((group, index) => ({ id: group.id ?? "", order: index })) as GroupOrder[];
-
-		await this.userService.update$(user);
+		this.user.groups = $event.map((group, index) => ({ id: group.id ?? "", order: index })) as GroupOrder[];
+		this.store.dispatch(UserAction.update({ user: this.user }));
 	}
 }
