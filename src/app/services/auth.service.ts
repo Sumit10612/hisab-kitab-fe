@@ -20,16 +20,16 @@ import { ErrorCode } from "../utilities/error-codes";
 	providedIn: "root"
 })
 export class AuthService {
-	firebaseAuth = inject(Auth);
-
+	private readonly firebaseAuth = inject(Auth);
 	private googleProvider = new GoogleAuthProvider();
 
-	currentUser$ = authState(this.firebaseAuth).pipe(
+	user$ = authState(this.firebaseAuth).pipe(
 		map(user => {
-			if (!user) {
-				throw ErrorCode.UNAUTHORIZED;
+			if (user) {
+				return user;
 			}
-			return user;
+
+			throw ErrorCode.UNAUTHORIZED;
 		})
 	);
 

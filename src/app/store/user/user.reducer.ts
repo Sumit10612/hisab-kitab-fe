@@ -2,20 +2,33 @@ import { createReducer, on } from "@ngrx/store";
 
 import { User } from "../../models/user.model";
 
-import { UserAction } from "./user.action";
+import { UserActions } from "./user.action";
 
 export interface UserState {
-	user?: User;
+	user: User | null;
 }
 
 export const INITIAL_STATE: UserState = {
-	user: undefined
+	user: null
 };
 
 export const userReducer = createReducer<UserState>(
 	INITIAL_STATE,
-	on(UserAction.getSuccess, (state, { user }): UserState => ({
+	on(UserActions.getSuccess, (state, { user }): UserState => ({
 		...state,
 		user
-	}))
+	})),
+	on(UserActions.updateSuccess, (state, { user }) => {
+		if(state.user) {
+			return ({
+				...state,
+				user: {
+					...state.user,
+					name: user.name,
+					photoUrl: user.photoUrl
+				}
+			})
+		}
+		return ({ ...state });
+	})
 );

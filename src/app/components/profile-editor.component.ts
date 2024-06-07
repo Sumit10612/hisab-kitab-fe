@@ -9,13 +9,12 @@ import { tap } from "rxjs";
 
 import { ToolbarButtonType } from "../models/toolbar.model";
 import { avatars, User } from "../models/user.model";
-import { AuthService } from "../services/auth.service";
-import { NavigationService } from "../services/navigation.service";
 import { ToolbarConfigurationService } from "../services/toolbar-configuration.service";
-import { UserAction } from "../store/user/user.action";
+import { UserActions } from "../store/user/user.action";
 import { UserSelector } from "../store/user/user.selector";
 
 import { LayoutComponent } from "./shared/layout.component";
+import { AuthActions } from "../store/auth/auth.action";
 
 @Component({
 	selector: "app-profile-editor",
@@ -96,9 +95,7 @@ import { LayoutComponent } from "./shared/layout.component";
 })
 export class ProfileEditorComponent implements OnInit {
 	private readonly fb = inject(NonNullableFormBuilder);
-	private readonly navigation = inject(NavigationService);
 	private readonly toolbar = inject(ToolbarConfigurationService);
-	private readonly authService = inject(AuthService);
 	private store = inject(Store);
 
 	protected form = this.fb.group({
@@ -127,16 +124,17 @@ export class ProfileEditorComponent implements OnInit {
 				{
 					type: ToolbarButtonType.Warn,
 					label: "Logout",
-					action: async () => {
-						await this.authService.logout();
-						this.navigation.navigateToHome();
-					}
+					action: () => this.store.dispatch(AuthActions.logout())
 				},
 				{
 					type: ToolbarButtonType.Primary,
 					label: "Update",
 					disabled: () => !this.form.dirty || !this.form.valid,
-					action: () => this.update()
+					action: () => {
+						const { ...data } = this.form.value;
+						this.store.dispatch(UserActions.update({ user: { ...data } as User }));
+						this.form.markAsPristine();
+					}
 				}
 			]
 		});
@@ -154,13 +152,7 @@ export class ProfileEditorComponent implements OnInit {
 				theme: $event.value
 			};
 
-			this.store.dispatch(UserAction.update({ user: { ...this.user, preferences} }));
+			this.store.dispatch(UserActions.update({ user: { ...this.user, preferences} }));
 		}
-	}
-
-	update() {
-		const { ...data } = this.form.value;
-		this.store.dispatch(UserAction.update({ user: { ...data } as User }));
-		this.form.markAsPristine();
 	}
 }

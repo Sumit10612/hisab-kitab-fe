@@ -1,28 +1,25 @@
 import { Component, inject } from "@angular/core";
-import { 
-	AbstractControl, 
-	NonNullableFormBuilder, 
-	ReactiveFormsModule, 
-	ValidationErrors, 
-	ValidatorFn, 
-	Validators 
+import {
+	AbstractControl,
+	NonNullableFormBuilder,
+	ReactiveFormsModule,
+	ValidationErrors,
+	ValidatorFn,
+	Validators
 } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
-import { Router } from "@angular/router";
 
-import { AuthService } from "../services/auth.service";
-import { NotificationService } from "../services/notification.service";
-import { UserService } from "../services/user.service";
-import { getFirebaseErrorMessage } from "../utilities/firebase-errors";
+import { Store } from "@ngrx/store";
+import { AuthActions } from "../store/auth/auth.action";
 
 export function passwordsMatchValidator(): ValidatorFn {
 	return (control: AbstractControl): ValidationErrors | null => {
 		const password = control.get("password")?.value;
 		const confirmPassword = control.get("confirmPassword")?.value;
 
-		if(password && confirmPassword && password !== confirmPassword) {
+		if (password && confirmPassword && password !== confirmPassword) {
 			return { passwordsDontMatch: true };
 		}
 
@@ -34,9 +31,9 @@ export function passwordsMatchValidator(): ValidatorFn {
 	selector: "app-signup",
 	standalone: true,
 	imports: [
-		MatFormFieldModule, 
-		MatInputModule, 
-		MatButtonModule, 
+		MatFormFieldModule,
+		MatInputModule,
+		MatButtonModule,
 		ReactiveFormsModule,
 	],
 	template: `
@@ -95,12 +92,8 @@ export function passwordsMatchValidator(): ValidatorFn {
 	`]
 })
 export class SignupComponent {
-	private readonly authService = inject(AuthService);
-	private readonly userService = inject(UserService);
-	private readonly notificationService = inject(NotificationService);
-	private readonly router = inject(Router);
-  
-	formBuilder = inject(NonNullableFormBuilder);
+	private readonly store = inject(Store);
+	private readonly formBuilder = inject(NonNullableFormBuilder);
 
 	signUpForm = this.formBuilder.group({
 		name: ["", [Validators.required]],
@@ -109,24 +102,13 @@ export class SignupComponent {
 		confirmPassword: ["", [Validators.required]],
 	}, { validators: passwordsMatchValidator() });
 
-	async submit() {
+	submit() {
 		const { name, email, password } = this.signUpForm.value;
 
-		if(!this.signUpForm.valid || !email || !password) {
+		if (!this.signUpForm.valid || !email || !password || !name) {
 			return;
 		}
 
-		try {
-			this.notificationService.showLoading();
-			const { user: { uid } } = await this.authService.signUp(email, password);
-
-			await this.userService.addUser({ uid, email, name });
-
-			this.router.navigate(["/home"]);
-		} catch (err) {
-			this.notificationService.error(getFirebaseErrorMessage(err));
-		} finally {
-			this.notificationService.hideLoading();
-		}
+		this.store.dispatch(AuthActions.signup({ email, password, name }));
 	}
 }
