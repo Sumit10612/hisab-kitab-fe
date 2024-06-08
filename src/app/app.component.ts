@@ -4,7 +4,6 @@ import {
 	effect,
 	HostBinding,
 	inject,
-	OnDestroy,
 	OnInit,
 	Renderer2
 } from "@angular/core";
@@ -16,7 +15,6 @@ import { MatToolbarModule } from "@angular/material/toolbar";
 import { RouterLink, RouterOutlet } from "@angular/router";
 import { SwUpdate } from "@angular/service-worker";
 import { Store } from "@ngrx/store";
-import { filter, Subscription } from "rxjs";
 
 import { ToolbarButtonType } from "./models/toolbar.model";
 import { getUserImage, User } from "./models/user.model";
@@ -24,7 +22,6 @@ import { NavigationService } from "./services/navigation.service";
 import { NotificationService } from "./services/notification.service";
 import { ThemeService } from "./services/theme.service";
 import { ToolbarConfigurationService } from "./services/toolbar-configuration.service";
-import { GroupAction } from "./store/group/group.action";
 import { UserSelector } from "./store/user/user.selector";
 import { AppActions } from "./store/app.action";
 
@@ -55,7 +52,7 @@ import { AppActions } from "./store/app.action";
 					}
 
 					@if (toolbar.config.profile?.visible) {
-						<a routerLink="/profile">
+						<a *ngIf="user$ | async as user" routerLink="/profile">
 							<img
 								width="55" 
 								height="55"
@@ -126,7 +123,7 @@ import { AppActions } from "./store/app.action";
 		}
 	`]
 })
-export class AppComponent implements OnInit, OnDestroy {
+export class AppComponent implements OnInit {
 	@HostBinding("class") class: string = "";
 
 	private readonly snackBar = inject(MatSnackBar);
@@ -134,15 +131,13 @@ export class AppComponent implements OnInit, OnDestroy {
 	private readonly renderer = inject(Renderer2);
 	private readonly store = inject(Store);
 
-	private group$$?: Subscription;
-
 	protected readonly navigation = inject(NavigationService);
 	protected readonly theme = inject(ThemeService);
 	protected readonly notification = inject(NotificationService);
 	protected readonly toolbar = inject(ToolbarConfigurationService);
-	
-	protected user?: User | null;
+
 	protected getUserImage = getUserImage;
+	protected user$ = this.store.select(UserSelector.select);
 
 	constructor() {
 		effect(() => {
@@ -154,19 +149,6 @@ export class AppComponent implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		this.store.dispatch(AppActions.init());
-		this.group$$ = this.store.select(UserSelector.select)
-			.pipe(
-				filter(user => user?.groupIds?.length !== this.user?.groupIds?.length)
-			)
-			.subscribe(user => {
-				this.user = user;
-				if(user?.groupIds?.length && user.groups?.length) {
-					this.store.dispatch(GroupAction.getAll({
-						ids: user.groupIds,
-						groups: user.groups
-					}));
-				}
-			});
 
 		// Checking service worker based update
 		if (this.swUpdate.isEnabled) {
@@ -180,10 +162,6 @@ export class AppComponent implements OnInit, OnDestroy {
 				}
 			});
 		}
-	}
-
-	ngOnDestroy(): void {
-		this.group$$?.unsubscribe();
 	}
 
 	getColor(type: ToolbarButtonType) {
