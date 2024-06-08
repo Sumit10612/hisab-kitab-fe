@@ -4,7 +4,7 @@ import { Subscription } from "rxjs";
 
 import { Group } from "../models/group.model";
 import { ToolbarButtonType } from "../models/toolbar.model";
-import { GroupOrder, User } from "../models/user.model";
+import { GroupOrder } from "../models/user.model";
 import { ToolbarConfigurationService } from "../services/toolbar-configuration.service";
 import { GroupSelector } from "../store/group/group.selector";
 

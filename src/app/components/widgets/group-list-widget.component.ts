@@ -2,7 +2,7 @@ import { CdkDragDrop, DragDropModule, moveItemInArray } from "@angular/cdk/drag-
 import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { MatDividerModule } from "@angular/material/divider";
 import { RouterLink } from "@angular/router";
-import { round } from "lodash";
+import { round } from "lodash-es";
 
 import { getGroupImage, Group, GroupType } from "../../models/group.model";
 import { getYearMonth } from "../../utilities/date";
