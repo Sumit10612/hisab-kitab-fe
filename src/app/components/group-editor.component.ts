@@ -15,18 +15,14 @@ import { MatIconModule } from "@angular/material/icon";
 import { MatInputModule } from "@angular/material/input";
 import { MatRadioModule } from "@angular/material/radio";
 import { MatSlideToggleModule } from "@angular/material/slide-toggle";
-import { filter, finalize, switchMap, tap } from "rxjs";
+import { filter, map, switchMap, tap } from "rxjs";
 
 import { DialogButtonType, DialogData } from "../models/dialog.model";
 import { groupImages, GroupMember, GroupType, UpsertGroup } from "../models/group.model";
 import { Otp } from "../models/otp.model";
 import { ToolbarButtonType } from "../models/toolbar.model";
 import { DialogService } from "../services/dialog.service";
-import { GroupService } from "../services/group.service";
-import { NavigationService } from "../services/navigation.service";
-import { NotificationService } from "../services/notification.service";
 import { ToolbarConfigurationService } from "../services/toolbar-configuration.service";
-import { ErrorCode } from "../utilities/error-codes";
 
 import { OtpComponent } from "./otp.component";
 import { LayoutComponent } from "./shared/layout.component";
@@ -101,19 +97,19 @@ import { RouterSelector } from "../store/app.selector";
 						<mat-card-subtitle>Members:</mat-card-subtitle>
 					</mat-card-header>
 					<mat-card-content>
-						@for (kvp of group.members | keyvalue; track kvp) {
+						@for (member of group.members; track member) {
 							<div class="user-info">
 								<div class="user-details">
-									<span>{{ kvp.value.name }}</span>
-									@if (isAdmin(kvp.value)) { <span class="role">(admin)</span> }
+									<span>{{ member.name }}</span>
+									@if (isAdmin(member)) { <span class="role">(admin)</span> }
 								</div>
 								@if (currentUser && isAdmin(currentUser)) {
 									<div class="user-actions">
-										<button mat-button [hidden]="isCurrentUser(kvp.value)" (click)="toggelAdmin(kvp.value)">
-											{{isAdmin(kvp.value) ? "Remove" : "Make"}} admin
+										<button mat-button [hidden]="isCurrentUser(member)" (click)="toggelAdmin(member)">
+											{{isAdmin(member) ? "Remove" : "Make"}} admin
 										</button>
-										<button mat-button color="warn" [disabled]="isCurrentUser(kvp.value)"
-											(click)="removeMember(kvp.value.id)">
+										<button mat-button color="warn" [disabled]="isCurrentUser(member)"
+											(click)="removeMember(member.id)">
 											<mat-icon>person_remove</mat-icon>
 										</button>
 									</div>
@@ -134,14 +130,15 @@ import { RouterSelector } from "../store/app.selector";
 
 		<ng-template #addUserToGroupDialogTemplate>
 			<div class="add-user-to-group-template">
-				@if (groupCode) {
-					<div class="code">{{groupCode}}</div>
+				<ng-container *ngIf="groupCode$ | async as code; else loading">
+					<div class="code">{{code}}</div>
 					<div class="timer">code is valid only for 5 minutes</div>
 					<p>Others can join this group <br />
 						using the above code</p>
-				} @else {
+				</ng-container>
+				<ng-template #loading>
 					Please wait, generating new code...
-				}
+				</ng-template>
 			</div>
 		</ng-template>
 
@@ -241,9 +238,6 @@ export class GroupEditorComponent implements OnInit {
 	@ViewChild("joinGroupDialogTemplate") joinGroupDialogTemplate: TemplateRef<unknown> | undefined;
 	@ViewChild("addUserToGroupDialogTemplate") addUserToGroupDialogTemplate: TemplateRef<unknown> | undefined;
 
-	private readonly notification = inject(NotificationService);
-	private readonly navigation = inject(NavigationService);
-	private readonly groupService = inject(GroupService);
 	private readonly dialog = inject(DialogService);
 	private readonly toolbar = inject(ToolbarConfigurationService);
 	private readonly fb = inject(NonNullableFormBuilder);
@@ -261,7 +255,6 @@ export class GroupEditorComponent implements OnInit {
 	protected selectedIndex: number | undefined;
 	protected members: GroupMember[] | undefined;
 	protected currentUser: GroupMember | undefined;
-	protected groupCode: number | undefined;
 	protected groupType = GroupType;
 
 	protected group$ = this.store.select(RouterSelector.selectParams).pipe(
@@ -272,9 +265,20 @@ export class GroupEditorComponent implements OnInit {
 				this.form.patchValue({ ...group });
 				this.selectedIndex = groupImages.findIndex(g => g.alt === group?.imageUrl);
 				this.currentUser = Object.values(group?.members ?? {}).find(member => this.isCurrentUser(member));
+			}),
+			map(group => {
+				const members = group?.memberIds.map(id => group.members[id]);
+				return {
+					...group,
+					members
+				};
 			})
 		))
-	)
+	);
+	protected groupCode$ = this.store.select(RouterSelector.selectParams).pipe(
+		filter(params => !!params["id"]),
+		switchMap(params => this.store.select(GroupSelector.selectCode(params["id"])))
+	);
 
 	ngOnInit(): void {
 		this.toolbar.configure({
@@ -359,15 +363,7 @@ export class GroupEditorComponent implements OnInit {
 		});
 
 		addMemberDialogRef.afterOpened().subscribe(async _ => {
-			this.notification.showLoading();
-			try {
-				this.groupCode = await this.groupService.getCode(this.form.controls.id.value);
-			} catch (err) {
-				this.notification.firebaseError(err);
-			} finally {
-				this.notification.hideLoading();
-			}
-
+			this.store.dispatch(GroupAction.getCode({ id: this.form.controls.id.value }));
 			setTimeout(() => {
 				addMemberDialogRef.close();
 			}, 300000);
@@ -389,13 +385,7 @@ export class GroupEditorComponent implements OnInit {
 						disabled: data => data?.code1 == null || data.code2 == null || data.code3 == null || data.code4 == null,
 						action: (data) => {
 							const code = +`${data?.code1}${data?.code2}${data?.code3}${data?.code4}`;
-							this.notification.showLoading();
-							this.groupService.addMemeberToGroup$(code).pipe(
-								finalize(() => this.notification.hideLoading())
-							).subscribe({
-								next: () => this.navigation.navigateToHome(),
-								error: (error) => this.notification.error(error)
-							});
+							this.store.dispatch(GroupAction.addMember({ code }));
 						}
 					}
 				]
@@ -413,30 +403,15 @@ export class GroupEditorComponent implements OnInit {
 	}
 
 	toggelAdmin(member: GroupMember) {
-		this.notification.showLoading();
-		this.groupService.updateRole$(this.form.controls.id.value, member.id, member.role === "admin" ? "user" : "admin").pipe(
-			finalize(() => this.notification.hideLoading())
-		).subscribe({
-			error: (error) => this.notification.firebaseError(error)
-		});
+		this.store.dispatch(GroupAction.updateRole({
+			id: this.form.controls.id.value,
+			memberId: member.id,
+			role: member.role === "admin" ? "user" : "admin"
+		}));
 	}
 
 	removeMember(memberId?: string) {
-		this.notification.showLoading();
-		this.groupService.removeMember$(this.form.controls.id.value, memberId).pipe(
-			finalize(() => this.notification.hideLoading())
-		).subscribe({
-			next: () => {
-				if (!memberId) {
-					this.navigation.navigateToHome();
-				}
-			},
-			error: err => {
-				if (err.message === ErrorCode.NO_OTHER_ADMIN_FOUND) {
-					this.notification.error("Cannot leave, you are the only admin here.");
-				}
-			}
-		});
+		this.store.dispatch(GroupAction.removeMember({ id: this.form.controls.id.value, memberId }));
 	}
 
 	deleteGroup() {

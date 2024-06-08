@@ -16,6 +16,7 @@ import { MatInputModule } from "@angular/material/input";
 import { MatSelectModule } from "@angular/material/select";
 import { ActivatedRoute } from "@angular/router";
 import {
+	map,
 	Subscription,
 	switchMap,
 	tap
@@ -33,6 +34,9 @@ import { ToolbarConfigurationService } from "../services/toolbar-configuration.s
 
 import { CategorySelectorComponent } from "./category-selector.component";
 import { LayoutComponent } from "./shared/layout.component";
+import { Store } from "@ngrx/store";
+import { RouterSelector } from "../store/app.selector";
+import { GroupSelector } from "../store/group/group.selector";
 
 @Component({
 	selector: "app-add-expense",
@@ -125,28 +129,25 @@ import { LayoutComponent } from "./shared/layout.component";
 export class ExpenseEditorComponent implements OnInit, OnDestroy {
 	private readonly bottomSheet = inject(MatBottomSheet);
 	private readonly formBuilder = inject(FormBuilder);
-	private readonly groupService = inject(GroupService);
 	private readonly expenseService = inject(ExpenseService);
 	private readonly notification = inject(NotificationService);
 	private readonly navigation = inject(NavigationService);
-	private readonly route = inject(ActivatedRoute);
 	private readonly toolbar = inject(ToolbarConfigurationService);
+	private readonly store = inject(Store);
 
 	private selectedCategory = getCategoryById(101);
 	private expenseSubscription$$: Subscription | undefined;
 
-	protected group$ = this.route.paramMap.pipe(
-		switchMap(params =>
-			this.groupService.get$(params.get("groupId") ?? "").pipe(
-				tap(group => {
-					//TODO
-					// const member = group.members.find(m => m.name === "You") as GroupMember;
-					// this.form.controls.paidBy.setValue(member.id);
-
-					// group.members = group.members.filter(m => m.active !== false);
-				})
-			)
-		)
+	protected group$ = this.store.select(RouterSelector.selectParams).pipe(
+		switchMap(params => this.store.select(GroupSelector.selectGroup(params["groupId"])).pipe(
+			map(group => {
+				const members = group?.memberIds.filter(id => group.members[id]);
+				return {
+					...group,
+					members
+				};
+			})
+		))
 	);
 
 	protected readonly form = this.formBuilder.group({

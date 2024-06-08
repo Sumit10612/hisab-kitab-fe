@@ -1,6 +1,6 @@
 import { inject, Injectable } from "@angular/core";
 import { Actions, createEffect, ofType } from "@ngrx/effects";
-import { filter, finalize, map, of, switchMap, take, tap } from "rxjs";
+import { catchError, filter, finalize, map, of, switchMap, take, tap } from "rxjs";
 
 import { GroupService } from "../../services/group.service";
 import { NotificationService } from "../../services/notification.service";
@@ -11,6 +11,7 @@ import { UserActions } from "../user/user.action";
 import { UserSelector } from "../user/user.selector";
 import { NavigationService } from "../../services/navigation.service";
 import { Group } from "../../models/group.model";
+import { ErrorCode } from "../../utilities/error-codes";
 
 @Injectable()
 export class GroupEffects {
@@ -41,7 +42,6 @@ export class GroupEffects {
 								id: user.uid,
 								name: user.name,
 								role: "admin",
-								active: true,
 							}
 						}
 					} as Group;
@@ -99,6 +99,17 @@ export class GroupEffects {
 		)
 	);
 
+	get$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(GroupAction.get),
+			tap(() => this.notification.showLoading()),
+			switchMap(({ id }) => this.groupService.get(id).then(
+				group => GroupAction.getSuccess({ group })
+			)),
+			finalize(() => this.notification.hideLoading())
+		)
+	);
+
 	update$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(GroupAction.update),
@@ -110,6 +121,19 @@ export class GroupEffects {
 				)
 				.finally(() => this.notification.hideLoading())
 			)
+		)
+	);
+
+	updateRole$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(GroupAction.updateRole),
+			tap(() => this.notification.showLoading()),
+			switchMap(async ({ id, memberId, role }) => {
+				await this.groupService.updateRole(id, memberId, role);
+				return GroupAction.updateRoleSuccess({ id });
+			}),
+			catchError(() => of(GroupAction.updateRoleFail())),
+			finalize(() => this.notification.hideLoading())
 		)
 	);
 
@@ -154,6 +178,88 @@ export class GroupEffects {
 		this.action$.pipe(
 			ofType(GroupAction.deleteSuccess),
 			tap(() => this.navigation.navigateToHome())
+		),
+		{ dispatch: false }
+	);
+
+	getCode$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(GroupAction.getCode),
+			tap(() => this.notification.showLoading()),
+			switchMap(({ id }) => this.groupService.getCode(id)
+				.then(
+					(code) => GroupAction.getCodeSuccess({ id, code }),
+					error => GroupAction.getCodeFail()
+				)
+				.finally(() => this.notification.hideLoading())
+			)
+		)
+	);
+
+	addMember$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(GroupAction.addMember),
+			tap(() => this.notification.showLoading()),
+			switchMap(({ code }) => this.store.select(UserSelector.select).pipe(
+				take(1),
+				switchMap(async user => {
+					if (!user) {
+						return GroupAction.addMemberFail();
+					}
+
+					const groupId = await this.groupService.addMemeberToGroup(user.uid, user.name ?? '', code);
+					return GroupAction.addMemberSuccess({ id: groupId });
+				}),
+				catchError((error) => {
+					this.notification.error(error);
+					return of(GroupAction.addMemberFail());
+				}),
+				finalize(() => this.notification.hideLoading())
+			))
+		)
+	);
+
+	addMemberSuccess$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(GroupAction.addMemberSuccess),
+			tap(() => this.navigation.navigateToHome())
+		),
+		{ dispatch: false }
+	);
+
+	removeMember$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(GroupAction.removeMember),
+			tap(() => this.notification.showLoading()),
+			switchMap(({ id, memberId }) => this.store.select(UserSelector.select).pipe(
+				take(1),
+				switchMap(async user => {
+					if (!user) {
+						return GroupAction.removeMemberFail();
+					}
+
+					await this.groupService.removeMember(id, memberId ?? user.uid);
+					return GroupAction.removeMemberSuccess({ id, memberId });
+				}),
+				catchError((error) => {
+					if (error === ErrorCode.NO_OTHER_ADMIN_FOUND) {
+						this.notification.error("Cannot leave, you are the only admin here.");
+					}
+					return of(GroupAction.removeMemberFail());
+				}),
+				finalize(() => this.notification.hideLoading())
+			))
+		)
+	);
+
+	removeMemberSuccess$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(GroupAction.removeMemberSuccess),
+			tap(({ memberId }) => {
+				if(!memberId) {
+					this.navigation.navigateToHome();
+				}
+			})
 		),
 		{ dispatch: false }
 	);

@@ -26,7 +26,6 @@ export interface GroupMember {
 	id: string;
 	name: string;
 	role?: "admin" | "user";
-	active?: boolean;
 }
 
 export interface GroupCode {
@@ -46,7 +45,7 @@ export const isExpired = (groupCode: GroupCode): boolean => {
 
 export const getGroupImage = (alt?: string) => {
 	if (!alt) {
-		return { src: "https://img.icons8.com/ios-glyphs/90/image.png", alt:"image" };
+		return { src: "https://img.icons8.com/ios-glyphs/90/image.png", alt: "image" };
 	}
 
 	return groupImages.filter(img => img.alt === alt)[0];
@@ -58,6 +57,6 @@ export const groupImages: Image[] = [
 	{ src: "https://img.icons8.com/color/96/person-male.png", alt: "Personal" },
 	{ src: "https://img.icons8.com/fluency/96/office.png", alt: "Office" },
 	{ src: "https://img.icons8.com/fluency/96/ping-pong.png", alt: "Sports" },
-	{ src: "https://img.icons8.com/color-glass/96/rupee.png", alt: "Investment"},
+	{ src: "https://img.icons8.com/color-glass/96/rupee.png", alt: "Investment" },
 	{ src: "https://img.icons8.com/color/96/group.png", alt: "Others" },
 ];

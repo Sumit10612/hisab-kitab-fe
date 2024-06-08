@@ -16,11 +16,14 @@ export namespace GroupAction {
 	);
 	export const createFail = createAction(`${ACTION_PREFIX} Create Fail`);
 
-	export const getAll = createAction(`${ACTION_PREFIX} Get All User's Group`);
+	export const getAll = createAction(`${ACTION_PREFIX} Get All`);
 	export const getAllSuccess = createAction(
-		`${ACTION_PREFIX} Get All User's Group Success`,
+		`${ACTION_PREFIX} Get All Success`,
 		props<{ groups: Group[] }>()
 	);
+
+	export const get = createAction(`${ACTION_PREFIX} Get`, props<{ id: string }>());
+	export const getSuccess = createAction(`${ACTION_PREFIX} Get Success`, props<{ group: Group }>());
 
 	export const update = createAction(
 		`${ACTION_PREFIX} Update`,
@@ -32,6 +35,16 @@ export namespace GroupAction {
 	);
 	export const updateFail = createAction(`${ACTION_PREFIX} Update Fail`);
 
+	export const updateRole = createAction(
+		`${ACTION_PREFIX} Update Role`,
+		props<{ id: string; memberId: string; role: "admin" | "user"; }>()
+	);
+	export const updateRoleSuccess = createAction(
+		`${ACTION_PREFIX} Update Role Success`,
+		props<{ id: string; }>()
+	);
+	export const updateRoleFail = createAction(`${ACTION_PREFIX} Update Role Fail`);
+
 	export const reorderGroups = createAction(
 		`${ACTION_PREFIX} Reorder`,
 		props<{ reorderedGroups: GroupOrder[] }>()
@@ -41,4 +54,28 @@ export namespace GroupAction {
 	export const deleteGroup = createAction(`${ACTION_PREFIX} Delete`, props<{ id: string }>());
 	export const deleteSuccess = createAction(`${ACTION_PREFIX} Delete Success`, props<{ id: string }>());
 	export const deleteFail = createAction(`${ACTION_PREFIX} Delete Fail`);
+
+	export const getCode = createAction(`${ACTION_PREFIX} Get Code`, props<{ id: string }>());
+	export const getCodeSuccess = createAction(
+		`${ACTION_PREFIX} Get Code Success`,
+		props<{ id: string; code: number; }>()
+	);
+	export const getCodeFail = createAction(`${ACTION_PREFIX} Get Code Fail`);
+
+	export const addMember = createAction(`${ACTION_PREFIX} Add Member`, props<{ code: number }>());
+	export const addMemberSuccess = createAction(
+		`${ACTION_PREFIX} Add Member Success`,
+		props<{ id: string }>()
+	);
+	export const addMemberFail = createAction(`${ACTION_PREFIX} Add Member Fail`);
+
+	export const removeMember = createAction(
+		`${ACTION_PREFIX} Remove Member`,
+		props<{ id: string; memberId?: string }>()
+	);
+	export const removeMemberSuccess = createAction(
+		`${ACTION_PREFIX} Remove Member Success`,
+		props<{ id: string; memberId?: string; }>()
+	);
+	export const removeMemberFail = createAction(`${ACTION_PREFIX} Remove Member Fail`);
 }
