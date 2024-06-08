@@ -24,6 +24,8 @@ import { getPreviousMonth, getYearMonth } from "../utilities/date";
 
 import { LayoutComponent } from "./shared/layout.component";
 import { ExpenseListComponent } from "./widgets/expense-list-widget.component";
+import { Store } from "@ngrx/store";
+import { GroupSelector } from "../store/group/group.selector";
 
 @Component({
 	selector: "app-group-expesnse-detail",
@@ -177,6 +179,7 @@ export class GroupExpenseDetailComponent implements OnInit, OnDestroy {
 	private readonly groupService = inject(GroupService);
 	private readonly expenseService = inject(ExpenseService);
 	private readonly toolbar = inject(ToolbarConfigurationService);
+	private store = inject(Store);
 
 	private expenses: Expense[] = [];
 	private subscription$$?: Subscription;
@@ -203,7 +206,7 @@ export class GroupExpenseDetailComponent implements OnInit, OnDestroy {
 			]
 		});
 
-		this.subscription$$ = this.groupService.get$(this.id).subscribe(group => {
+		this.subscription$$ = this.store.select(GroupSelector.selectGroup(this.id)).subscribe(group => {
 			this.group = group;
 			this.getNextExpenses(true);
 		});

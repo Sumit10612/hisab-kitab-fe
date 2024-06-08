@@ -10,6 +10,7 @@ import {
 	limit,
 	query,
 	runTransaction,
+	updateDoc,
 	where
 } from "@angular/fire/firestore";
 import { keyBy, round, sortBy } from "lodash";
@@ -34,7 +35,10 @@ import { generateRandomNumber } from "../utilities/common";
 import { ErrorCode } from "../utilities/error-codes";
 import { throwIfNotFound } from "../utilities/firebase-errors";
 
-import { UserService } from "./user.service";
+import { USER_COLLECTION_NAME, UserService } from "./user.service";
+import { AuthService } from "./auth.service";
+
+const GROUP_COLLECTION_NAME = "groups";
 
 @Injectable({
 	providedIn: "root"
@@ -42,6 +46,7 @@ import { UserService } from "./user.service";
 export class GroupService {
 	private readonly firestore = inject(Firestore);
 	private readonly userService = inject(UserService);
+	private readonly authService = inject(AuthService);
 
 	private readonly collectionRef = () => collection(this.firestore, "groups");
 	private readonly docRef = (id: string) => doc(this.firestore, "groups", id);
@@ -67,7 +72,7 @@ export class GroupService {
 	}
 
 	get$(groupId: string): Observable<Group> {
-		return this.userService.authService.currentUser$.pipe(
+		return this.authService.user$.pipe(
 			switchMap(user => (docData(this.docRef(groupId), { idField: "id" }) as Observable<Group>).pipe(
 				take(1),
 				map(group => {
@@ -84,47 +89,24 @@ export class GroupService {
 		);
 	}
 
-	create$(groupToCreate: UpsertGroup): Observable<string> {
-		const ref = doc(this.collectionRef());
-		return this.userService.get$.pipe(
-			take(1),
-			concatMap(user => runTransaction(this.firestore, async (transction) => {
-				transction.set(ref, {
-					...groupToCreate,
-					groupTotal: 0,
-					monthTotal: {},
-					members: [{
-						id: user.uid,
-						name: user.name,
-						role: "admin",
-						active: true,
-					}]
-				} as Group);
+	create(group: Group, user: User): Promise<string> {
+		const ref = doc(collection(this.firestore, GROUP_COLLECTION_NAME));
+		return runTransaction(this.firestore, async transaction => {
+			transaction.set(ref, group);
+			transaction.update(doc(this.firestore, USER_COLLECTION_NAME, user.uid), this.addGroupToUser(user, ref.id));
 
-				transction.update(doc(this.firestore, "users", user.uid), this.addGroupToUser(user, ref.id));
-
-				return ref.id;
-			}))
-		);
+			return ref.id;
+		});
 	}
 
-	update$(groupId: string, groupToUpdate: UpsertGroup): Observable<void> {
-		const ref = this.docRef(groupId);
-		return this.userService.authService.currentUser$.pipe(
-			take(1),
-			switchMap(user => runTransaction(this.firestore, async (transaction) => {
-				const sanapshot = await transaction.get(ref);
-				const groupDoc = throwIfNotFound(sanapshot).data() as Group;
-				if (this.isCurrentUserAuthorizedToUpdate(user.uid, groupDoc)) {
-					transaction.update(ref, { ...groupToUpdate });
-				}
-			}))
-		);
+	update(id: string, group: UpsertGroup): Promise<void> {
+		const ref = doc(this.firestore, GROUP_COLLECTION_NAME, id);
+		return updateDoc(ref, { ...group });
 	}
 
 	updateRole$(groupId: string, memberId: string, roleToUpdate: "admin" | "user") {
 		const ref = this.docRef(groupId);
-		return this.userService.authService.currentUser$.pipe(
+		return this.authService.user$.pipe(
 			take(1),
 			tap(user => runTransaction(this.firestore, async (transaction) => {
 				const sanapshot = await transaction.get(ref);
@@ -142,7 +124,7 @@ export class GroupService {
 
 	removeMember$(groupId: string, memberId?: string) {
 		const groupRef = this.docRef(groupId);
-		return this.userService.authService.currentUser$.pipe(
+		return this.authService.user$.pipe(
 			take(1),
 			switchMap(user => runTransaction(this.firestore, async transaction => {
 				const snapshot = await transaction.get(groupRef);
@@ -184,7 +166,7 @@ export class GroupService {
 		const groupRef = this.docRef(groupId);
 		const q = query(collection(this.firestore, "users"), where("groupIds", "array-contains", groupId));
 
-		return this.userService.authService.currentUser$.pipe(
+		return this.authService.user$.pipe(
 			take(1),
 			switchMap(user => runTransaction(this.firestore, async (transaction) => {
 				const groupSnapshot = await transaction.get(groupRef);

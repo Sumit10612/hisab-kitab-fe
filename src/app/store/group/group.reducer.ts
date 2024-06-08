@@ -25,5 +25,9 @@ export const groupReducer = createReducer<GroupState>(
 	on(GroupAction.getAllSuccess, (state, { groups }) => ({
 		...state,
 		groups: groupAdapter.upsertMany(groups, state.groups)
+	})),
+	on(GroupAction.createSuccess, (state, { group }) => ({
+		...state,
+		groups: groupAdapter.addOne(group, state.groups)
 	}))
 );

@@ -8,7 +8,7 @@ import { User } from "../models/user.model";
 
 import { AuthService } from "./auth.service";
 
-const COLLECTION_NAME = "users";
+export const USER_COLLECTION_NAME = "users";
 
 @Injectable({
 	providedIn: "root"
@@ -18,19 +18,19 @@ export class UserService {
 	private readonly authService = inject(AuthService);
 
 	get$ = this.authService.user$.pipe(
-		switchMap(user => docData(doc(this.firestore, COLLECTION_NAME, user.uid)) as Observable<User>)
+		switchMap(user => docData(doc(this.firestore, USER_COLLECTION_NAME, user.uid)) as Observable<User>)
 	);
 
 	async get(id: string): Promise<User> {
-		const docSnapshot = await getDoc(doc(this.firestore, COLLECTION_NAME, id));
+		const docSnapshot = await getDoc(doc(this.firestore, USER_COLLECTION_NAME, id));
 		return docSnapshot.data() as User;
 	}
 
 	add(user: User): Promise<void> {
-		return setDoc(doc(this.firestore, COLLECTION_NAME, user.uid), user);
+		return setDoc(doc(this.firestore, USER_COLLECTION_NAME, user.uid), user);
 	}
 
 	update(user: User): Promise<void> {
-		return updateDoc(doc(this.firestore, COLLECTION_NAME, user.uid), { ...user });
+		return updateDoc(doc(this.firestore, USER_COLLECTION_NAME, user.uid), { ...user });
 	}
 }
