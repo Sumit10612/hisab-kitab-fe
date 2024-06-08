@@ -6,7 +6,6 @@ export interface User {
 	email?: string;
 	photoUrl?: string;
 	preferences?: UserPreferences;
-	groupIds?: string[];
 	groups?: GroupOrder[];
 }
 

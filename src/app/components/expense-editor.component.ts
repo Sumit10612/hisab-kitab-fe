@@ -86,11 +86,12 @@ import { LayoutComponent } from "./shared/layout.component";
 					<mat-form-field>
 						<mat-label>Paid by</mat-label>
 						<mat-select [formControl]="form.controls.paidBy">
-							@for (member of (group$ | async)?.members; track member) {
+							<!-- TODO -->
+							<!-- @for (member of (group$ | async)?.members; track member) {
 								<mat-option [value]="member.id">
 									{{member.name}}
 								</mat-option>
-							}
+							} -->
 						</mat-select>
 					</mat-form-field>
 					<mat-form-field>
@@ -138,10 +139,11 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
 		switchMap(params =>
 			this.groupService.get$(params.get("groupId") ?? "").pipe(
 				tap(group => {
-					const member = group.members.find(m => m.name === "You") as GroupMember;
-					this.form.controls.paidBy.setValue(member.id);
+					//TODO
+					// const member = group.members.find(m => m.name === "You") as GroupMember;
+					// this.form.controls.paidBy.setValue(member.id);
 
-					group.members = group.members.filter(m => m.active !== false);
+					// group.members = group.members.filter(m => m.active !== false);
 				})
 			)
 		)

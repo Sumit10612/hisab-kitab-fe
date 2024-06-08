@@ -35,15 +35,18 @@ export class GroupEffects {
 						...upsertGroup,
 						groupTotal: 0,
 						monthTotal: {},
-						members: [{
-							id: user.uid,
-							name: user.name,
-							role: "admin",
-							active: true,
-						}]
+						memberIds: [user.uid],
+						members: {
+							[user.uid]: {
+								id: user.uid,
+								name: user.name,
+								role: "admin",
+								active: true,
+							}
+						}
 					} as Group;
 
-					return this.groupService.create(group, user).then(
+					return this.groupService.create(group).then(
 						id => GroupAction.createSuccess({ group: { ...group, id } }),
 						error => GroupAction.createFail()
 					)
@@ -69,18 +72,21 @@ export class GroupEffects {
 				filter(user => !!user),
 				take(1),
 				switchMap(user => {
-					if (user?.groupIds?.length && user.groups?.length) {
-						return this.groupService.getGroups$(user.groupIds, user.groups).pipe(
+					if (user?.uid) {
+						return this.groupService.getGroups$(user.uid).pipe(
 							map(groups => {
 								this.notification.hideLoading();
 								return GroupAction.getAllSuccess({
 									groups: groups.map(group => {
-										const members = group.members
-											.map(m => m.id === user.uid ? { ...m, name: "You" } : m);
 										return {
 											...group,
-											members
-										}
+											members: Object.fromEntries(
+												Object.entries(group.members).map(([id, member]) => [
+													id,
+													{ ...member, name: member.id === user.uid ? "You" : member.name }
+												])
+											)
+										};
 									})
 								});
 							})
@@ -122,4 +128,33 @@ export class GroupEffects {
 			))
 		)
 	});
+
+	delete$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(GroupAction.deleteGroup),
+			tap(() => this.notification.showLoading()),
+			switchMap(({ id }) => this.store.select(UserSelector.select).pipe(
+				take(1),
+				switchMap(user => {
+					if (!user?.uid) {
+						return of(GroupAction.deleteFail());
+					}
+
+					return this.groupService.delete(user.uid, id).then(
+						() => GroupAction.deleteSuccess({ id }),
+						error => GroupAction.deleteFail()
+					)
+				})
+			)),
+			finalize(() => this.notification.hideLoading())
+		)
+	);
+
+	deleteSuccess$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(GroupAction.deleteSuccess),
+			tap(() => this.navigation.navigateToHome())
+		),
+		{ dispatch: false }
+	);
 }

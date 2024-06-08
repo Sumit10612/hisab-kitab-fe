@@ -37,4 +37,8 @@ export namespace GroupAction {
 		props<{ reorderedGroups: GroupOrder[] }>()
 	);
 	export const reorderGroupsFail = createAction(`${ACTION_PREFIX} Reorder Fail`);
+
+	export const deleteGroup = createAction(`${ACTION_PREFIX} Delete`, props<{ id: string }>());
+	export const deleteSuccess = createAction(`${ACTION_PREFIX} Delete Success`, props<{ id: string }>());
+	export const deleteFail = createAction(`${ACTION_PREFIX} Delete Fail`);
 }

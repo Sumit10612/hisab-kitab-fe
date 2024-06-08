@@ -29,5 +29,9 @@ export const groupReducer = createReducer<GroupState>(
 	on(GroupAction.createSuccess, (state, { group }) => ({
 		...state,
 		groups: groupAdapter.addOne(group, state.groups)
+	})),
+	on(GroupAction.deleteSuccess, (state, { id }) => ({
+		...state,
+		groups: groupAdapter.removeOne(id, state.groups)
 	}))
 );

@@ -101,19 +101,19 @@ import { RouterSelector } from "../store/app.selector";
 						<mat-card-subtitle>Members:</mat-card-subtitle>
 					</mat-card-header>
 					<mat-card-content>
-						@for (member of group.members; track member) {
+						@for (kvp of group.members | keyvalue; track kvp) {
 							<div class="user-info">
 								<div class="user-details">
-									<span>{{ member.name }}</span>
-									@if (isAdmin(member)) { <span class="role">(admin)</span> }
+									<span>{{ kvp.value.name }}</span>
+									@if (isAdmin(kvp.value)) { <span class="role">(admin)</span> }
 								</div>
 								@if (currentUser && isAdmin(currentUser)) {
 									<div class="user-actions">
-										<button mat-button [hidden]="isCurrentUser(member)" (click)="toggelAdmin(member)">
-											{{isAdmin(member) ? "Remove" : "Make"}} admin
+										<button mat-button [hidden]="isCurrentUser(kvp.value)" (click)="toggelAdmin(kvp.value)">
+											{{isAdmin(kvp.value) ? "Remove" : "Make"}} admin
 										</button>
-										<button mat-button color="warn" [disabled]="isCurrentUser(member)"
-											(click)="removeMember(member.id)">
+										<button mat-button color="warn" [disabled]="isCurrentUser(kvp.value)"
+											(click)="removeMember(kvp.value.id)">
 											<mat-icon>person_remove</mat-icon>
 										</button>
 									</div>
@@ -271,8 +271,7 @@ export class GroupEditorComponent implements OnInit {
 				this.isEdit = true;
 				this.form.patchValue({ ...group });
 				this.selectedIndex = groupImages.findIndex(g => g.alt === group?.imageUrl);
-				this.members = group?.members.filter(m => m.active !== false);
-				this.currentUser = this.members?.find(member => this.isCurrentUser(member));
+				this.currentUser = Object.values(group?.members ?? {}).find(member => this.isCurrentUser(member));
 			})
 		))
 	)
@@ -452,15 +451,7 @@ export class GroupEditorComponent implements OnInit {
 					{
 						type: DialogButtonType.Primary,
 						label: "Yes",
-						action: () => {
-							this.notification.showLoading();
-							this.groupService.delete$(this.form.controls.id.value).pipe(
-								finalize(() => this.notification.hideLoading())
-							).subscribe({
-								next: () => this.navigation.navigateToHome(),
-								error: (error) => this.notification.firebaseError(error)
-							});
-						}
+						action: () => this.store.dispatch(GroupAction.deleteGroup({ id: this.form.controls.id.value }))
 					}
 				]
 			}

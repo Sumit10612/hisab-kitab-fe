@@ -239,11 +239,7 @@ export class GroupExpenseDetailComponent implements OnInit, OnDestroy {
 
 	private async getNextExpenses(initialGet = false) {
 		this.loading = true;
-		const members = this.group?.members.reduce((acc, member) => {
-			acc[member.id] = member;
-			return acc;
-		}, {} as Record<string, GroupMember>) ?? {};
-
+		const members = this.group?.members ?? {};
 		try {
 			const expenseDocs = await this.expenseService.getAll(this.id, initialGet);
 			this.expenses = this.expenses.concat(expenseDocs);
