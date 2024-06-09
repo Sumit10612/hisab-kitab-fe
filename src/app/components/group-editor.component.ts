@@ -259,7 +259,7 @@ export class GroupEditorComponent implements OnInit {
 
 	protected group$ = this.store.select(RouterSelector.selectParams).pipe(
 		filter(params => !!params["id"]),
-		switchMap(params => this.store.select(GroupSelector.selectGroup(params["id"])).pipe(
+		switchMap(params => this.store.select(GroupSelector.select(params["id"])).pipe(
 			tap(group => {
 				this.isEdit = true;
 				this.form.patchValue({ ...group });

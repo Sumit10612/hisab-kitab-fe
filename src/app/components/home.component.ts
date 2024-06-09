@@ -64,13 +64,13 @@ export class HomeComponent implements OnInit, OnDestroy {
 			actionBtns: [
 				{
 					type: ToolbarButtonType.Primary,
-					label: "Create Group",
+					label: "Add Group",
 					redirectTo: "/group"
 				}
 			]
 		});
 
-		this.subscription$$ = this.store.select(GroupSelector.selectGroups()).subscribe(groups => this.groups = groups);
+		this.subscription$$ = this.store.select(GroupSelector.selectAll).subscribe(groups => this.groups = groups);
 	}
 
 	ngOnDestroy(): void {

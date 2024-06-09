@@ -4,16 +4,12 @@ import { createReducer, on } from "@ngrx/store";
 import { Group } from "../../models/group.model";
 
 import { GroupAction } from "./group.action";
+import { keyBy } from "lodash-es";
 
 export interface GroupState {
-	groups: EntityState<Group>;
+	groups: Record<string, Group>;
 	groupCodes: EntityState<{ id: string, code: number }>;
 }
-
-export const groupAdapter = createEntityAdapter<Group>({
-	selectId: group => group.id,
-	sortComparer: false
-});
 
 export const groupCodeAdapter = createEntityAdapter<{ id: string, code: number }>({
 	selectId: gc => gc.id,
@@ -21,7 +17,7 @@ export const groupCodeAdapter = createEntityAdapter<{ id: string, code: number }
 })
 
 const INITIAL_STATE: GroupState = {
-	groups: groupAdapter.getInitialState(),
+	groups: {},
 	groupCodes: groupCodeAdapter.getInitialState(),
 };
 
@@ -29,19 +25,7 @@ export const groupReducer = createReducer<GroupState>(
 	INITIAL_STATE,
 	on(GroupAction.getAllSuccess, (state, { groups }) => ({
 		...state,
-		groups: groupAdapter.upsertMany(groups, state.groups)
-	})),
-	on(GroupAction.getSuccess, (state, { group }) => ({
-		...state,
-		groups: groupAdapter.upsertOne(group, state.groups)
-	})),
-	on(GroupAction.createSuccess, (state, { group }) => ({
-		...state,
-		groups: groupAdapter.addOne(group, state.groups)
-	})),
-	on(GroupAction.deleteSuccess, (state, { id }) => ({
-		...state,
-		groups: groupAdapter.removeOne(id, state.groups)
+		groups: keyBy(groups, group => group.id)
 	})),
 	on(GroupAction.getCodeSuccess, (state, { id, code }) => ({
 		...state,

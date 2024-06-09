@@ -139,7 +139,7 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
 	private expenseSubscription$$: Subscription | undefined;
 
 	protected group$ = this.store.select(RouterSelector.selectParams).pipe(
-		switchMap(params => this.store.select(GroupSelector.selectGroup(params["groupId"])).pipe(
+		switchMap(params => this.store.select(GroupSelector.select(params["groupId"])).pipe(
 			map(group => {
 				const members = group?.memberIds.filter(id => group.members[id]);
 				return {

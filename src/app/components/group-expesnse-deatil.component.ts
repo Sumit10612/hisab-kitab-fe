@@ -206,7 +206,7 @@ export class GroupExpenseDetailComponent implements OnInit, OnDestroy {
 			]
 		});
 
-		this.subscription$$ = this.store.select(GroupSelector.selectGroup(this.id)).subscribe(group => {
+		this.subscription$$ = this.store.select(GroupSelector.select(this.id)).subscribe(group => {
 			this.group = group;
 			this.getNextExpenses(true);
 		});
