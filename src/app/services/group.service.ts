@@ -27,7 +27,7 @@ import { generateRandomNumber } from "../utilities/common";
 import { ErrorCode } from "../utilities/error-codes";
 import { throwIfNotFound } from "../utilities/firebase-errors";
 
-const GROUP_COLLECTION_NAME = "groups";
+export const GROUP_COLLECTION_NAME = "groups";
 const GROUP_CODE_COLLECTION_NAME = "group_code";
 
 @Injectable({
@@ -57,20 +57,6 @@ export class GroupService {
 				return groups;
 			})
 		);
-	}
-
-	async get(id: string): Promise<Group> {
-		const ref = doc(this.firestore, GROUP_COLLECTION_NAME, id);
-		const snapshot = await getDoc(ref);
-		const group = throwIfNotFound(snapshot).data() as Group;
-
-		return {
-			...group,
-			groupTotal: Math.ceil(group.groupTotal),
-			monthTotal: Object.fromEntries(
-				Object.entries(group.monthTotal).map(([key, value]) => [key, round(value, 2)])
-			)
-		};
 	}
 
 	async create(group: Group): Promise<string> {

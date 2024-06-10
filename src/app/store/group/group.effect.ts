@@ -99,17 +99,6 @@ export class GroupEffects {
 		)
 	);
 
-	get$ = createEffect(() =>
-		this.action$.pipe(
-			ofType(GroupAction.get),
-			tap(() => this.notification.showLoading()),
-			switchMap(({ id }) => this.groupService.get(id).then(
-				group => GroupAction.getSuccess({ group })
-			)),
-			finalize(() => this.notification.hideLoading())
-		)
-	);
-
 	update$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(GroupAction.update),
@@ -256,7 +245,7 @@ export class GroupEffects {
 		this.action$.pipe(
 			ofType(GroupAction.removeMemberSuccess),
 			tap(({ memberId }) => {
-				if(!memberId) {
+				if (!memberId) {
 					this.navigation.navigateToHome();
 				}
 			})

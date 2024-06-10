@@ -1,7 +1,7 @@
 import { Timestamp } from "firebase/firestore";
 
 export interface ExpenseBase {
-	id?: string;
+	id: string;
     description: string;
 	where?: string;
     amount: number;

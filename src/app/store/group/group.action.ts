@@ -22,9 +22,6 @@ export namespace GroupAction {
 		props<{ groups: Group[] }>()
 	);
 
-	export const get = createAction(`${ACTION_PREFIX} Get`, props<{ id: string }>());
-	export const getSuccess = createAction(`${ACTION_PREFIX} Get Success`, props<{ group: Group }>());
-
 	export const update = createAction(
 		`${ACTION_PREFIX} Update`,
 		props<{ id: string; upsertGroup: UpsertGroup; }>()
