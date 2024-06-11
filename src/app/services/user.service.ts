@@ -1,35 +1,36 @@
 import { inject, Injectable } from "@angular/core";
-import { toSignal } from "@angular/core/rxjs-interop";
-import { Firestore } from "@angular/fire/firestore";
+import { Firestore, getDoc } from "@angular/fire/firestore";
 import { doc, setDoc, updateDoc } from "firebase/firestore";
-import { docData } from "rxfire/firestore";
-import { Observable, switchMap, take } from "rxjs";
+import { docData,  } from "rxfire/firestore";
+import { Observable, switchMap } from "rxjs";
 
 import { User } from "../models/user.model";
 
 import { AuthService } from "./auth.service";
 
+export const USER_COLLECTION_NAME = "users";
+
 @Injectable({
 	providedIn: "root"
 })
 export class UserService {
-	firestore = inject(Firestore);
-	authService = inject(AuthService);
+	private readonly firestore = inject(Firestore);
+	private readonly authService = inject(AuthService);
 
-	private docRef = (id: string) => doc(this.firestore, "users", id);
-
-	user$ = this.authService.currentUser$.pipe(
-		take(1),
-		switchMap((user) => docData(this.docRef(user.uid)) as Observable<User>)
+	get$ = this.authService.user$.pipe(
+		switchMap(user => docData(doc(this.firestore, USER_COLLECTION_NAME, user.uid)) as Observable<User>)
 	);
 
-	currentUser = toSignal(this.user$);
-
-	addUser(user: User): Promise<void> {
-		return setDoc(this.docRef(user.uid), user);
+	async get(id: string): Promise<User> {
+		const docSnapshot = await getDoc(doc(this.firestore, USER_COLLECTION_NAME, id));
+		return docSnapshot.data() as User;
 	}
 
-	updateUser(user: User): Promise<void> {
-		return updateDoc(this.docRef(user.uid), { ...user });
+	add(user: User): Promise<void> {
+		return setDoc(doc(this.firestore, USER_COLLECTION_NAME, user.uid), user);
+	}
+
+	update(user: User): Promise<void> {
+		return updateDoc(doc(this.firestore, USER_COLLECTION_NAME, user.uid), { ...user });
 	}
 }

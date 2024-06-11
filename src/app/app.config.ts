@@ -8,9 +8,15 @@ import { MatSnackBarModule } from "@angular/material/snack-bar";
 import { provideAnimationsAsync } from "@angular/platform-browser/animations/async";
 import { provideRouter, withComponentInputBinding } from "@angular/router";
 import { provideServiceWorker } from "@angular/service-worker";
+import { provideEffects } from "@ngrx/effects";
+import { provideRouterStore } from "@ngrx/router-store";
+import { provideStore } from "@ngrx/store";
+import { provideStoreDevtools } from "@ngrx/store-devtools";
 
 import { routes } from "./app.routes";
 import { PwaService } from "./services/pwa.service";
+import { effects, metaReducers, reducers } from "./store";
+import { AppRouterStateSerializer } from "./store/app.serializer";
 
 const firebaseConfig = {
 	apiKey: "AIzaSyAMBjtKAO5RZXUggmiljSbKh_EQdzoPUBs",
@@ -39,7 +45,11 @@ export const appConfig: ApplicationConfig = {
 			registrationStrategy: "registerWhenStable:30000"
 		}),
 		{ provide: APP_INITIALIZER, useFactory: initializer, deps: [PwaService], multi: true },
-		{ provide: MatDialogRef, useValue: {}},
-		{ provide: MAT_DIALOG_DATA, useValue: {}},
+		{ provide: MatDialogRef, useValue: {} },
+		{ provide: MAT_DIALOG_DATA, useValue: {} },
+		provideStore(reducers, { metaReducers }),
+		provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode() }),
+		provideEffects(effects),
+		provideRouterStore({ serializer: AppRouterStateSerializer }),
 	]
 };

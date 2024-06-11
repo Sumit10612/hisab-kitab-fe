@@ -14,6 +14,7 @@ import { MatSnackBar } from "@angular/material/snack-bar";
 import { MatToolbarModule } from "@angular/material/toolbar";
 import { RouterLink, RouterOutlet } from "@angular/router";
 import { SwUpdate } from "@angular/service-worker";
+import { Store } from "@ngrx/store";
 
 import { ToolbarButtonType } from "./models/toolbar.model";
 import { getUserImage } from "./models/user.model";
@@ -21,7 +22,7 @@ import { NavigationService } from "./services/navigation.service";
 import { NotificationService } from "./services/notification.service";
 import { ThemeService } from "./services/theme.service";
 import { ToolbarConfigurationService } from "./services/toolbar-configuration.service";
-import { UserService } from "./services/user.service";
+import { UserSelector } from "./store/user/user.selector";
 
 @Component({
 	selector: "app-root",
@@ -50,12 +51,12 @@ import { UserService } from "./services/user.service";
 					}
 
 					@if (toolbar.config.profile?.visible) {
-						<a routerLink="/profile">
+						<a *ngIf="user$ | async as user" routerLink="/profile">
 							<img
 								width="55" 
 								height="55"
-								[src]="getUserImage(userService.currentUser()?.photoUrl).src"
-								[alt]="getUserImage(userService.currentUser()?.photoUrl).alt" />
+								[src]="getUserImage(user?.photoUrl).src"
+								[alt]="getUserImage(user?.photoUrl).alt" />
 						</a>
 					}
 
@@ -127,14 +128,15 @@ export class AppComponent implements OnInit {
 	private readonly snackBar = inject(MatSnackBar);
 	private readonly swUpdate = inject(SwUpdate);
 	private readonly renderer = inject(Renderer2);
+	private readonly store = inject(Store);
 
 	protected readonly navigation = inject(NavigationService);
 	protected readonly theme = inject(ThemeService);
 	protected readonly notification = inject(NotificationService);
 	protected readonly toolbar = inject(ToolbarConfigurationService);
-	protected readonly userService = inject(UserService);
 
 	protected getUserImage = getUserImage;
+	protected user$ = this.store.select(UserSelector.select);
 
 	constructor() {
 		effect(() => {
@@ -145,8 +147,6 @@ export class AppComponent implements OnInit {
 	}
 
 	ngOnInit() {
-		this.navigation.clearRouteHistory();
-
 		// Checking service worker based update
 		if (this.swUpdate.isEnabled) {
 			this.swUpdate.checkForUpdate();

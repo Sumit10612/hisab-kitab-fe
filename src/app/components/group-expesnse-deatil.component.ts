@@ -12,14 +12,17 @@ import { MatButtonToggleModule } from "@angular/material/button-toggle";
 import { MatIconModule } from "@angular/material/icon";
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 import { RouterLink } from "@angular/router";
-import { Subscription } from "rxjs";
+import { Store } from "@ngrx/store";
+import { groupBy, mapValues, pick } from "lodash-es";
+import { combineLatest, Subscription, tap } from "rxjs";
 
 import { Expense } from "../models/expense.model";
-import { getGroupImage, Group, GroupMember } from "../models/group.model";
+import { getGroupImage, Group } from "../models/group.model";
 import { ToolbarButtonType } from "../models/toolbar.model";
-import { ExpenseService } from "../services/expense.service";
-import { GroupService } from "../services/group.service";
 import { ToolbarConfigurationService } from "../services/toolbar-configuration.service";
+import { ExpenseAction } from "../store/expense/expense.action";
+import { ExpenseSelector } from "../store/expense/expense.selector";
+import { GroupSelector } from "../store/group/group.selector";
 import { getPreviousMonth, getYearMonth } from "../utilities/date";
 
 import { LayoutComponent } from "./shared/layout.component";
@@ -174,12 +177,10 @@ import { ExpenseListComponent } from "./widgets/expense-list-widget.component";
 export class GroupExpenseDetailComponent implements OnInit, OnDestroy {
 	@ViewChild("scrollContainer", { static: false }) scrollContainer: ElementRef | undefined;
 
-	private readonly groupService = inject(GroupService);
-	private readonly expenseService = inject(ExpenseService);
 	private readonly toolbar = inject(ToolbarConfigurationService);
+	private readonly store = inject(Store);
 
-	private expenses: Expense[] = [];
-	private subscription$$?: Subscription;
+	private expenses$$?: Subscription;
 
 	protected groupedExpenses?: Record<string, Expense[]>;
 	protected group: Group | undefined;
@@ -190,7 +191,6 @@ export class GroupExpenseDetailComponent implements OnInit, OnDestroy {
 	@Input() id: string = "";
 
 	ngOnInit() {
-		this.expenses = [];
 		this.toolbar.configure({
 			back: { visible: true },
 			actionBtns: [
@@ -203,14 +203,31 @@ export class GroupExpenseDetailComponent implements OnInit, OnDestroy {
 			]
 		});
 
-		this.subscription$$ = this.groupService.get$(this.id).subscribe(group => {
-			this.group = group;
-			this.getNextExpenses(true);
+		const group$ = this.store.select(GroupSelector.select(this.id)).pipe(
+			tap(group => {
+				this.group = group;
+				this.store.dispatch(ExpenseAction.getNext({ groupId: this.id, initialGet: true }));
+			})
+		);
+
+		this.expenses$$ = combineLatest([
+			group$,
+			this.store.select(ExpenseSelector.selectAll()),
+			this.store.select(ExpenseSelector.isLoading)
+		]).subscribe(([group, expenses, isLoading]) => {
+			this.loading = isLoading;
+			if (group?.memberIds.length) {
+				const members = pick(group.members, group.memberIds);
+				this.groupedExpenses = mapValues(
+					groupBy(expenses, e => getYearMonth(e.expenseDate)),
+					es => es.map(e => ({ ...e, paidBy: members[e.paidBy].name }))
+				);
+			}
 		});
 	}
 
 	ngOnDestroy(): void {
-		this.subscription$$?.unsubscribe();
+		this.expenses$$?.unsubscribe();
 	}
 
 	protected get currentMonthTotal() {
@@ -230,29 +247,7 @@ export class GroupExpenseDetailComponent implements OnInit, OnDestroy {
 
 		const element = this.scrollContainer.nativeElement;
 		if (element.scrollHeight - element.clientHeight <= element.scrollTop + 1) {
-			this.getNextExpenses();
-		}
-	}
-
-	private async getNextExpenses(initialGet = false) {
-		this.loading = true;
-		const members = this.group?.members.reduce((acc, member) => {
-			acc[member.id] = member;
-			return acc;
-		}, {} as Record<string, GroupMember>) ?? {};
-
-		try {
-			const expenseDocs = await this.expenseService.getAll(this.id, initialGet);
-			this.expenses = this.expenses.concat(expenseDocs);
-
-			this.groupedExpenses = this.expenses.reduce((acc, e) => {
-				const key = getYearMonth(e.expenseDate);
-				acc[key] = acc[key] || [];
-				acc[key].push({ ...e, paidBy: members[e.paidBy].name } as Expense);
-				return acc;
-			}, {} as Record<string, Expense[]>);
-		} finally {
-			this.loading = false;
+			this.store.dispatch(ExpenseAction.getNext({ groupId: this.id, initialGet: false }));
 		}
 	}
 }

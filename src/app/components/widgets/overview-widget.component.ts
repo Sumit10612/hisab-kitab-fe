@@ -2,7 +2,7 @@ import { Component, Input } from "@angular/core";
 import { MatCardModule } from "@angular/material/card";
 import { MatDividerModule } from "@angular/material/divider";
 import { MatIconModule } from "@angular/material/icon";
-import { round } from "lodash";
+import { round } from "lodash-es";
 
 import { Group, GroupType } from "../../models/group.model";
 import { getYearMonth } from "../../utilities/date";

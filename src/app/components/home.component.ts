@@ -1,16 +1,13 @@
-import { CommonModule } from "@angular/common";
 import { Component, inject, OnDestroy, OnInit } from "@angular/core";
-import { MatButtonModule } from "@angular/material/button";
-import { MatIconModule } from "@angular/material/icon";
-import { RouterLink } from "@angular/router";
+import { Store } from "@ngrx/store";
 import { Subscription } from "rxjs";
 
 import { Group } from "../models/group.model";
 import { ToolbarButtonType } from "../models/toolbar.model";
 import { GroupOrder } from "../models/user.model";
-import { GroupService } from "../services/group.service";
 import { ToolbarConfigurationService } from "../services/toolbar-configuration.service";
-import { UserService } from "../services/user.service";
+import { GroupAction } from "../store/group/group.action";
+import { GroupSelector } from "../store/group/group.selector";
 
 import { LayoutComponent } from "./shared/layout.component";
 import { GroupListWidgetComponent } from "./widgets/group-list-widget.component";
@@ -20,13 +17,9 @@ import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
 	selector: "app-home",
 	standalone: true,
 	imports: [
-		CommonModule,
-		MatButtonModule,
-		MatIconModule,
-		RouterLink,
+		GroupListWidgetComponent,
 		OverviewWidgetComponent,
 		LayoutComponent,
-		GroupListWidgetComponent
 	],
 	template: `
 		<app-layout headerHeight="152px">
@@ -58,43 +51,38 @@ import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
 	`]
 })
 export class HomeComponent implements OnInit, OnDestroy {
-	private readonly groupService = inject(GroupService);
-	private readonly userService = inject(UserService);
 	private readonly toolbar = inject(ToolbarConfigurationService);
+	private readonly store = inject(Store);
 
 	private subscription$$?: Subscription;
 
 	protected groups: Group[] = [];
 
 	ngOnInit(): void {
-		this.subscription$$ = this.groupService.myGroups$.subscribe(
-			groups => this.groups = groups
-		);
-
 		this.toolbar.configure({
 			profile: { visible: true },
 			actionBtns: [
 				{
 					type: ToolbarButtonType.Primary,
-					label: "Create Group",
+					label: "Add Group",
 					redirectTo: "/group"
 				}
 			]
 		});
+
+		this.subscription$$ = this.store.select(GroupSelector.selectAll).subscribe(groups => this.groups = groups);
 	}
 
 	ngOnDestroy(): void {
 		this.subscription$$?.unsubscribe();
 	}
 
-	async reorderGroups($event: Group[]) {
-		const user = this.userService.currentUser();
-		if (!user || !$event.length) {
+	reorderGroups($event: Group[]) {
+		if (!$event.length) {
 			return;
 		}
 
-		user.groups = $event.map((group, index) => ({ id: group.id ?? "", order: index })) as GroupOrder[];
-
-		await this.userService.updateUser(user);
+		const reorderedGroups = $event.map((group, index) => ({ id: group.id ?? "", order: index })) as GroupOrder[];
+		this.store.dispatch(GroupAction.reorderGroups({ reorderedGroups }));
 	}
 }

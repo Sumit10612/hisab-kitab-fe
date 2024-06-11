@@ -1,27 +1,20 @@
 import { inject, Injectable } from "@angular/core";
 import {
+	addDoc,
 	collection,
 	collectionData,
 	doc,
-	docData,
-	documentId,
 	Firestore,
+	getDoc,
 	getDocs,
 	limit,
 	query,
 	runTransaction,
+	updateDoc,
 	where
 } from "@angular/fire/firestore";
-import { keyBy, round, sortBy } from "lodash";
-import {
-	concatMap,
-	map,
-	Observable,
-	of,
-	switchMap,
-	take,
-	tap
-} from "rxjs";
+import { round } from "lodash";
+import { map, Observable, } from "rxjs";
 
 import {
 	Group,
@@ -30,193 +23,97 @@ import {
 	toFirestore,
 	UpsertGroup
 } from "../models/group.model";
-import { GroupOrder, User } from "../models/user.model";
 import { generateRandomNumber } from "../utilities/common";
 import { ErrorCode } from "../utilities/error-codes";
 import { throwIfNotFound } from "../utilities/firebase-errors";
 
-import { UserService } from "./user.service";
+export const GROUP_COLLECTION_NAME = "groups";
+const GROUP_CODE_COLLECTION_NAME = "group_code";
 
 @Injectable({
 	providedIn: "root"
 })
 export class GroupService {
 	private readonly firestore = inject(Firestore);
-	private readonly userService = inject(UserService);
 
-	private readonly collectionRef = () => collection(this.firestore, "groups");
-	private readonly docRef = (id: string) => doc(this.firestore, "groups", id);
-
-	myGroups$: Observable<Group[]> = this.userService.user$.pipe(
-		switchMap(user => {
-			if(!user) {
-				return of([]);
-			}
-
-			const q = query(this.collectionRef(), where(documentId(), "in", user.groupIds));
-			return (collectionData(q, { idField: "id" }) as Observable<Group[]>).pipe(
-				map(groupDocs => {
-					const groups = groupDocs.map(group => {
-						return {
-							...group,
-							groupTotal: round(group.groupTotal, 2),
-							monthTotal: Object.fromEntries(
-								Object.entries(group.monthTotal).map(([key, value]) => [key, round(value, 2)])
-							),
-						};
-					});
-
-					const orderMap = keyBy(user.groups, g => g.id);
-					return sortBy(groups, g => g.id ? orderMap[g.id].order : Number.MAX_SAFE_INTEGER);
-				})
-			);
-		})
-	);
-
-	get$(groupId: string): Observable<Group> {
-		return this.userService.authService.currentUser$.pipe(
-			switchMap(user => (docData(this.docRef(groupId), { idField: "id" }) as Observable<Group>).pipe(
-				take(1),
-				map(group => {
+	getGroups$(userId: string): Observable<Group[]> {
+		const ref = collection(this.firestore, GROUP_COLLECTION_NAME);
+		const q = query(ref, where("memberIds", "array-contains", userId));
+		return (collectionData(q, { idField: "id" }) as Observable<Group[]>).pipe(
+			map(groupDocs => {
+				const groups = groupDocs.map(group => {
 					return {
 						...group,
-						groupTotal: Math.ceil(group.groupTotal),
+						groupTotal: round(group.groupTotal, 2),
 						monthTotal: Object.fromEntries(
 							Object.entries(group.monthTotal).map(([key, value]) => [key, round(value, 2)])
 						),
-						members: group.members.map(member => member.id === user.uid ? { ...member, name: "You" } : member)
-					} as Group;
-				})
-			))
-		);
-	}
-
-	create$(groupToCreate: UpsertGroup): Observable<string> {
-		const ref = doc(this.collectionRef());
-		return this.userService.user$.pipe(
-			take(1),
-			concatMap(user => runTransaction(this.firestore, async (transction) => {
-				transction.set(ref, {
-					...groupToCreate,
-					groupTotal: 0,
-					monthTotal: {},
-					members: [{
-						id: user.uid,
-						name: user.name,
-						role: "admin",
-						active: true,
-					}]
-				} as Group);
-
-				transction.update(doc(this.firestore, "users", user.uid), this.addGroupToUser(user, ref.id));
-
-				return ref.id;
-			}))
-		);
-	}
-
-	update$(groupId: string, groupToUpdate: UpsertGroup): Observable<void> {
-		const ref = this.docRef(groupId);
-		return this.userService.authService.currentUser$.pipe(
-			take(1),
-			switchMap(user => runTransaction(this.firestore, async (transaction) => {
-				const sanapshot = await transaction.get(ref);
-				const groupDoc = throwIfNotFound(sanapshot).data() as Group;
-				if (this.isCurrentUserAuthorizedToUpdate(user.uid, groupDoc)) {
-					transaction.update(ref, { ...groupToUpdate });
-				}
-			}))
-		);
-	}
-
-	updateRole$(groupId: string, memberId: string, roleToUpdate: "admin" | "user") {
-		const ref = this.docRef(groupId);
-		return this.userService.authService.currentUser$.pipe(
-			take(1),
-			tap(user => runTransaction(this.firestore, async (transaction) => {
-				const sanapshot = await transaction.get(ref);
-				const groupDoc = throwIfNotFound(sanapshot).data() as Group;
-				if (this.isCurrentUserAuthorizedToUpdate(user.uid, groupDoc)) {
-					transaction.update(ref, {
-						members: groupDoc.members.map(
-							member => member.id === memberId ? { ...member, role: roleToUpdate } : member
-						)
-					});
-				}
-			}))
-		);
-	}
-
-	removeMember$(groupId: string, memberId?: string) {
-		const groupRef = this.docRef(groupId);
-		return this.userService.authService.currentUser$.pipe(
-			take(1),
-			switchMap(user => runTransaction(this.firestore, async transaction => {
-				const snapshot = await transaction.get(groupRef);
-				const groupDoc = throwIfNotFound(snapshot).data() as Group;
-				if (memberId && !this.isCurrentUserAuthorizedToUpdate(user.uid, groupDoc)) {
-					throw new Error(ErrorCode.INVALID_PERMISSION);
-				}
-
-				memberId = memberId ?? user.uid;
-				const member = groupDoc.members.find(member => member.id === memberId);
-				if (!member) {
-					throw ErrorCode.USER_DOESNOT_BELONG_TO_GROUP;
-				}
-
-				if (member.role === "admin" &&
-					groupDoc.members.filter(m => m.role === "admin").length === 1) {
-					throw new Error(ErrorCode.NO_OTHER_ADMIN_FOUND);
-				}
-
-				const userRef = doc(this.firestore, "users", memberId);
-				const userSnapshot = await transaction.get(userRef);
-				const userDoc = throwIfNotFound(userSnapshot).data() as User;
-
-				const members = groupDoc.members.map(m => {
-					if (m.id === memberId) {
-						m.active = false;
-						m.role = "user";
-					}
-					return m;
+					};
 				});
 
-				transaction.update(userRef, this.filterUserGroups(userDoc, groupId));
-				transaction.update(groupRef, { members });
-			}))
+				// TODO
+				// const orderMap = keyBy(groupOrders, g => g.id);
+				// return sortBy(groups, g => g.id ? orderMap[g.id].order : Number.MAX_SAFE_INTEGER);
+				return groups;
+			})
 		);
 	}
 
-	delete$(groupId: string) {
-		const groupRef = this.docRef(groupId);
-		const q = query(collection(this.firestore, "users"), where("groupIds", "array-contains", groupId));
-
-		return this.userService.authService.currentUser$.pipe(
-			take(1),
-			switchMap(user => runTransaction(this.firestore, async (transaction) => {
-				const groupSnapshot = await transaction.get(groupRef);
-				const groupDoc = throwIfNotFound(groupSnapshot).data() as Group;
-				if (!this.isCurrentUserAuthorizedToUpdate(user.uid, groupDoc)) {
-					throw ErrorCode.INVALID_PERMISSION;
-				}
-
-				const usersSnapshot = await getDocs(q);
-				usersSnapshot.forEach(userSanpshot => {
-					const userRef = doc(this.firestore, "users", userSanpshot.id);
-					const userDoc = userSanpshot.data() as User;
-					transaction.update(userRef, this.filterUserGroups(userDoc, groupId));
-				});
-
-				transaction.delete(doc(this.firestore, "group_code", groupId));
-				transaction.delete(doc(collection(this.firestore, "groups", groupId, "expenses")));
-				transaction.delete(groupRef);
-			}))
-		);
+	async create(group: Group): Promise<string> {
+		const ref = collection(this.firestore, GROUP_COLLECTION_NAME);
+		const sanpshot = await addDoc(ref, group);
+		return sanpshot.id;
 	}
 
-	async getCode(groupId: string): Promise<number> {
-		const collectionRef = collection(this.firestore, "group_code");
-		return await runTransaction(this.firestore, async (transaction) => {
+	update(id: string, group: UpsertGroup): Promise<void> {
+		const ref = doc(this.firestore, GROUP_COLLECTION_NAME, id);
+		return updateDoc(ref, { ...group });
+	}
+
+	async updateRole(id: string, memberId: string, roleToUpdate: "admin" | "user"): Promise<void> {
+		const ref = doc(this.firestore, GROUP_COLLECTION_NAME, id);
+		const sanapshot = await getDoc(ref);
+		const group = throwIfNotFound(sanapshot).data() as Group;
+		group.members[memberId].role = roleToUpdate;
+
+		return updateDoc(ref, { members: group.members });
+	}
+
+	async removeMember(id: string, memberId: string): Promise<void> {
+		const ref = doc(this.firestore, GROUP_COLLECTION_NAME, id);
+		const sanapshot = await getDoc(ref);
+		const group = throwIfNotFound(sanapshot).data() as Group;
+		const member = group.memberIds.find(id => id === memberId);
+		if (!member) {
+			throw ErrorCode.USER_DOESNOT_BELONG_TO_GROUP;
+		} else if (group.members[member].role === "admin" &&
+			Object.values(group.members).filter(m => m.role === "admin").length === 1) {
+			throw ErrorCode.NO_OTHER_ADMIN_FOUND;
+		}
+
+		group.memberIds = group.memberIds.filter(id => id != memberId);
+
+		return updateDoc(ref, { memberIds: group.memberIds });
+	}
+
+	delete(userId: string, id: string): Promise<void> {
+		const ref = doc(this.firestore, GROUP_COLLECTION_NAME, id);
+		return runTransaction(this.firestore, async transaction => {
+			const snapshot = await transaction.get(ref);
+			const group = throwIfNotFound(snapshot).data() as Group;
+			if (!this.isCurrentUserAuthorizedToUpdate(userId, group)) {
+				throw ErrorCode.INVALID_PERMISSION;
+			}
+
+			transaction.delete(doc(this.firestore, GROUP_CODE_COLLECTION_NAME, id));
+			transaction.delete(doc(collection(this.firestore, "groups", id, "expenses")));
+			transaction.delete(ref);
+		});
+	}
+
+	getCode(groupId: string): Promise<number> {
+		const collectionRef = collection(this.firestore, GROUP_CODE_COLLECTION_NAME);
+		return runTransaction(this.firestore, async (transaction) => {
 			const groupDoc = await transaction.get(doc(collectionRef, groupId));
 			if (!groupDoc.exists() || isExpired(groupDoc.data() as GroupCode)) {
 				let newCode;
@@ -232,73 +129,48 @@ export class GroupService {
 		});
 	}
 
-	addMemeberToGroup$(code: number): Observable<string> {
-		const collectionRef = collection(this.firestore, "group_code");
-		return this.userService.user$.pipe(
-			take(1),
-			switchMap(async user => {
-				return await runTransaction(this.firestore, async transaction => {
-					const querySnapshot = await getDocs(query(collectionRef, where("code", "==", code), limit(1)));
-					if (querySnapshot.empty) {
-						throw "Invalide code";
-					}
+	async addMemeberToGroup(userId: string, name: string, code: number): Promise<string> {
+		const ref = collection(this.firestore, GROUP_CODE_COLLECTION_NAME);
+		const q = query(ref, where("code", "==", code), limit(1));
 
-					const groupCodeDoc = querySnapshot.docs[0];
-					const groupCode = groupCodeDoc.data() as GroupCode;
-					if (isExpired(groupCode)) {
-						throw "Code expired.";
-					} else if (+groupCode.code !== code) {
-						throw "Invalide code";
-					}
+		const querySnapshot = await getDocs(q);
+		if (querySnapshot.empty) {
+			throw "Invalid code";
+		}
 
-					if (user.groupIds?.findIndex(groupId => groupId === groupCodeDoc.id) === 1) {
-						return groupCodeDoc.id;
-					}
+		const groupCodeDoc = querySnapshot.docs[0];
+		const groupCode = groupCodeDoc.data() as GroupCode;
+		if (isExpired(groupCode)) {
+			throw "Code expired.";
+		} else if (+groupCode.code !== code) {
+			throw "Invalide code";
+		}
 
-					const groupRef = doc(this.firestore, "groups", groupCodeDoc.id);
-					const groupSnapshot = await transaction.get(groupRef);
-					const group = throwIfNotFound(groupSnapshot).data() as Group;
-					
-					const memberExists = group.members.find(member => member.id === user.uid);
-					if (memberExists) {
-						memberExists.active = true;
-					} else {
-						group.members.push({
-							id: user.uid,
-							name: user.name ?? "",
-							active: true,
-						});
-					}
+		const groupRef = doc(this.firestore, GROUP_COLLECTION_NAME, groupCodeDoc.id);
+		const groupSnapshot = await getDoc(groupRef);
+		const group = throwIfNotFound(groupSnapshot).data() as Group;
+		const existingMemberId = group.memberIds.find(id => id === userId);
+		if (!existingMemberId) {
+			const memberIds = [...group.memberIds, userId];
+			const members = { ...group.members };
+			if (!group.members[userId]) {
+				members[userId] = { id: userId, name };
+			} else {
+				members[userId].role = "user";
+			}
 
-					transaction.update(groupRef, { members: group.members });
-					transaction.update(doc(this.firestore, "users", user.uid), this.addGroupToUser(user, groupCodeDoc.id));
+			await updateDoc(groupRef, { memberIds, members });
+		}
 
-					return groupCodeDoc.id;
-				});
-			})
-		);
+		return group.id;
 	}
 
 	private isCurrentUserAuthorizedToUpdate(userId: string | null, group: Group) {
-		const currentMember = group.members.find(member => member.id === userId);
-		if (!currentMember || currentMember.role !== "admin") {
+		const currentMemberId = group.memberIds.find(id => id === userId);
+		if (!currentMemberId || group.members[currentMemberId].role !== "admin") {
 			throw "User is not authorised to perform this action";
 		}
 
 		return true;
-	}
-
-	private filterUserGroups(user: User, groupId: string) {
-		return {
-			groupIds: user.groupIds?.filter(id => id !== groupId) as string[],
-			groups: user.groups?.filter(g => g.id !== groupId) as GroupOrder[],
-		};
-	}
-
-	private addGroupToUser(user: User, groupId: string) {
-		return { 
-			groupIds: [...user.groupIds ?? [], groupId] as string[],
-			groups: [...user.groups ?? [], { id: groupId, order: Number.MAX_SAFE_INTEGER }] as GroupOrder[],
-		};
 	}
 }

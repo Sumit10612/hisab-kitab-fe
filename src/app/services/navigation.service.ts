@@ -39,6 +39,10 @@ export class NavigationService {
 		this.router.navigate(["/home"]);
 	}
 
+	navigateToLogin() {
+		this.router.navigate(["/login"]);
+	}
+
 	clearRouteHistory() {
 		this.history = [];
 	}
