@@ -10,11 +10,11 @@ import { tap } from "rxjs";
 import { ToolbarButtonType } from "../models/toolbar.model";
 import { avatars, User } from "../models/user.model";
 import { ToolbarConfigurationService } from "../services/toolbar-configuration.service";
+import { AuthActions } from "../store/auth/auth.action";
 import { UserActions } from "../store/user/user.action";
 import { UserSelector } from "../store/user/user.selector";
 
 import { LayoutComponent } from "./shared/layout.component";
-import { AuthActions } from "../store/auth/auth.action";
 
 @Component({
 	selector: "app-profile-editor",
@@ -109,7 +109,7 @@ export class ProfileEditorComponent implements OnInit {
 	protected user?: User;
 	protected user$ = this.store.select(UserSelector.select).pipe(
 		tap(user => {
-			if(user) {
+			if (user) {
 				this.user = user;
 				this.form.patchValue({ ...user });
 				this.selectedIndex = avatars.findIndex(avatar => avatar.alt === user?.photoUrl);
@@ -152,7 +152,7 @@ export class ProfileEditorComponent implements OnInit {
 				theme: $event.value
 			};
 
-			this.store.dispatch(UserActions.update({ user: { ...this.user, preferences} }));
+			this.store.dispatch(UserActions.update({ user: { ...this.user, preferences } }));
 		}
 	}
 }

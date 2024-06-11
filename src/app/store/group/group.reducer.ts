@@ -1,20 +1,20 @@
 import { createEntityAdapter, EntityState } from "@ngrx/entity";
 import { createReducer, on } from "@ngrx/store";
+import { keyBy } from "lodash-es";
 
 import { Group } from "../../models/group.model";
 
 import { GroupAction } from "./group.action";
-import { keyBy } from "lodash-es";
 
 export interface GroupState {
 	groups: Record<string, Group>;
-	groupCodes: EntityState<{ id: string, code: number }>;
+	groupCodes: EntityState<{ id: string; code: number }>;
 }
 
-export const groupCodeAdapter = createEntityAdapter<{ id: string, code: number }>({
+export const groupCodeAdapter = createEntityAdapter<{ id: string; code: number }>({
 	selectId: gc => gc.id,
 	sortComparer: false
-})
+});
 
 const INITIAL_STATE: GroupState = {
 	groups: {},

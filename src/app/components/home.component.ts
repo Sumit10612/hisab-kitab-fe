@@ -6,12 +6,12 @@ import { Group } from "../models/group.model";
 import { ToolbarButtonType } from "../models/toolbar.model";
 import { GroupOrder } from "../models/user.model";
 import { ToolbarConfigurationService } from "../services/toolbar-configuration.service";
+import { GroupAction } from "../store/group/group.action";
 import { GroupSelector } from "../store/group/group.selector";
 
 import { LayoutComponent } from "./shared/layout.component";
 import { GroupListWidgetComponent } from "./widgets/group-list-widget.component";
 import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
-import { GroupAction } from "../store/group/group.action";
 
 @Component({
 	selector: "app-home",
@@ -56,7 +56,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
 	private subscription$$?: Subscription;
 
-	protected groups: Group[] = []; 
+	protected groups: Group[] = [];
 
 	ngOnInit(): void {
 		this.toolbar.configure({

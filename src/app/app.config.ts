@@ -50,6 +50,6 @@ export const appConfig: ApplicationConfig = {
 		provideStore(reducers, { metaReducers }),
 		provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode() }),
 		provideEffects(effects),
-		provideRouterStore({ serializer: AppRouterStateSerializer })
+		provideRouterStore({ serializer: AppRouterStateSerializer }),
 	]
 };

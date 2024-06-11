@@ -1,6 +1,8 @@
-import { MemoizedSelector, Selector, createSelector } from "@ngrx/store";
+import { createSelector, MemoizedSelector, Selector } from "@ngrx/store";
+
 import { State } from "..";
 import { Expense } from "../../models/expense.model";
+
 import { expenseAdapter } from "./group.reducer";
 
 const expenseAdapterSelector = expenseAdapter.getSelectors<State>(state => state.expense.expenses);

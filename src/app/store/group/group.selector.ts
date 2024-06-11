@@ -1,10 +1,10 @@
 import { createSelector, MemoizedSelector, Selector } from "@ngrx/store";
+import { values } from "lodash-es";
 
 import { State } from "..";
 import { Group } from "../../models/group.model";
 
 import { groupCodeAdapter } from "./group.reducer";
-import { values } from "lodash-es";
 
 export const groupCodeAdapterSelectors = groupCodeAdapter.getSelectors<State>(state => state.group.groupCodes);
 

@@ -12,21 +12,21 @@ import { MatButtonToggleModule } from "@angular/material/button-toggle";
 import { MatIconModule } from "@angular/material/icon";
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 import { RouterLink } from "@angular/router";
+import { Store } from "@ngrx/store";
+import { groupBy, mapValues, pick } from "lodash-es";
 import { combineLatest, Subscription, tap } from "rxjs";
 
 import { Expense } from "../models/expense.model";
 import { getGroupImage, Group } from "../models/group.model";
 import { ToolbarButtonType } from "../models/toolbar.model";
 import { ToolbarConfigurationService } from "../services/toolbar-configuration.service";
+import { ExpenseAction } from "../store/expense/expense.action";
+import { ExpenseSelector } from "../store/expense/expense.selector";
+import { GroupSelector } from "../store/group/group.selector";
 import { getPreviousMonth, getYearMonth } from "../utilities/date";
 
 import { LayoutComponent } from "./shared/layout.component";
 import { ExpenseListComponent } from "./widgets/expense-list-widget.component";
-import { Store } from "@ngrx/store";
-import { GroupSelector } from "../store/group/group.selector";
-import { groupBy, mapValues, pick } from "lodash-es";
-import { ExpenseAction } from "../store/expense/expense.action";
-import { ExpenseSelector } from "../store/expense/expense.selector";
 
 @Component({
 	selector: "app-group-expesnse-detail",
@@ -216,7 +216,7 @@ export class GroupExpenseDetailComponent implements OnInit, OnDestroy {
 			this.store.select(ExpenseSelector.isLoading)
 		]).subscribe(([group, expenses, isLoading]) => {
 			this.loading = isLoading;
-			if(group?.memberIds.length) {
+			if (group?.memberIds.length) {
 				const members = pick(group.members, group.memberIds);
 				this.groupedExpenses = mapValues(
 					groupBy(expenses, e => getYearMonth(e.expenseDate)),

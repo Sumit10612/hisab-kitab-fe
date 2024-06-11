@@ -10,8 +10,10 @@ import { MatBottomSheet } from "@angular/material/bottom-sheet";
 import { provideNativeDateAdapter } from "@angular/material/core";
 import { MatDatepickerModule } from "@angular/material/datepicker";
 import { MatFormFieldModule } from "@angular/material/form-field";
+import { MatIconModule } from "@angular/material/icon";
 import { MatInputModule } from "@angular/material/input";
 import { MatSelectModule } from "@angular/material/select";
+import { Store } from "@ngrx/store";
 import { combineLatest, Subscription } from "rxjs";
 
 import { categoriesByGroup, getCategoryById } from "../models/category.model";
@@ -19,14 +21,12 @@ import { Expense } from "../models/expense.model";
 import { GroupMember } from "../models/group.model";
 import { ToolbarButtonType } from "../models/toolbar.model";
 import { ToolbarConfigurationService } from "../services/toolbar-configuration.service";
+import { ExpenseAction } from "../store/expense/expense.action";
+import { ExpenseSelector } from "../store/expense/expense.selector";
+import { GroupSelector } from "../store/group/group.selector";
 
 import { CategorySelectorComponent } from "./category-selector.component";
 import { LayoutComponent } from "./shared/layout.component";
-import { Store } from "@ngrx/store";
-import { GroupSelector } from "../store/group/group.selector";
-import { ExpenseSelector } from "../store/expense/expense.selector";
-import { ExpenseAction } from "../store/expense/expense.action";
-import { MatIconModule } from "@angular/material/icon";
 
 @Component({
 	selector: "app-add-expense",

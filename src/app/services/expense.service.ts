@@ -14,6 +14,7 @@ import { Expense, FirestoreExpense, fromFirestoreModel, toFirestoreModel } from 
 import { Group } from "../models/group.model";
 import { getYearMonth } from "../utilities/date";
 import { throwIfNotFound } from "../utilities/firebase-errors";
+
 import { GROUP_COLLECTION_NAME } from "./group.service";
 
 const COLLECTION_NAME = "expenses";

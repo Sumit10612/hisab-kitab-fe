@@ -15,6 +15,7 @@ import { MatIconModule } from "@angular/material/icon";
 import { MatInputModule } from "@angular/material/input";
 import { MatRadioModule } from "@angular/material/radio";
 import { MatSlideToggleModule } from "@angular/material/slide-toggle";
+import { Store } from "@ngrx/store";
 import { filter, map, switchMap, tap } from "rxjs";
 
 import { DialogButtonType, DialogData } from "../models/dialog.model";
@@ -23,13 +24,12 @@ import { Otp } from "../models/otp.model";
 import { ToolbarButtonType } from "../models/toolbar.model";
 import { DialogService } from "../services/dialog.service";
 import { ToolbarConfigurationService } from "../services/toolbar-configuration.service";
+import { RouterSelector } from "../store/app.selector";
+import { GroupAction } from "../store/group/group.action";
+import { GroupSelector } from "../store/group/group.selector";
 
 import { OtpComponent } from "./otp.component";
 import { LayoutComponent } from "./shared/layout.component";
-import { Store } from "@ngrx/store";
-import { GroupAction } from "../store/group/group.action";
-import { GroupSelector } from "../store/group/group.selector";
-import { RouterSelector } from "../store/app.selector";
 
 @Component({
 	selector: "app-group-editor",

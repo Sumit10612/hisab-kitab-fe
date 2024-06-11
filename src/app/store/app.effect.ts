@@ -1,34 +1,48 @@
-import { Injectable, inject } from "@angular/core";
-import { Actions, createEffect, ofType } from "@ngrx/effects";
-import { AppActions } from "./app.action";
+import { inject, Injectable } from "@angular/core";
+import { Actions, createEffect, ofType, ROOT_EFFECTS_INIT } from "@ngrx/effects";
 import { map, switchMap, tap } from "rxjs";
+
 import { AuthService } from "../services/auth.service";
-import { UserActions } from "./user/user.action";
-import { NavigationService } from "../services/navigation.service";
-import { Store } from "@ngrx/store";
+import { NotificationService } from "../services/notification.service";
+
+import { AppActions } from "./app.action";
+import { AuthActions } from "./auth/auth.action";
 import { GroupAction } from "./group/group.action";
+import { UserActions } from "./user/user.action";
 
 @Injectable()
 export class AppEffects {
 	private readonly actions$ = inject(Actions);
 	private readonly authService = inject(AuthService);
-	private readonly navigation = inject(NavigationService);
-	private readonly store = inject(Store);
+	private readonly notification = inject(NotificationService);
 
-	initApp$ = createEffect(() =>
-		this.actions$.pipe(
-			ofType(AppActions.init),
+	initApp$ = createEffect(() => {
+		return this.actions$.pipe(
+			ofType(ROOT_EFFECTS_INIT, AuthActions.loginSuccess),
 			switchMap(() => this.authService.user$.pipe(
-				tap(() => this.navigation.clearRouteHistory()),
-				map(user => {
-					if (user) {
-						this.store.dispatch(UserActions.get({ id: user.uid }));
-						this.store.dispatch(GroupAction.getAll());
-					}
-
-					return AppActions.initialized();
-				})
+				map(user => AppActions.initialized({ loggedInUserId: user.uid }))
 			))
-		)
-	);
+		);
+	});
+
+	getUser$ = createEffect(() => {
+		return this.actions$.pipe(
+			ofType(AppActions.initialized),
+			map(({ loggedInUserId }) => UserActions.get({ id: loggedInUserId }))
+		);
+	});
+
+	myGroups$ = createEffect(() => {
+		return this.actions$.pipe(
+			ofType(AppActions.initialized),
+			map(({ loggedInUserId }) => GroupAction.getAll({ userId: loggedInUserId }))
+		);
+	});
+
+	handleError$ = createEffect(() => {
+		return this.actions$.pipe(
+			ofType(AppActions.handleError),
+			tap(({ error }) => this.notification.firebaseError(error))
+		);
+	}, { dispatch: false});
 }

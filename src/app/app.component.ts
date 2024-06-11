@@ -17,13 +17,12 @@ import { SwUpdate } from "@angular/service-worker";
 import { Store } from "@ngrx/store";
 
 import { ToolbarButtonType } from "./models/toolbar.model";
-import { getUserImage, User } from "./models/user.model";
+import { getUserImage } from "./models/user.model";
 import { NavigationService } from "./services/navigation.service";
 import { NotificationService } from "./services/notification.service";
 import { ThemeService } from "./services/theme.service";
 import { ToolbarConfigurationService } from "./services/toolbar-configuration.service";
 import { UserSelector } from "./store/user/user.selector";
-import { AppActions } from "./store/app.action";
 
 @Component({
 	selector: "app-root",
@@ -148,8 +147,6 @@ export class AppComponent implements OnInit {
 	}
 
 	ngOnInit() {
-		this.store.dispatch(AppActions.init());
-
 		// Checking service worker based update
 		if (this.swUpdate.isEnabled) {
 			this.swUpdate.checkForUpdate();

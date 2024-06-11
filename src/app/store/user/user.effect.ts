@@ -1,18 +1,12 @@
 import { inject, Injectable } from "@angular/core";
 import { Actions, createEffect, ofType } from "@ngrx/effects";
-import {
-	catchError,
-	map,
-	of,
-	switchMap,
-	tap
-} from "rxjs";
+import { switchMap, tap } from "rxjs";
 
+import { NavigationService } from "../../services/navigation.service";
 import { NotificationService } from "../../services/notification.service";
 import { UserService } from "../../services/user.service";
 
 import { UserActions } from "./user.action";
-import { NavigationService } from "../../services/navigation.service";
 
 @Injectable()
 export class UserEffects {
@@ -32,12 +26,13 @@ export class UserEffects {
 		);
 	});
 
-	addSuccess$ = createEffect(() =>
-		this.actions$.pipe(
+	addSuccess$ = createEffect(() => {
+		return this.actions$.pipe(
 			ofType(UserActions.addSuccess),
 			tap(() => this.navigation.navigateToHome())
-		),
-		{ dispatch: false }
+		);
+	},
+	{ dispatch: false }
 	);
 
 	get$ = createEffect(() => {

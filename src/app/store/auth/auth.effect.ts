@@ -1,13 +1,14 @@
-import { Injectable, inject } from "@angular/core";
+import { inject, Injectable } from "@angular/core";
 import { Actions, createEffect, ofType } from "@ngrx/effects";
-
 import { map, mergeMap, switchMap, tap } from "rxjs";
-import { NotificationService } from "../../services/notification.service";
-import { AuthActions } from "./auth.action";
-import { NavigationService } from "../../services/navigation.service";
-import { UserActions } from "../user/user.action";
+
 import { AuthService } from "../../services/auth.service";
+import { NavigationService } from "../../services/navigation.service";
+import { NotificationService } from "../../services/notification.service";
 import { AppActions } from "../app.action";
+import { UserActions } from "../user/user.action";
+
+import { AuthActions } from "./auth.action";
 
 @Injectable()
 export class AuthEffects {
@@ -19,93 +20,114 @@ export class AuthEffects {
 	login$ = createEffect(() => {
 		return this.actions$.pipe(
 			ofType(AuthActions.login),
-			tap(() => this.notification.showLoading()),
-			switchMap(({ email, password }) => this.authService.login(email, password)
-				.then(
-					() => AuthActions.loginSuccess(),
-					error => AuthActions.loginFailure({ error })
-				)
-				.finally(() => this.notification.hideLoading())
-			)
-		)
+			switchMap(async ({ email, password }) => {
+				try {
+					this.notification.showLoading();
+					await this.authService.login(email, password);
+					return AuthActions.loginSuccess();
+				} catch (error) {
+					return AppActions.handleError({ error });
+				} finally {
+					this.notification.hideLoading();
+				}
+			})
+		);
 	});
 
-	loginWithGoogle$ = createEffect(() =>
-		this.actions$.pipe(
+	loginWithGoogle$ = createEffect(() => {
+		return this.actions$.pipe(
 			ofType(AuthActions.loginWithGoogle),
-			tap(() => this.notification.showLoading()),
-			switchMap(() => this.authService.googleSignIn()
-				.then(
-					user => user === null ? AuthActions.loginSuccess() : AuthActions.saveUserProfile({ user }),
-					error => AuthActions.loginFailure({ error })
-				)
-				.finally(() => this.notification.hideLoading())
-			)
-		)
-	);
+			switchMap(async () => {
+				try {
+					this.notification.showLoading();
+					const user = await this.authService.googleSignIn();
+					if (user) {
+						return AuthActions.saveUserProfile({ user });
+					}
+					return AuthActions.loginSuccess();
+				} catch (error) {
+					return AppActions.handleError({ error });
+				} finally {
+					this.notification.hideLoading();
+				}
+			})
+		);
+	});
 
-	signup$ = createEffect(() =>
-		this.actions$.pipe(
+	signup$ = createEffect(() => {
+		return this.actions$.pipe(
 			ofType(AuthActions.signup),
 			tap(() => this.notification.showLoading()),
-			switchMap(({ email, password, name }) => this.authService.signUp(email, password)
-				.then(
-					userCredential => {
-						const { user: { uid } } = userCredential;
-						return AuthActions.saveUserProfile({ user: { uid, email, name } });
-					},
-					error => AuthActions.signupFailure({ error })
-				)
-				.finally(() => this.notification.hideLoading())
-			)
-		)
-	);
+			switchMap(async ({ email, password, name }) => {
+				this.notification.showLoading();
+				try {
+					const { user: { uid } } = await this.authService.signUp(email, password);
+					return AuthActions.saveUserProfile({ user: { uid, email, name } });
+				} catch (error) {
+					return AppActions.handleError({ error });
+				} finally {
+					this.notification.hideLoading();
+				}
+			})
+		);
+	});
 
-	saveUserProfile$ = createEffect(() =>
-		this.actions$.pipe(
+	saveUserProfile$ = createEffect(() => {
+		return this.actions$.pipe(
 			ofType(AuthActions.saveUserProfile),
 			map(({ user }) => UserActions.add({ user }))
-		)
-	);
+		);
+	});
 
-	loginSuccess$ = createEffect(() =>
-		this.actions$.pipe(
+	loginSuccess$ = createEffect(() => {
+		return this.actions$.pipe(
 			ofType(AuthActions.loginSuccess),
-			map(() => AppActions.init()),
 			tap(() => this.navigation.navigateToHome())
-		)
-	);
+		);
+	}, { dispatch: false });
 
 	logout$ = createEffect(() => {
 		return this.actions$.pipe(
 			ofType(AuthActions.logout),
 			tap(() => this.notification.showLoading()),
-			mergeMap(() => this.authService.logout()
-				.then(
-					() => AuthActions.logoutSuccess(),
-					error => AuthActions.logoutFailure({ error })
-				)
-			)
+			mergeMap(async () => {
+				this.notification.showLoading();
+				try {
+					await this.authService.logout();
+					return AuthActions.logoutSuccess();
+				} catch (error) {
+					return AppActions.handleError({ error });
+				} finally {
+					this.notification.hideLoading();
+				}
+			})
 		);
 	});
 
-	logoutSuccess$ = createEffect(() =>
-		this.actions$.pipe(
+	logoutSuccess$ = createEffect(() => {
+		return this.actions$.pipe(
 			ofType(AuthActions.logoutSuccess),
 			tap(() => {
 				window.location.reload();
 				this.navigation.navigateToLogin();
 			})
-		),
-		{ dispatch: false }
-	);
+		);
+	}, { dispatch: false });
 
-	resetPassword$ = createEffect(() =>
-		this.actions$.pipe(
+	resetPassword$ = createEffect(() => {
+		return this.actions$.pipe(
 			ofType(AuthActions.resetPassword),
-			switchMap(({ email }) => this.authService.passwordReset(email)
-				.then(() => AuthActions.resetPasswordSuccess())
-			)
-		)
-	);
+			switchMap(async ({ email }) => {
+				this.notification.showLoading();
+				try {
+					await this.authService.passwordReset(email);
+					return AuthActions.resetPasswordSuccess();
+				} catch (error) {
+					return AppActions.handleError({ error });
+				} finally {
+					this.notification.hideLoading();
+				}
+			})
+		);
+	});
 }

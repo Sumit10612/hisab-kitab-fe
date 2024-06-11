@@ -1,4 +1,5 @@
 import { createAction, props } from "@ngrx/store";
+
 import { Expense } from "../../models/expense.model";
 
 export namespace ExpenseAction {
@@ -15,35 +16,32 @@ export namespace ExpenseAction {
 		`${ACTION_PREFIX} Get Next Success`,
 		props<{ expenses: Expense[] }>()
 	);
-	export const getNextFail = createAction(`${ACTION_PREFIX} Get Next Fail`);
 
 	export const add = createAction(
 		`${ACTION_PREFIX} Add`,
 		props<{
-			groupId: string,
-			expense: Expense
+			groupId: string;
+			expense: Expense;
 		}>()
 	);
-	export const addFail = createAction(`${ACTION_PREFIX} Add Fail`);
+	export const addSuccess = createAction(`${ACTION_PREFIX} Add Success`);
 
 	export const update = createAction(
 		`${ACTION_PREFIX} Update`,
 		props<{
-			groupId: string,
-			id: string,
-			expense: Expense
+			groupId: string;
+			id: string;
+			expense: Expense;
 		}>()
 	);
-	export const updateFail = createAction(`${ACTION_PREFIX} Update Fail`);
+	export const updateSuccess = createAction(`${ACTION_PREFIX} Update Success`);
 
 	export const remove = createAction(
 		`${ACTION_PREFIX} Delete`,
 		props<{
-			groupId: string,
-			id: string
+			groupId: string;
+			id: string;
 		}>()
 	);
-	export const removeFail = createAction(`${ACTION_PREFIX} Remove Fail`);
-	
-	export const cudSuccess = createAction(`${ACTION_PREFIX} Add/Update/Delete Success`);
+	export const removeSuccess = createAction(`${ACTION_PREFIX} Delete Success`);
 }

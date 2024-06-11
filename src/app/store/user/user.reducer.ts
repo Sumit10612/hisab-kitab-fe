@@ -18,8 +18,8 @@ export const userReducer = createReducer<UserState>(
 		...state,
 		user
 	})),
-	on(UserActions.updateSuccess, (state, { user }) => {
-		if(state.user) {
+	on(UserActions.updateSuccess, (state, { user }): UserState => {
+		if (state.user) {
 			return ({
 				...state,
 				user: {
@@ -27,7 +27,7 @@ export const userReducer = createReducer<UserState>(
 					name: user.name,
 					photoUrl: user.photoUrl
 				}
-			})
+			});
 		}
 		return ({ ...state });
 	})
