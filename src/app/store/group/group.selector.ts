@@ -1,18 +1,24 @@
 import { createSelector, MemoizedSelector, Selector } from "@ngrx/store";
-import { values } from "lodash-es";
 
 import { State } from "..";
 import { Group } from "../../models/group.model";
 
-import { groupCodeAdapter } from "./group.reducer";
+import { groupAdapter, groupCodeAdapter } from "./group.reducer";
 
+export const groupAdapterSelectors = groupAdapter.getSelectors<State>(state => state.group.groups);
 export const groupCodeAdapterSelectors = groupCodeAdapter.getSelectors<State>(state => state.group.groupCodes);
 
 export namespace GroupSelector {
-	export const selectAll: Selector<State, Group[]> = state => values(state.group.groups);
+	export const selectAll = createSelector(
+		groupAdapterSelectors.selectAll,
+		entities => entities
+	);
 
-	export const select = (id: string): Selector<State, Group> =>
-		state => state.group.groups[id];
+	export const selectGroup: (id: string) => MemoizedSelector<State, Group | undefined> =
+		id => createSelector(
+			groupAdapterSelectors.selectEntities,
+			entities => entities[id]
+		);
 
 	export const selectCode: (id: string) => MemoizedSelector<State, number | undefined> =
 		id => createSelector(

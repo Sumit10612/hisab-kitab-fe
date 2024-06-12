@@ -35,7 +35,7 @@ export class AppEffects {
 	myGroups$ = createEffect(() => {
 		return this.actions$.pipe(
 			ofType(AppActions.initialized),
-			map(({ loggedInUserId }) => GroupAction.getAll({ userId: loggedInUserId }))
+			map(({ loggedInUserId }) => GroupAction.query({ userId: loggedInUserId }))
 		);
 	});
 
@@ -44,5 +44,5 @@ export class AppEffects {
 			ofType(AppActions.handleError),
 			tap(({ error }) => this.notification.firebaseError(error))
 		);
-	}, { dispatch: false});
+	}, { dispatch: false });
 }

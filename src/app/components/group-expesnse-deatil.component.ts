@@ -203,7 +203,7 @@ export class GroupExpenseDetailComponent implements OnInit, OnDestroy {
 			]
 		});
 
-		const group$ = this.store.select(GroupSelector.select(this.id)).pipe(
+		const group$ = this.store.select(GroupSelector.selectGroup(this.id)).pipe(
 			tap(group => {
 				this.group = group;
 				this.store.dispatch(ExpenseAction.getNext({ groupId: this.id, initialGet: true }));

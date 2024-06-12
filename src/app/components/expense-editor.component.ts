@@ -159,7 +159,7 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
 		});
 
 		this.subscription$$ = combineLatest([
-			this.store.select(GroupSelector.select(this.groupId)),
+			this.store.select(GroupSelector.selectGroup(this.groupId)),
 			this.store.select(ExpenseSelector.select(this.id))
 		]).subscribe(([group, expense]) => {
 			this.members = group?.memberIds.map(id => group.members[id]).filter(member => member);
@@ -170,7 +170,7 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
 			this.form.patchValue({
 				...expense,
 				category: this.selectedCategory?.name,
-				paidBy: currentUser?.id
+				paidBy: this.id ? expense?.paidBy : currentUser?.id
 			});
 		});
 	}

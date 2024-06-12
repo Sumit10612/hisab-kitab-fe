@@ -19,7 +19,13 @@ import { Store } from "@ngrx/store";
 import { filter, map, switchMap, tap } from "rxjs";
 
 import { DialogButtonType, DialogData } from "../models/dialog.model";
-import { groupImages, GroupMember, GroupType, UpsertGroup } from "../models/group.model";
+import {
+	groupImages,
+	GroupMember,
+	GroupType,
+	MemberRole,
+	UpsertGroup
+} from "../models/group.model";
 import { Otp } from "../models/otp.model";
 import { ToolbarButtonType } from "../models/toolbar.model";
 import { DialogService } from "../services/dialog.service";
@@ -259,7 +265,7 @@ export class GroupEditorComponent implements OnInit {
 
 	protected group$ = this.store.select(RouterSelector.selectParams).pipe(
 		filter(params => !!params["id"]),
-		switchMap(params => this.store.select(GroupSelector.select(params["id"])).pipe(
+		switchMap(params => this.store.select(GroupSelector.selectGroup(params["id"])).pipe(
 			tap(group => {
 				this.isEdit = true;
 				this.form.patchValue({ ...group });
@@ -406,7 +412,7 @@ export class GroupEditorComponent implements OnInit {
 		this.store.dispatch(GroupAction.updateRole({
 			id: this.form.controls.id.value,
 			memberId: member.id,
-			role: member.role === "admin" ? "user" : "admin"
+			role: member.role === MemberRole.admin ? MemberRole.user : MemberRole.admin
 		}));
 	}
 

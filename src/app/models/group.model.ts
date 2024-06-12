@@ -25,7 +25,12 @@ export interface Group extends UpsertGroup {
 export interface GroupMember {
 	id: string;
 	name: string;
-	role?: "admin" | "user";
+	role?: MemberRole;
+}
+
+export enum MemberRole {
+	admin = "admin",
+	user = "user"
 }
 
 export interface GroupCode {

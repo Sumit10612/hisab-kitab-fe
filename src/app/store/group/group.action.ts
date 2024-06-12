@@ -1,25 +1,18 @@
 import { createAction, props } from "@ngrx/store";
 
-import { Group, UpsertGroup } from "../../models/group.model";
+import { Group, MemberRole, UpsertGroup } from "../../models/group.model";
 import { GroupOrder } from "../../models/user.model";
 
 export namespace GroupAction {
 	const ACTION_PREFIX = "[Group] -";
 
-	export const create = createAction(
-		`${ACTION_PREFIX} Create`,
-		props<{ upsertGroup: UpsertGroup }>()
-	);
-	export const createSuccess = createAction(`${ACTION_PREFIX} Create Success`);
+	export const query = createAction(`${ACTION_PREFIX} Query`, props<{ userId: string }>());
+	export const added = createAction(`${ACTION_PREFIX} Added`, props<{ group: Group }>());
+	export const modified = createAction(`${ACTION_PREFIX} Modified`, props<{ group: Group }>());
+	export const removed = createAction(`${ACTION_PREFIX} Removed`, props<{ id: string }>());
 
-	export const getAll = createAction(
-		`${ACTION_PREFIX} Get All`,
-		props<{ userId: string }>()
-	);
-	export const getAllSuccess = createAction(
-		`${ACTION_PREFIX} Get All Success`,
-		props<{ groups: Group[] }>()
-	);
+	export const create = createAction(`${ACTION_PREFIX} Create`, props<{ upsertGroup: UpsertGroup }>());
+	export const createSuccess = createAction(`${ACTION_PREFIX} Create Success`);
 
 	export const update = createAction(
 		`${ACTION_PREFIX} Update`,
@@ -28,7 +21,7 @@ export namespace GroupAction {
 
 	export const updateRole = createAction(
 		`${ACTION_PREFIX} Update Role`,
-		props<{ id: string; memberId: string; role: "admin" | "user" }>()
+		props<{ id: string; memberId: string; role: MemberRole }>()
 	);
 
 	export const updateSuccess = createAction(`${ACTION_PREFIX} Update Success`);
@@ -54,7 +47,8 @@ export namespace GroupAction {
 		`${ACTION_PREFIX} Remove Member`,
 		props<{ id: string; memberId?: string }>()
 	);
-	export const removeMemberSuccess = createAction(`${ACTION_PREFIX} Remove Member Success`,
-		props<{ id: string; memberId?: string }>()
+	export const removeMemberSuccess = createAction(
+		`${ACTION_PREFIX} Remove Member Success`,
+		props<{ memberId?: string }>()
 	);
 }

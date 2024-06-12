@@ -1,14 +1,16 @@
 import { inject, Injectable } from "@angular/core";
 import { Actions, createEffect, ofType } from "@ngrx/effects";
 import { Store } from "@ngrx/store";
+import { round } from "lodash-es";
 import {
 	map,
+	mergeMap,
 	switchMap,
 	take,
 	tap
 } from "rxjs";
 
-import { Group } from "../../models/group.model";
+import { Group, MemberRole } from "../../models/group.model";
 import { GroupService } from "../../services/group.service";
 import { NavigationService } from "../../services/navigation.service";
 import { NotificationService } from "../../services/notification.service";
@@ -25,6 +27,35 @@ export class GroupEffects {
 	private readonly notification = inject(NotificationService);
 	private readonly navigation = inject(NavigationService);
 	private readonly store = inject(Store);
+
+	query$ = createEffect(() => {
+		return this.action$.pipe(
+			ofType(GroupAction.query),
+			mergeMap(({ userId }) => this.groupService.query$(userId).pipe(
+				map(changeDoc => {
+					const group = {
+						...changeDoc.group,
+						groupTotal: round(changeDoc.group.groupTotal, 2),
+						monthTotal: Object.fromEntries(
+							Object.entries(changeDoc.group.monthTotal).map(([key, value]) => [key, round(value, 2)])
+						),
+						members: Object.fromEntries(
+							Object.entries(changeDoc.group.members).map(([id, member]) => [
+								id,
+								{ ...member, name: member.id === userId ? "You" : member.name }
+							])
+						)
+					} as Group;
+
+					switch (changeDoc.type) {
+						case "added": return GroupAction.added({ group });
+						case "modified": return GroupAction.modified({ group });
+						case "removed": return GroupAction.removed({ id: group.id });
+					}
+				})
+			))
+		);
+	});
 
 	create$ = createEffect(() => {
 		return this.action$.pipe(
@@ -47,7 +78,7 @@ export class GroupEffects {
 								[user.uid]: {
 									id: user.uid,
 									name: user.name,
-									role: "admin",
+									role: MemberRole.admin,
 								}
 							}
 						} as Group;
@@ -59,31 +90,6 @@ export class GroupEffects {
 					} finally {
 						this.notification.hideLoading();
 					}
-				})
-			))
-		);
-	});
-
-	getAll$ = createEffect(() => {
-		return this.action$.pipe(
-			ofType(GroupAction.getAll),
-			tap(() => this.notification.showLoading()),
-			switchMap(({ userId }) => this.groupService.getGroups$(userId).pipe(
-				map(groups => {
-					this.notification.hideLoading();
-					return GroupAction.getAllSuccess({
-						groups: groups.map(group => {
-							return {
-								...group,
-								members: Object.fromEntries(
-									Object.entries(group.members).map(([id, member]) => [
-										id,
-										{ ...member, name: member.id === userId ? "You" : member.name }
-									])
-								)
-							};
-						})
-					});
 				})
 			))
 		);
@@ -221,7 +227,7 @@ export class GroupEffects {
 						}
 
 						await this.groupService.removeMember(id, memberId ?? user.uid);
-						return GroupAction.removeMemberSuccess({ id, memberId });
+						return GroupAction.removeMemberSuccess({ memberId });
 					} catch (error) {
 						if (error === ErrorCode.NO_OTHER_ADMIN_FOUND) {
 							this.notification.error("Cannot leave, you are the only admin here.");

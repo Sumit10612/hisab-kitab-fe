@@ -34,7 +34,7 @@ import { Expense } from "../../models/expense.model";
 							}
 						</span>
 						<span class="expense-amount">
-							<span class="expense-amount-paid-by">{{expense.paidBy.split(' ')[0]}} paid</span>
+							<span class="expense-amount-paid-by">{{expense.paidBy.split(' ')[0] | lowercase}} paid</span>
 							&#8377; {{expense.amount}}
 						</span>
 					</a>
