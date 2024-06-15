@@ -8,7 +8,7 @@ import {
 	query,
 	startAfter
 } from "@angular/fire/firestore";
-import { doc, DocumentData, runTransaction, Transaction } from "firebase/firestore";
+import { doc, DocumentData, runTransaction, Timestamp, Transaction } from "firebase/firestore";
 
 import { Expense, FirestoreExpense, fromFirestoreModel, toFirestoreModel } from "../models/expense.model";
 import { Group } from "../models/group.model";
@@ -73,7 +73,7 @@ export class ExpenseService {
 			const monthKey = getYearMonth(expense.expenseDate);
 			monthTotal[monthKey] = +(monthTotal[monthKey] ?? 0) + expense.amount;
 
-			transaction.update(groupRef, { groupTotal, monthTotal });
+			transaction.update(groupRef, { groupTotal, monthTotal, modifiedAt: Timestamp.fromDate(new Date()) });
 			transaction.set(ref, toFirestoreModel(expense));
 
 			return ref.id;
@@ -98,7 +98,7 @@ export class ExpenseService {
 				monthTotal[oldKey] = monthTotal[oldKey] - expenseDoc.amount;
 				monthTotal[newKey] = +(monthTotal[newKey] ?? 0) + updateExpense.amount;
 
-				transaction.update(groupRef, { groupTotal, monthTotal });
+				transaction.update(groupRef, { groupTotal, monthTotal, modifiedAt: Timestamp.fromDate(new Date()) });
 			}
 
 			transaction.set(ref, toFirestoreModel(updateExpense), { merge: true });
@@ -118,7 +118,7 @@ export class ExpenseService {
 			const monthTotal = groupDoc.monthTotal ?? [];
 			monthTotal[key] = monthTotal[key] - expenseDoc.amount;
 
-			transaction.update(groupRef, { groupTotal, monthTotal });
+			transaction.update(groupRef, { groupTotal, monthTotal, modifiedAt: Timestamp.fromDate(new Date()) });
 			transaction.delete(ref);
 		});
 	}

@@ -4,9 +4,7 @@ import { Subscription } from "rxjs";
 
 import { Group } from "../models/group.model";
 import { ToolbarButtonType } from "../models/toolbar.model";
-import { GroupOrder } from "../models/user.model";
 import { ToolbarConfigurationService } from "../services/toolbar-configuration.service";
-import { GroupAction } from "../store/group/group.action";
 import { GroupSelector } from "../store/group/group.selector";
 
 import { LayoutComponent } from "./shared/layout.component";
@@ -30,10 +28,7 @@ import { ExpenseAction } from "../store/expense/expense.action";
 			
 			<div section="detail" class="detail-section">
 				My Groups
-				<app-group-list-selector
-					[groups]="groups"
-					(reorderedGroupList)="reorderGroups($event)">
-				</app-group-list-selector>
+				<app-group-list-selector [groups]="groups"></app-group-list-selector>
 			</div>
 		</app-layout>
 	`,
@@ -78,14 +73,5 @@ export class HomeComponent implements OnInit, OnDestroy {
 
 	ngOnDestroy(): void {
 		this.subscription$$?.unsubscribe();
-	}
-
-	reorderGroups($event: Group[]) {
-		if (!$event.length) {
-			return;
-		}
-
-		const reorderedGroups = $event.map((group, index) => ({ id: group.id ?? "", order: index })) as GroupOrder[];
-		this.store.dispatch(GroupAction.reorderGroups({ reorderedGroups }));
 	}
 }

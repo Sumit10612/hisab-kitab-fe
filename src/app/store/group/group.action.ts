@@ -1,7 +1,6 @@
 import { createAction, props } from "@ngrx/store";
 
 import { Group, MemberRole, UpsertGroup } from "../../models/group.model";
-import { GroupOrder } from "../../models/user.model";
 
 export namespace GroupAction {
 	const ACTION_PREFIX = "[Group] -";
@@ -25,11 +24,6 @@ export namespace GroupAction {
 	);
 
 	export const updateSuccess = createAction(`${ACTION_PREFIX} Update Success`);
-
-	export const reorderGroups = createAction(
-		`${ACTION_PREFIX} Reorder`,
-		props<{ reorderedGroups: GroupOrder[] }>()
-	);
 
 	export const deleteGroup = createAction(`${ACTION_PREFIX} Delete`, props<{ id: string }>());
 	export const deleteSuccess = createAction(`${ACTION_PREFIX} Delete Success`);

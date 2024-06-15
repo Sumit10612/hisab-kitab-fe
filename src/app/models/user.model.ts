@@ -6,16 +6,10 @@ export interface User {
 	email?: string;
 	photoUrl?: string;
 	preferences?: UserPreferences;
-	groups?: GroupOrder[];
 }
 
 export interface UserPreferences {
 	theme?: string;
-}
-
-export interface GroupOrder {
-	id: string;
-	order: number;
 }
 
 export const getUserImage = (alt?: string) => {

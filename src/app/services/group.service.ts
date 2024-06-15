@@ -10,10 +10,11 @@ import {
 	limit,
 	query,
 	runTransaction,
+	Timestamp,
 	updateDoc,
 	where
 } from "@angular/fire/firestore";
-import { mergeMap, Observable, switchMap, } from "rxjs";
+import { mergeMap, Observable } from "rxjs";
 
 import {
 	Group,
@@ -50,13 +51,19 @@ export class GroupService {
 
 	async create(group: Group): Promise<string> {
 		const ref = collection(this.firestore, GROUP_COLLECTION_NAME);
-		const sanpshot = await addDoc(ref, group);
+		const sanpshot = await addDoc(ref, {
+			...group,
+			modifiedAt: Timestamp.fromDate(new Date())
+		} as Group);
 		return sanpshot.id;
 	}
 
 	update(id: string, group: UpsertGroup): Promise<void> {
 		const ref = doc(this.firestore, GROUP_COLLECTION_NAME, id);
-		return updateDoc(ref, { ...group });
+		return updateDoc(ref, {
+			...group,
+			modifiedAt: Timestamp.fromDate(new Date())
+		});
 	}
 
 	async updateRole(id: string, memberId: string, roleToUpdate: MemberRole): Promise<void> {

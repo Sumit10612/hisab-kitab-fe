@@ -20,6 +20,7 @@ export interface Group extends UpsertGroup {
 	members: Record<string, GroupMember>;
 	groupTotal: number;
 	monthTotal: Record<string, number>;
+	modifiedAt?: Timestamp;
 }
 
 export interface GroupMember {

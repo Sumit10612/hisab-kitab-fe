@@ -129,20 +129,6 @@ export class GroupEffects {
 		);
 	});
 
-	// reorderGroups$ = createEffect(() => {
-	// 	return this.action$.pipe(
-	// 		ofType(GroupAction.reorderGroups),
-	// 		switchMap(({ reorderedGroups }) => this.store.select(UserSelector.select).pipe(
-	// 			take(1),
-	// 			map(user => {
-	// 				if (user) {
-	// 					return UserActions.update({ user: { ...user, groups: reorderedGroups } });
-	// 				}
-	// 			})
-	// 		))
-	// 	);
-	// });
-
 	delete$ = createEffect(() => {
 		return this.action$.pipe(
 			ofType(GroupAction.deleteGroup),
