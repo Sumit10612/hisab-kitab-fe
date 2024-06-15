@@ -28,10 +28,6 @@ export class ExpenseService {
 	private lastRetrievedDoc: DocumentData | null = null;
 	private lastPageRetrieved = false;
 
-	private readonly groupRef = (id: string) => doc(this.firestore, "groups", id);
-	private readonly collectionRef = (groupId: string) => collection(doc(this.firestore, GROUP_COLLECTION_NAME, groupId), "expenses");
-	private readonly docCollectionRef = (groupId: string, id: string) => doc(this.collectionRef(groupId), id);
-
 	async getNext(groupId: string, initialGet = false): Promise<Expense[]> {
 		if (initialGet) {
 			this.lastRetrievedDoc = null;
@@ -45,12 +41,7 @@ export class ExpenseService {
 		const ref = collection(this.firestore, GROUP_COLLECTION_NAME, groupId, COLLECTION_NAME);
 		let queryRef = query(ref, orderBy("expenseDate", "desc"), limit(25));
 		if (this.lastRetrievedDoc) {
-			queryRef = query(
-				this.collectionRef(groupId),
-				orderBy("expenseDate", "desc"),
-				startAfter(this.lastRetrievedDoc),
-				limit(25)
-			);
+			queryRef = query(ref, orderBy("expenseDate", "desc"), startAfter(this.lastRetrievedDoc), limit(25));
 		}
 
 		const documentSnapshots = await getDocs(queryRef);
@@ -66,7 +57,7 @@ export class ExpenseService {
 		});
 	}
 
-	add(groupId: string, expense: Expense): Promise<void> {
+	add(groupId: string, expense: Expense): Promise<string> {
 		const groupRef = doc(this.firestore, GROUP_COLLECTION_NAME, groupId);
 		const ref = doc(collection(groupRef, COLLECTION_NAME));
 
@@ -84,6 +75,8 @@ export class ExpenseService {
 
 			transaction.update(groupRef, { groupTotal, monthTotal });
 			transaction.set(ref, toFirestoreModel(expense));
+
+			return ref.id;
 		});
 	}
 

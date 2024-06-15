@@ -2,8 +2,6 @@ import {
 	Component,
 	ElementRef,
 	inject,
-	Input,
-	OnDestroy,
 	OnInit,
 	ViewChild
 } from "@angular/core";
@@ -14,9 +12,8 @@ import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 import { RouterLink } from "@angular/router";
 import { Store } from "@ngrx/store";
 import { groupBy, mapValues, pick } from "lodash-es";
-import { combineLatest, Subscription, tap } from "rxjs";
+import { filter, map, switchMap, tap } from "rxjs";
 
-import { Expense } from "../models/expense.model";
 import { getGroupImage, Group } from "../models/group.model";
 import { ToolbarButtonType } from "../models/toolbar.model";
 import { ToolbarConfigurationService } from "../services/toolbar-configuration.service";
@@ -27,11 +24,14 @@ import { getPreviousMonth, getYearMonth } from "../utilities/date";
 
 import { LayoutComponent } from "./shared/layout.component";
 import { ExpenseListComponent } from "./widgets/expense-list-widget.component";
+import { RouterSelector } from "../store/app.selector";
+import { CommonModule } from "@angular/common";
 
 @Component({
 	selector: "app-group-expesnse-detail",
 	standalone: true,
 	imports: [
+		CommonModule,
 		MatButtonToggleModule,
 		MatButtonModule,
 		MatIconModule,
@@ -49,7 +49,7 @@ import { ExpenseListComponent } from "./widgets/expense-list-widget.component";
 					
 					<span class="header-section-page-info-name">{{group?.name}}</span>
 
-					<a mat-icon-button [routerLink]="['/group', id]">
+					<a mat-icon-button [routerLink]="['/group', group?.id]" [disabled]="!group">
 						<mat-icon>settings</mat-icon>
 					</a>
 				</div>
@@ -86,12 +86,12 @@ import { ExpenseListComponent } from "./widgets/expense-list-widget.component";
 
 			<div section="detail" class="detail-section" #scrollContainer (scroll)="onScroll()">
 				@if (selectedTab === "expense") {
-					<app-expense-list [groupId]="id" [expensesByMonth]="groupedExpenses"></app-expense-list>
+					<app-expense-list [groupId]="group?.id" [expensesByMonth]="expenses$ | async"></app-expense-list>
 				} @else {
 					Summary
 				}
 
-				@if(loading) {
+				@if(loading$ | async) {
 					<div class="loading-spinner">
 						<mat-progress-spinner diameter="15" mode="indeterminate"></mat-progress-spinner>
 						<span class="loading-spinner-text">loading...</span>
@@ -174,21 +174,39 @@ import { ExpenseListComponent } from "./widgets/expense-list-widget.component";
 		}
 	`
 })
-export class GroupExpenseDetailComponent implements OnInit, OnDestroy {
+export class GroupExpenseDetailComponent implements OnInit {
 	@ViewChild("scrollContainer", { static: false }) scrollContainer: ElementRef | undefined;
 
 	private readonly toolbar = inject(ToolbarConfigurationService);
 	private readonly store = inject(Store);
 
-	private expenses$$?: Subscription;
-
-	protected groupedExpenses?: Record<string, Expense[]>;
 	protected group: Group | undefined;
 	protected getGroupImage = getGroupImage;
 	protected selectedTab: string = "expense";
 	protected loading = false;
-
-	@Input() id: string = "";
+	protected loading$ = this.store.select(ExpenseSelector.isLoading).pipe(
+		tap(loading => this.loading = loading)
+	);
+	protected expenses$ = this.store.select(RouterSelector.selectParams).pipe(
+		switchMap(params => this.store.select(GroupSelector.selectGroup(params["id"])).pipe(
+			tap(group => this.group = group),
+			filter(group => !!group),
+			switchMap(group => this.store.select(ExpenseSelector.selectAllExpenses).pipe(
+				tap(expenses => {
+					if (!expenses.length && group) {
+						this.store.dispatch(ExpenseAction.getNext({ groupId: group.id, initialGet: true }));
+					}
+				}),
+				map(expenses => {
+					const members = pick(group?.members ?? {}, group?.memberIds ?? []);
+					return mapValues(
+						groupBy(expenses, e => getYearMonth(e.expenseDate)),
+						es => es.map(e => ({ ...e, paidBy: members[e.paidBy].name }))
+					);
+				})
+			))
+		))
+	)
 
 	ngOnInit() {
 		this.toolbar.configure({
@@ -197,37 +215,11 @@ export class GroupExpenseDetailComponent implements OnInit, OnDestroy {
 				{
 					type: ToolbarButtonType.Primary,
 					label: "Add expense",
-					disabled: () => !this.id,
-					redirectTo: ["/group", this.id, "expense"]
+					disabled: () => !this.group?.id,
+					redirectTo: () => ["/group", this.group?.id ?? "", "expense"]
 				}
 			]
 		});
-
-		const group$ = this.store.select(GroupSelector.selectGroup(this.id)).pipe(
-			tap(group => {
-				this.group = group;
-				this.store.dispatch(ExpenseAction.getNext({ groupId: this.id, initialGet: true }));
-			})
-		);
-
-		this.expenses$$ = combineLatest([
-			group$,
-			this.store.select(ExpenseSelector.selectAll()),
-			this.store.select(ExpenseSelector.isLoading)
-		]).subscribe(([group, expenses, isLoading]) => {
-			this.loading = isLoading;
-			if (group?.memberIds.length) {
-				const members = pick(group.members, group.memberIds);
-				this.groupedExpenses = mapValues(
-					groupBy(expenses, e => getYearMonth(e.expenseDate)),
-					es => es.map(e => ({ ...e, paidBy: members[e.paidBy].name }))
-				);
-			}
-		});
-	}
-
-	ngOnDestroy(): void {
-		this.expenses$$?.unsubscribe();
 	}
 
 	protected get currentMonthTotal() {
@@ -246,8 +238,8 @@ export class GroupExpenseDetailComponent implements OnInit, OnDestroy {
 		}
 
 		const element = this.scrollContainer.nativeElement;
-		if (element.scrollHeight - element.clientHeight <= element.scrollTop + 1) {
-			this.store.dispatch(ExpenseAction.getNext({ groupId: this.id, initialGet: false }));
+		if ((element.scrollHeight - element.clientHeight <= element.scrollTop + 1) && this.group) {
+			this.store.dispatch(ExpenseAction.getNext({ groupId: this.group.id, initialGet: false }));
 		}
 	}
 }

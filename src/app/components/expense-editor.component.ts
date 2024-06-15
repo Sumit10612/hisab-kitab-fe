@@ -1,10 +1,4 @@
-import {
-	Component,
-	inject,
-	Input,
-	OnDestroy,
-	OnInit
-} from "@angular/core";
+import { Component, inject, OnInit } from "@angular/core";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { MatBottomSheet } from "@angular/material/bottom-sheet";
 import { provideNativeDateAdapter } from "@angular/material/core";
@@ -14,7 +8,7 @@ import { MatIconModule } from "@angular/material/icon";
 import { MatInputModule } from "@angular/material/input";
 import { MatSelectModule } from "@angular/material/select";
 import { Store } from "@ngrx/store";
-import { combineLatest, Subscription } from "rxjs";
+import { filter, switchMap, tap } from "rxjs";
 
 import { categoriesByGroup, getCategoryById } from "../models/category.model";
 import { Expense } from "../models/expense.model";
@@ -27,11 +21,15 @@ import { GroupSelector } from "../store/group/group.selector";
 
 import { CategorySelectorComponent } from "./category-selector.component";
 import { LayoutComponent } from "./shared/layout.component";
+import { RouterSelector } from "../store/app.selector";
+import { pick, values } from "lodash-es";
+import { CommonModule } from "@angular/common";
 
 @Component({
 	selector: "app-add-expense",
 	standalone: true,
 	imports: [
+		CommonModule,
 		MatIconModule,
 		MatFormFieldModule,
 		ReactiveFormsModule,
@@ -42,9 +40,10 @@ import { LayoutComponent } from "./shared/layout.component";
 	],
 	providers: [provideNativeDateAdapter()],
 	template: `
-		<app-layout [pageTitle]="(id ? 'Update' : 'Add') + ' an expense'">
+		@if (expense$ | async) {}
+		<app-layout [pageTitle]="(form.controls.id.value ? 'Update' : 'Add') + ' an expense'">
 			<div section="detail" class="detail-section">
-				<form [formGroup]="form" (ngSubmit)="submit()">
+				<form [formGroup]="form">
 					<mat-form-field>
 						<mat-label>Description</mat-label>
 						<input matInput [formControl]="form.controls.description" />
@@ -113,16 +112,17 @@ import { LayoutComponent } from "./shared/layout.component";
 	`,
 	],
 })
-export class ExpenseEditorComponent implements OnInit, OnDestroy {
+export class ExpenseEditorComponent implements OnInit {
 	private readonly bottomSheet = inject(MatBottomSheet);
 	private readonly formBuilder = inject(FormBuilder);
 	private readonly toolbar = inject(ToolbarConfigurationService);
 	private readonly store = inject(Store);
 
 	private selectedCategory = getCategoryById(101);
-	private subscription$$?: Subscription;
 
 	protected readonly form = this.formBuilder.group({
+		id: "",
+		groupId: "",
 		description: ["", Validators.required],
 		where: [""],
 		amount: this.formBuilder.control<number | null>(null, {
@@ -135,9 +135,24 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
 	protected categoryGroups = categoriesByGroup;
 	protected getCategoryById = getCategoryById;
 	protected members?: GroupMember[];
-
-	@Input() groupId: string = "";
-	@Input() id: string = "";
+	protected expense$ = this.store.select(RouterSelector.selectParams).pipe(
+		switchMap(params => this.store.select(GroupSelector.selectGroup(params["groupId"])).pipe(
+			filter(group => !!group),
+			switchMap((group) => this.store.select(ExpenseSelector.selectExpense(params["id"])).pipe(
+				tap(expense => {
+					this.selectedCategory = getCategoryById(expense?.category ?? 101);
+					this.members = values(pick(group?.members ?? {}, group?.memberIds ?? []));
+					const currentUser = this.members?.find(m => m.name === "You");
+					this.form.patchValue({
+						...expense,
+						category: this.selectedCategory?.name,
+						paidBy: expense ? expense.paidBy : currentUser?.id,
+						groupId: group?.id
+					});
+				})
+			))
+		))
+	);
 
 	ngOnInit(): void {
 		this.toolbar.configure({
@@ -146,37 +161,22 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
 				{
 					type: ToolbarButtonType.Warn,
 					label: "Delete",
-					visible: () => !!this.id,
-					action: () => this.store.dispatch(ExpenseAction.remove({ groupId: this.groupId, id: this.id }))
+					visible: () => !!this.form.controls.id.value,
+					action: () => {
+						const { id, groupId } = this.form.value;
+						if (id && groupId) {
+							this.store.dispatch(ExpenseAction.remove({ groupId, id }))
+						}
+					}
 				},
 				{
 					type: ToolbarButtonType.Primary,
-					label: this.id ? "Update" : "Submit",
+					label: this.form.controls.id.value ? "Update" : "Submit",
 					disabled: () => this.form.invalid || !this.form.dirty,
 					action: () => this.submit()
 				}
 			]
 		});
-
-		this.subscription$$ = combineLatest([
-			this.store.select(GroupSelector.selectGroup(this.groupId)),
-			this.store.select(ExpenseSelector.select(this.id))
-		]).subscribe(([group, expense]) => {
-			this.members = group?.memberIds.map(id => group.members[id]).filter(member => member);
-			const currentUser = this.members?.find(m => m.name === "You");
-			if (expense?.category) {
-				this.selectedCategory = getCategoryById(expense.category);
-			}
-			this.form.patchValue({
-				...expense,
-				category: this.selectedCategory?.name,
-				paidBy: this.id ? expense?.paidBy : currentUser?.id
-			});
-		});
-	}
-
-	ngOnDestroy(): void {
-		this.subscription$$?.unsubscribe();
 	}
 
 	openCategorySheet() {
@@ -191,8 +191,8 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
 	}
 
 	submit() {
-		const { description, where, amount, expenseDate, paidBy } = this.form.value;
-		if (!this.form.valid || !this.groupId || !expenseDate || !paidBy || !description) {
+		const { id, groupId, description, where, amount, expenseDate, paidBy } = this.form.value;
+		if (!this.form.valid || !groupId || !expenseDate || !paidBy || !description) {
 			return;
 		}
 
@@ -205,10 +205,10 @@ export class ExpenseEditorComponent implements OnInit, OnDestroy {
 			paidBy,
 		} as Expense;
 
-		if (this.id) {
-			this.store.dispatch(ExpenseAction.update({ groupId: this.groupId, id: this.id, expense }));
+		if (id) {
+			this.store.dispatch(ExpenseAction.update({ groupId, id, expense }));
 		} else {
-			this.store.dispatch(ExpenseAction.add({ groupId: this.groupId, expense }));
+			this.store.dispatch(ExpenseAction.add({ groupId, expense }));
 		}
 	}
 }

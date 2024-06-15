@@ -112,5 +112,5 @@ export class ExpenseListComponent {
 	}
 
 	@Input() groupId?: string;
-	@Input() expensesByMonth?: Record<string, Expense[]>;
+	@Input() expensesByMonth?: Record<string, Expense[]> | null;
 }

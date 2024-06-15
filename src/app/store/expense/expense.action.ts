@@ -19,12 +19,12 @@ export namespace ExpenseAction {
 
 	export const add = createAction(
 		`${ACTION_PREFIX} Add`,
-		props<{
-			groupId: string;
-			expense: Expense;
-		}>()
+		props<{ groupId: string; expense: Expense; }>()
 	);
-	export const addSuccess = createAction(`${ACTION_PREFIX} Add Success`);
+	export const addSuccess = createAction(
+		`${ACTION_PREFIX} Add Success`,
+		props<{ expense: Expense; }>()
+	);
 
 	export const update = createAction(
 		`${ACTION_PREFIX} Update`,
@@ -34,7 +34,10 @@ export namespace ExpenseAction {
 			expense: Expense;
 		}>()
 	);
-	export const updateSuccess = createAction(`${ACTION_PREFIX} Update Success`);
+	export const updateSuccess = createAction(
+		`${ACTION_PREFIX} Update Success`,
+		props<{ expense: Expense; }>()
+	);
 
 	export const remove = createAction(
 		`${ACTION_PREFIX} Delete`,
@@ -43,5 +46,10 @@ export namespace ExpenseAction {
 			id: string;
 		}>()
 	);
-	export const removeSuccess = createAction(`${ACTION_PREFIX} Delete Success`);
+	export const removeSuccess = createAction(
+		`${ACTION_PREFIX} Delete Success`,
+		props<{ id: string; }>()
+	);
+
+	export const reset = createAction(`${ACTION_PREFIX} Reset`);
 }

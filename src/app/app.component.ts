@@ -66,7 +66,7 @@ import { UserSelector } from "./store/user/user.selector";
 								[color]="getColor(actionBtn.type)"
 								[disabled]="actionBtn.disabled?.()"
 								[hidden]="!(actionBtn.visible?.() ?? true)"
-								[routerLink]="actionBtn.redirectTo"
+								[routerLink]="actionBtn.redirectTo?.()"
 								(click)="actionBtn.action?.()">
 									@if (actionBtn.icon) {
 										<mat-icon>{{actionBtn.icon}}</mat-icon>

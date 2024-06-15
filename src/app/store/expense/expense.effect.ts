@@ -36,8 +36,8 @@ export class ExpenseEffects {
 			switchMap(async ({ groupId, expense }) => {
 				this.notification.showLoading();
 				try {
-					await this.expenseService.add(groupId, expense);
-					return ExpenseAction.addSuccess();
+					const id = await this.expenseService.add(groupId, expense);
+					return ExpenseAction.addSuccess({ expense: { ...expense, id } });
 				} catch (error) {
 					return AppActions.handleError({ error });
 				} finally {
@@ -55,7 +55,7 @@ export class ExpenseEffects {
 				this.notification.showLoading();
 				try {
 					await this.expenseService.update(groupId, id, expense);
-					return ExpenseAction.updateSuccess();
+					return ExpenseAction.updateSuccess({ expense: { ...expense, id } });
 				} catch (error) {
 					return AppActions.handleError({ error });
 				} finally {
@@ -72,7 +72,7 @@ export class ExpenseEffects {
 				this.notification.showLoading();
 				try {
 					await this.expenseService.delete(groupId, id);
-					return ExpenseAction.removeSuccess();
+					return ExpenseAction.removeSuccess({ id });
 				} catch (error) {
 					return AppActions.handleError({ error });
 				} finally {

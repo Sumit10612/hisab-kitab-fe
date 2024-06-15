@@ -16,7 +16,7 @@ export interface ToolbarActionButton {
 	disabled?: () => boolean;
 	visible?: () => boolean;
 	action?: () => void;
-	redirectTo?: string | string[];
+	redirectTo?: () => string | string[];
 }
 
 export enum ToolbarButtonType {

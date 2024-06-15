@@ -12,6 +12,7 @@ import { GroupSelector } from "../store/group/group.selector";
 import { LayoutComponent } from "./shared/layout.component";
 import { GroupListWidgetComponent } from "./widgets/group-list-widget.component";
 import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
+import { ExpenseAction } from "../store/expense/expense.action";
 
 @Component({
 	selector: "app-home",
@@ -59,13 +60,15 @@ export class HomeComponent implements OnInit, OnDestroy {
 	protected groups: Group[] = [];
 
 	ngOnInit(): void {
+		this.store.dispatch(ExpenseAction.reset());
+
 		this.toolbar.configure({
 			profile: { visible: true },
 			actionBtns: [
 				{
 					type: ToolbarButtonType.Primary,
 					label: "Add Group",
-					redirectTo: "/group"
+					redirectTo: () => "/group"
 				}
 			]
 		});
