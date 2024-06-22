@@ -26,6 +26,8 @@ export interface Group extends UpsertGroup {
 export interface GroupMember {
 	id: string;
 	name: string;
+	paid: number;
+	share: number;
 	role?: MemberRole;
 }
 

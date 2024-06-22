@@ -1,9 +1,10 @@
 import { Component, Inject, inject } from "@angular/core";
+import { FormsModule } from "@angular/forms";
 import { MAT_BOTTOM_SHEET_DATA, MatBottomSheetRef } from "@angular/material/bottom-sheet";
-import { GroupMember } from "../../models/group.model";
 import { MatButtonModule } from "@angular/material/button";
 import { MatInputModule } from "@angular/material/input";
-import { FormsModule } from "@angular/forms";
+
+import { GroupMember } from "../../models/group.model";
 
 @Component({
 	selector: "app-paid-by-share",
@@ -79,6 +80,6 @@ export class PaidByShareComponent {
 		}) { }
 
 	close() {
-		this.bottomSheet.dismiss();
+		this.bottomSheet.dismiss(this.data.userShare);
 	}
 }

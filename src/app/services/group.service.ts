@@ -150,7 +150,7 @@ export class GroupService {
 			const memberIds = [...group.memberIds, userId];
 			const members = { ...group.members };
 			if (!group.members[userId]) {
-				members[userId] = { id: userId, name };
+				members[userId] = { id: userId, name, paid: 0, share: 0 };
 			} else {
 				members[userId].role = MemberRole.user;
 			}
