@@ -1,4 +1,4 @@
-import { createEntityAdapter, EntityState, Update } from "@ngrx/entity";
+import { createEntityAdapter, EntityState } from "@ngrx/entity";
 import { createReducer, on } from "@ngrx/store";
 
 import { Expense } from "../../models/expense.model";
@@ -22,7 +22,7 @@ const INITIAL_STATE: ExpenseState = {
 
 export const expenseReducer = createReducer<ExpenseState>(
 	INITIAL_STATE,
-	on(ExpenseAction.getNext, state => ({
+	on(ExpenseAction.getNext, (state): ExpenseState => ({
 		...state,
 		loading: true
 	})),

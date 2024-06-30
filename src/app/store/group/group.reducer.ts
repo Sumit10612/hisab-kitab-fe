@@ -1,10 +1,10 @@
 import { createEntityAdapter, EntityState } from "@ngrx/entity";
 import { createReducer, on } from "@ngrx/store";
+import { Timestamp } from "firebase/firestore";
 
 import { Group } from "../../models/group.model";
 
 import { GroupAction } from "./group.action";
-import { Timestamp } from "firebase/firestore";
 
 export interface GroupState {
 	groups: EntityState<Group>;

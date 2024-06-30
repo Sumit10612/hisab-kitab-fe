@@ -8,10 +8,17 @@ import {
 	query,
 	startAfter
 } from "@angular/fire/firestore";
-import { doc, DocumentData, runTransaction, Timestamp, Transaction } from "firebase/firestore";
+import {
+	doc,
+	DocumentData,
+	runTransaction,
+	Timestamp,
+	Transaction
+} from "firebase/firestore";
+import { keys } from "lodash-es";
 
 import { Expense, FirestoreExpense, fromFirestoreModel, toFirestoreModel } from "../models/expense.model";
-import { Group } from "../models/group.model";
+import { Group, GroupType } from "../models/group.model";
 import { getYearMonth } from "../utilities/date";
 import { throwIfNotFound } from "../utilities/firebase-errors";
 
@@ -38,11 +45,13 @@ export class ExpenseService {
 			return [];
 		}
 
-		const ref = collection(this.firestore, GROUP_COLLECTION_NAME, groupId, COLLECTION_NAME);
-		let queryRef = query(ref, orderBy("expenseDate", "desc"), limit(25));
-		if (this.lastRetrievedDoc) {
-			queryRef = query(ref, orderBy("expenseDate", "desc"), startAfter(this.lastRetrievedDoc), limit(25));
-		}
+		const queryRef = query(
+			collection(this.firestore, GROUP_COLLECTION_NAME, groupId, COLLECTION_NAME),
+			orderBy("expenseDate", "desc"),
+			orderBy("timestamp", "desc"),
+			this.lastRetrievedDoc ? startAfter(this.lastRetrievedDoc) : limit(25),
+			limit(25)
+		);
 
 		const documentSnapshots = await getDocs(queryRef);
 		this.lastRetrievedDoc = documentSnapshots.docs[documentSnapshots.docs.length - 1];
@@ -65,15 +74,28 @@ export class ExpenseService {
 			const groupSnapshot = await transaction.get(groupRef);
 			const groupDoc = throwIfNotFound(groupSnapshot).data() as Group;
 
-			// add new expense amount to group total
+			// Calculate new group total
 			const groupTotal = +(groupDoc.groupTotal ?? 0) + expense.amount;
 
-			// add new expense to the corresponding month for which the expense is created
+			// Calculate new month total for the specific month of the expense
 			const monthTotal = groupDoc.monthTotal ?? {};
 			const monthKey = getYearMonth(expense.expenseDate);
 			monthTotal[monthKey] = +(monthTotal[monthKey] ?? 0) + expense.amount;
 
-			transaction.update(groupRef, { groupTotal, monthTotal, modifiedAt: Timestamp.fromDate(new Date()) });
+			// Handle split expense type
+			if (groupDoc.groupType === GroupType.SpiltExpense) {
+				groupDoc.members[expense.paidBy].paid += expense.amount;
+				keys(expense.usersShare).forEach(memberId => {
+					groupDoc.members[memberId].share += expense.usersShare[memberId];
+				});
+			}
+
+			transaction.update(groupRef, {
+				groupTotal,
+				monthTotal,
+				modifiedAt: Timestamp.fromDate(new Date()),
+				members: groupDoc.members
+			});
 			transaction.set(ref, toFirestoreModel(expense));
 
 			return ref.id;
@@ -98,7 +120,27 @@ export class ExpenseService {
 				monthTotal[oldKey] = monthTotal[oldKey] - expenseDoc.amount;
 				monthTotal[newKey] = +(monthTotal[newKey] ?? 0) + updateExpense.amount;
 
-				transaction.update(groupRef, { groupTotal, monthTotal, modifiedAt: Timestamp.fromDate(new Date()) });
+				// Handle split expense type
+				if (groupDoc.groupType === GroupType.SpiltExpense) {
+					// Update the paid amount for the user who paid
+					groupDoc.members[expenseDoc.paidBy].paid -= expenseDoc.amount;
+					groupDoc.members[updateExpense.paidBy].paid += updateExpense.amount;
+
+					// Update the share for each user involved
+					keys(expenseDoc.usersShare).forEach(memberId => {
+						groupDoc.members[memberId].share -= expenseDoc.usersShare[memberId];
+					});
+					keys(updateExpense.usersShare).forEach(memberId => {
+						groupDoc.members[memberId].share += updateExpense.usersShare[memberId];
+					});
+				}
+
+				transaction.update(groupRef, {
+					groupTotal,
+					monthTotal,
+					members: groupDoc.members,
+					modifiedAt: Timestamp.fromDate(new Date())
+				});
 			}
 
 			transaction.set(ref, toFirestoreModel(updateExpense), { merge: true });
@@ -118,7 +160,23 @@ export class ExpenseService {
 			const monthTotal = groupDoc.monthTotal ?? [];
 			monthTotal[key] = monthTotal[key] - expenseDoc.amount;
 
-			transaction.update(groupRef, { groupTotal, monthTotal, modifiedAt: Timestamp.fromDate(new Date()) });
+			// Handle split expense type
+			if (groupDoc.groupType === GroupType.SpiltExpense) {
+				// Update the paid amount for the user who paid
+				groupDoc.members[expenseDoc.paidBy].paid -= expenseDoc.amount;
+
+				// Update the share for each user involved
+				keys(expenseDoc.usersShare).forEach(memberId => {
+					groupDoc.members[memberId].share -= expenseDoc.usersShare[memberId];
+				});
+			}
+
+			transaction.update(groupRef, {
+				groupTotal,
+				monthTotal,
+				members: groupDoc.members,
+				modifiedAt: Timestamp.fromDate(new Date())
+			});
 			transaction.delete(ref);
 		});
 	}

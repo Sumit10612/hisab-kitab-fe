@@ -1,27 +1,27 @@
-import { Component, inject, OnDestroy, OnInit } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { Component, inject, OnInit } from "@angular/core";
 import { Store } from "@ngrx/store";
-import { Subscription } from "rxjs";
 
-import { Group } from "../models/group.model";
 import { ToolbarButtonType } from "../models/toolbar.model";
 import { ToolbarConfigurationService } from "../services/toolbar-configuration.service";
+import { ExpenseAction } from "../store/expense/expense.action";
 import { GroupSelector } from "../store/group/group.selector";
 
 import { LayoutComponent } from "./shared/layout.component";
 import { GroupListWidgetComponent } from "./widgets/group-list-widget.component";
 import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
-import { ExpenseAction } from "../store/expense/expense.action";
 
 @Component({
 	selector: "app-home",
 	standalone: true,
 	imports: [
+		CommonModule,
 		GroupListWidgetComponent,
 		OverviewWidgetComponent,
 		LayoutComponent,
 	],
 	template: `
-		<app-layout headerHeight="152px">
+		<app-layout headerHeight="152px" *ngIf="((groups$ | async) || []) as groups">
 			<div section="header">
 				<app-overview-widget [groups]="groups"></app-overview-widget>
 			</div>
@@ -46,13 +46,11 @@ import { ExpenseAction } from "../store/expense/expense.action";
 		}
 	`]
 })
-export class HomeComponent implements OnInit, OnDestroy {
+export class HomeComponent implements OnInit {
 	private readonly toolbar = inject(ToolbarConfigurationService);
 	private readonly store = inject(Store);
 
-	private subscription$$?: Subscription;
-
-	protected groups: Group[] = [];
+	protected groups$ = this.store.select(GroupSelector.selectAll);
 
 	ngOnInit(): void {
 		this.store.dispatch(ExpenseAction.reset());
@@ -67,11 +65,5 @@ export class HomeComponent implements OnInit, OnDestroy {
 				}
 			]
 		});
-
-		this.subscription$$ = this.store.select(GroupSelector.selectAll).subscribe(groups => this.groups = groups);
-	}
-
-	ngOnDestroy(): void {
-		this.subscription$$?.unsubscribe();
 	}
 }

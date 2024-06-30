@@ -1,12 +1,18 @@
 import { Timestamp } from "firebase/firestore";
 
+export enum SplitType {
+	Equally = "eq",
+	ByShare = "share",
+	ByPercentage = "%"
+}
+
 export interface ExpenseBase {
 	id: string;
-    description: string;
+	description: string;
 	where?: string;
-    amount: number;
-    category?: number;
-    paidBy: string;
+	amount: number;
+	category?: number;
+	paidBy: string;
 	usersShare: Record<string, number>;
 }
 

@@ -1,3 +1,4 @@
+import { CommonModule } from "@angular/common";
 import {
 	Component,
 	ElementRef,
@@ -11,12 +12,13 @@ import { MatIconModule } from "@angular/material/icon";
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 import { RouterLink } from "@angular/router";
 import { Store } from "@ngrx/store";
-import { groupBy, mapValues, pick } from "lodash-es";
+import { groupBy, mapValues, pick, values } from "lodash-es";
 import { filter, map, switchMap, tap } from "rxjs";
 
-import { getGroupImage, Group } from "../models/group.model";
+import { getGroupImage, Group, GroupType } from "../models/group.model";
 import { ToolbarButtonType } from "../models/toolbar.model";
 import { ToolbarConfigurationService } from "../services/toolbar-configuration.service";
+import { RouterSelector } from "../store/app.selector";
 import { ExpenseAction } from "../store/expense/expense.action";
 import { ExpenseSelector } from "../store/expense/expense.selector";
 import { GroupSelector } from "../store/group/group.selector";
@@ -24,8 +26,7 @@ import { getPreviousMonth, getYearMonth } from "../utilities/date";
 
 import { LayoutComponent } from "./shared/layout.component";
 import { ExpenseListComponent } from "./widgets/expense-list-widget.component";
-import { RouterSelector } from "../store/app.selector";
-import { CommonModule } from "@angular/common";
+import { GroupBalancesComponent } from "./widgets/group-balances.component";
 
 @Component({
 	selector: "app-group-expesnse-detail",
@@ -37,6 +38,7 @@ import { CommonModule } from "@angular/common";
 		MatIconModule,
 		LayoutComponent,
 		MatProgressSpinnerModule,
+		GroupBalancesComponent,
 		ExpenseListComponent,
 		RouterLink
 	],
@@ -56,29 +58,30 @@ import { CommonModule } from "@angular/common";
 				<div class="header-section-group-info">
 					<div class="header-section-group-info-total">
 						<span class="header-section-group-info-total-amount">
-							&#8377; {{lastMonthTotal}}
+							&#8377; {{ isExpenseTracker ? lastMonthTotal : youPaid }}
 						</span>
-						<span class="label">last month</span>
+						<span class="label">{{ isExpenseTracker ? "last month" : "you paid" }}</span>
 					</div>
 
 					<div class="header-section-group-info-month">
 						<span class="header-section-group-info-month-amount">
-							&#8377; {{currentMonthTotal}}
+							&#8377; {{ isExpenseTracker ? currentMonthTotal : totalBalance }}
 						</span>
-						<span class="label">this month</span>
+						<span class="label">{{ isExpenseTracker ? "this month" : "total balance" }}</span>
 					</div>
 
 					<div class="header-section-group-info-total">
 						<span class="header-section-group-info-total-amount">
-							&#8377; {{group?.groupTotal}}
+							&#8377; {{ isExpenseTracker ? group?.groupTotal : yourShare }}
 						</span>
-						<span class="label">total</span>
+						<span class="label">{{ isExpenseTracker ? "total" : "your share" }}</span>
 					</div>
 				</div>
 
 				<div class="header-section-tab">
 					<mat-button-toggle-group [(value)]="selectedTab" hideSingleSelectionIndicator="true">
 						<mat-button-toggle value="expense">Expense</mat-button-toggle>
+						<mat-button-toggle *ngIf="!isExpenseTracker" value="balance">Balance</mat-button-toggle>
 						<mat-button-toggle value="summary">Summary</mat-button-toggle>
 					</mat-button-toggle-group>
 				</div>
@@ -87,6 +90,8 @@ import { CommonModule } from "@angular/common";
 			<div section="detail" class="detail-section" #scrollContainer (scroll)="onScroll()">
 				@if (selectedTab === "expense") {
 					<app-expense-list [groupId]="group?.id" [expensesByMonth]="expenses$ | async"></app-expense-list>
+				} @else if (selectedTab === "balance") {
+					<app-group-balances [group]="group"></app-group-balances>
 				} @else {
 					Summary
 				}
@@ -206,7 +211,7 @@ export class GroupExpenseDetailComponent implements OnInit {
 				})
 			))
 		))
-	)
+	);
 
 	ngOnInit() {
 		this.toolbar.configure({
@@ -222,14 +227,33 @@ export class GroupExpenseDetailComponent implements OnInit {
 		});
 	}
 
-	protected get currentMonthTotal() {
+	protected get isExpenseTracker(): boolean {
+		return this.group?.groupType === GroupType.ExpenseTracker;
+	}
+
+	protected get currentMonthTotal(): number {
 		const currentMonth = getYearMonth(new Date());
 		return this.group?.monthTotal[currentMonth] ?? 0;
+	}
+
+	protected get totalBalance(): number {
+		const you = values(this.group?.members).find(member => member.name === "You");
+		return (you?.paid ?? 0) - (you?.share ?? 0);
 	}
 
 	protected get lastMonthTotal() {
 		const lastMonth = getPreviousMonth(new Date());
 		return this.group?.monthTotal[getYearMonth(lastMonth)] ?? 0;
+	}
+
+	protected get youPaid(): number {
+		const you = values(this.group?.members).find(member => member.name === "You");
+		return you?.paid ?? 0;
+	}
+
+	protected get yourShare(): number {
+		const you = values(this.group?.members).find(member => member.name === "You");
+		return you?.share ?? 0;
 	}
 
 	protected onScroll() {

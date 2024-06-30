@@ -4,12 +4,12 @@ import { MatButtonModule } from "@angular/material/button";
 import { MatDividerModule } from "@angular/material/divider";
 import { MatIconModule } from "@angular/material/icon";
 
-import { categoriesByGroup } from "../models/category.model";
+import { categoriesByGroup } from "../../models/category.model";
 
 @Component({
 	selector: "app-category-selector",
 	standalone: true,
-	imports:[
+	imports: [
 		MatIconModule,
 		MatDividerModule,
 		MatButtonModule
