@@ -26,6 +26,7 @@ import { getPreviousMonth, getYearMonth } from "../utilities/date";
 
 import { LayoutComponent } from "./shared/layout.component";
 import { ExpenseListComponent } from "./widgets/expense-list-widget.component";
+import { GroupBalancesComponent } from "./widgets/group-balances.component";
 
 @Component({
 	selector: "app-group-expesnse-detail",
@@ -37,6 +38,7 @@ import { ExpenseListComponent } from "./widgets/expense-list-widget.component";
 		MatIconModule,
 		LayoutComponent,
 		MatProgressSpinnerModule,
+		GroupBalancesComponent,
 		ExpenseListComponent,
 		RouterLink
 	],
@@ -79,6 +81,7 @@ import { ExpenseListComponent } from "./widgets/expense-list-widget.component";
 				<div class="header-section-tab">
 					<mat-button-toggle-group [(value)]="selectedTab" hideSingleSelectionIndicator="true">
 						<mat-button-toggle value="expense">Expense</mat-button-toggle>
+						<mat-button-toggle *ngIf="!isExpenseTracker" value="balance">Balance</mat-button-toggle>
 						<mat-button-toggle value="summary">Summary</mat-button-toggle>
 					</mat-button-toggle-group>
 				</div>
@@ -87,6 +90,8 @@ import { ExpenseListComponent } from "./widgets/expense-list-widget.component";
 			<div section="detail" class="detail-section" #scrollContainer (scroll)="onScroll()">
 				@if (selectedTab === "expense") {
 					<app-expense-list [groupId]="group?.id" [expensesByMonth]="expenses$ | async"></app-expense-list>
+				} @else if (selectedTab === "balance") {
+					<app-group-balances [group]="group"></app-group-balances>
 				} @else {
 					Summary
 				}
