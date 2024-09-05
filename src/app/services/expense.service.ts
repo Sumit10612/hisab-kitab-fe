@@ -6,7 +6,8 @@ import {
 	limit,
 	orderBy,
 	query,
-	startAfter
+	startAfter,
+	where
 } from "@angular/fire/firestore";
 import {
 	doc,
@@ -60,6 +61,21 @@ export class ExpenseService {
 		}
 
 		return documentSnapshots.docs.map(doc => {
+			const expense = fromFirestoreModel(doc.data() as FirestoreExpense);
+			expense.id = doc.id;
+			return expense;
+		});
+	}
+
+	async getByDateRange(groupId: string, from: Date, to: Date): Promise<Expense[]> {
+		const queryRef = query(
+			collection(this.firestore, GROUP_COLLECTION_NAME, groupId, COLLECTION_NAME),
+			where("expenseDate", ">=", Timestamp.fromDate(from)),
+			where("expenseDate", "<=", Timestamp.fromDate(to))
+		);
+
+		const snapshot = await getDocs(queryRef);
+		return snapshot.docs.map(doc => {
 			const expense = fromFirestoreModel(doc.data() as FirestoreExpense);
 			expense.id = doc.id;
 			return expense;

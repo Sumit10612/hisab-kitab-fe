@@ -6,7 +6,7 @@ export interface ToolbarConfiguration {
 }
 
 export interface ToolbarButton {
-	visible?: boolean;
+	visible?: () => boolean;
 }
 
 export interface ToolbarActionButton {

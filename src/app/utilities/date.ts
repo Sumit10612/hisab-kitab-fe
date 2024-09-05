@@ -3,7 +3,7 @@ export const getYearMonth = (date: Date): string => `${date.getFullYear()}-${dat
 export const getPreviousMonth = (date: Date): Date => {
 	const month = date.getMonth();
 	const year = date.getFullYear();
-	if(month === 0) {
+	if (month === 0) {
 		date.setFullYear(year - 1);
 		date.setMonth(11);
 	} else {
@@ -11,4 +11,12 @@ export const getPreviousMonth = (date: Date): Date => {
 	}
 
 	return date;
+};
+
+export const getStartOfMonth = (date: Date): Date => {
+	return new Date(date.getFullYear(), date.getMonth(), 1);
+};
+
+export const getEndOfMonth = (date: Date): Date => {
+	return new Date(date.getFullYear(), date.getMonth() + 1, 0);
 };

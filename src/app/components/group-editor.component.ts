@@ -288,7 +288,7 @@ export class GroupEditorComponent implements OnInit {
 
 	ngOnInit(): void {
 		this.toolbar.configure({
-			back: { visible: true },
+			back: { visible: () => true },
 			actionBtns: [
 				{
 					type: ToolbarButtonType.Primary,

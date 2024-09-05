@@ -56,7 +56,7 @@ export class HomeComponent implements OnInit {
 		this.store.dispatch(ExpenseAction.reset());
 
 		this.toolbar.configure({
-			profile: { visible: true },
+			profile: { visible: () => true },
 			actionBtns: [
 				{
 					type: ToolbarButtonType.Primary,

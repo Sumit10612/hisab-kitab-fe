@@ -44,8 +44,8 @@ import { UserSelector } from "./store/user/user.selector";
 
 			@if (toolbar.config) {
 				<mat-toolbar>
-					@if (toolbar.config.back?.visible) {
-						<button mat-icon-button (click)="navigation.navigateBack()">
+					@if (toolbar.config.back?.visible()) {
+						<button mat-icon-button  (click)="navigation.navigateBack()">
 							<mat-icon>arrow_back</mat-icon>
 						</button>
 					}
@@ -62,17 +62,25 @@ import { UserSelector } from "./store/user/user.selector";
 
 					<div class="btn-group">
 						@for (actionBtn of toolbar.config.actionBtns; track actionBtn) {
-							<button mat-raised-button
-								[color]="getColor(actionBtn.type)"
-								[disabled]="actionBtn.disabled?.()"
-								[hidden]="!(actionBtn.visible?.() ?? true)"
-								[routerLink]="actionBtn.redirectTo?.()"
-								(click)="actionBtn.action?.()">
-									@if (actionBtn.icon) {
-										<mat-icon>{{actionBtn.icon}}</mat-icon>
-									}
-									{{actionBtn.label}}
-							</button>
+							@if (actionBtn.icon) {
+								<button mat-icon-button
+									[color]="getColor(actionBtn.type)"
+									[disabled]="actionBtn.disabled?.()"
+									[hidden]="!(actionBtn.visible?.() ?? true)"
+									[routerLink]="actionBtn.redirectTo?.()"
+									(click)="actionBtn.action?.()">
+										<mat-icon>{{actionBtn.icon}}</mat-icon> {{actionBtn.label}}
+								</button>
+							} @else {
+								<button mat-raised-button
+									[color]="getColor(actionBtn.type)"
+									[disabled]="actionBtn.disabled?.()"
+									[hidden]="!(actionBtn.visible?.() ?? true)"
+									[routerLink]="actionBtn.redirectTo?.()"
+									(click)="actionBtn.action?.()">
+										{{actionBtn.label}}
+								</button>
+							}
 						}
 					</div>
 				</mat-toolbar>
@@ -108,9 +116,7 @@ import { UserSelector } from "./store/user/user.selector";
 				display: flex;
 				gap: 8px;
 
-				> a, > button {
-					border-radius: 16px;
-				}
+				
 			}
 		}
 

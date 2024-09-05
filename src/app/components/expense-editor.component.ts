@@ -116,16 +116,18 @@ import { PaidByShareComponent } from "./widgets/paid-by-share.component";
 						</mat-form-field>
 					</div>
 
-					<div class="split">
-						<mat-label>Split:</mat-label>
-						<mat-button-toggle-group
-							[(value)]="selectedSplitType"
-							hideSingleSelectionIndicator="true"
-							(change)="onSplitTypeChanged($event)">
-							<mat-button-toggle [value]="splitType.Equally">Equally</mat-button-toggle>
-							<mat-button-toggle [value]="splitType.ByShare">By share</mat-button-toggle>
-						</mat-button-toggle-group>
-					</div>
+					@if (form.controls.groupType.value === groupType.SpiltExpense) {
+						<div class="split">
+							<mat-label>Split:</mat-label>
+							<mat-button-toggle-group
+								[(value)]="selectedSplitType"
+								hideSingleSelectionIndicator="true"
+								(change)="onSplitTypeChanged($event)">
+								<mat-button-toggle [value]="splitType.Equally">Equally</mat-button-toggle>
+								<mat-button-toggle [value]="splitType.ByShare">By share</mat-button-toggle>
+							</mat-button-toggle-group>
+						</div>
+					}
 				</form>
 			</div>
 		</app-layout>
@@ -239,7 +241,7 @@ export class ExpenseEditorComponent implements OnInit {
 
 	ngOnInit(): void {
 		this.toolbar.configure({
-			back: { visible: true },
+			back: { visible: () => true },
 			actionBtns: [
 				{
 					type: ToolbarButtonType.Warn,

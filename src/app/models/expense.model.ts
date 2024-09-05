@@ -6,6 +6,11 @@ export enum SplitType {
 	ByPercentage = "%"
 }
 
+export interface FilterExpense {
+	from: Date;
+	to: Date;
+}
+
 export interface ExpenseBase {
 	id: string;
 	description: string;
