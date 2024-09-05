@@ -2,14 +2,15 @@ import { CommonModule } from "@angular/common";
 import { Component, inject, Input, OnInit } from "@angular/core";
 import { MatBottomSheet } from "@angular/material/bottom-sheet";
 import { MatButtonModule } from "@angular/material/button";
+import { MatDividerModule } from "@angular/material/divider";
 import { MatIconModule } from "@angular/material/icon";
 
+import { getCategoryById } from "../models/category.model";
 import { DateOption, FilterCriteria } from "../models/filter-criteria.model";
 import { ExpenseService } from "../services/expense.service";
 import { getEndOfMonth, getPreviousMonth, getStartOfMonth } from "../utilities/date";
 
 import { FilterExpenseCriteriaComponent } from "./widgets/filter-expense-criteria.component";
-
 
 @Component({
 	selector: "app-expenses-summary",
@@ -17,7 +18,8 @@ import { FilterExpenseCriteriaComponent } from "./widgets/filter-expense-criteri
 	imports: [
 		CommonModule,
 		MatButtonModule,
-		MatIconModule
+		MatIconModule,
+		MatDividerModule
 	],
 	template: `
 		<div class="date-selection-section">
@@ -25,6 +27,24 @@ import { FilterExpenseCriteriaComponent } from "./widgets/filter-expense-criteri
 			<button mat-icon-button (click)="changeCriteria()">
 				<mat-icon>tune</mat-icon>
 			</button>
+		</div>
+
+		<div class="summary-container">
+			@if (hasData) {
+				@for (kvp of expenseSummary | keyvalue; track kvp) {
+					<div class="summary-record">
+						<div class="summary-record-name">
+							<mat-icon>{{getCategoryById(+kvp.key)?.icon}}</mat-icon>
+							<span>{{getCategoryById(+kvp.key)?.name}}</span>
+						</div>
+						<span>&#8377; {{kvp.value | number: '1.2-2'}}</span>
+					</div>
+
+					<mat-divider></mat-divider>
+				}
+			} @else {
+				No data available for selected criteria.
+			}
 		</div>
 	`,
 	styles: [`
@@ -34,13 +54,34 @@ import { FilterExpenseCriteriaComponent } from "./widgets/filter-expense-criteri
 			justify-content: space-between;
 			align-items: center;
 		}
+
+		.summary-container {
+			margin: 16px 0;
+
+			.summary-record {
+				display: flex;
+				justify-content: space-between;
+				gap: 8px;
+
+				&-name {
+					display: flex;
+					gap: 8px;
+				}
+			}
+
+			> mat-divider {
+				margin: 8px 16px;
+			}
+		}
 	`]
 })
 export class ExpensesSummaryComponent implements OnInit {
 	private readonly bottomSheet = inject(MatBottomSheet);
 	private readonly expenseService = inject(ExpenseService);
 
+	protected getCategoryById = getCategoryById;
 	protected filterCriteria?: FilterCriteria;
+	protected expenseSummary: Record<number, number> = {};
 
 	@Input() groupId?: string;
 
@@ -95,6 +136,19 @@ export class ExpensesSummaryComponent implements OnInit {
 			this.filterCriteria?.toDate
 		);
 
-		console.log(expenses);
+		this.expenseSummary = {};
+		expenses.forEach(expense => {
+			if (expense.category) {
+				if (!this.expenseSummary[expense.category]) {
+					this.expenseSummary[expense.category] = 0;
+				}
+
+				this.expenseSummary[expense.category] += expense.amount;
+			}
+		});
+	}
+
+	get hasData() {
+		return Object.keys(this.expenseSummary).length > 0;
 	}
 }
