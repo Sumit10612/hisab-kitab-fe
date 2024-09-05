@@ -44,6 +44,7 @@ export const categoriesByGroup: CategoryGroup[] = [
 			{ id: 202, name: "Movies", icon: "movie" },
 			{ id: 203, name: "Entertainment", icon: "confirmation_number" },
 			{ id: 204, name: "Sports", icon: "sports_soccer" },
+			{ id: 205, name: "Salon", icon: "content_cut" },
 		]
 	},
 	{
@@ -55,7 +56,8 @@ export const categoriesByGroup: CategoryGroup[] = [
 			{ id: 304, name: "Vegitable", icon: "eco" },
 			{ id: 305, name: "Dairy", icon: "local_drink" },
 			{ id: 306, name: "Food", icon: "fastfood" },
-			{ id: 307, name: "Beverage", icon: "local_cafe" }
+			{ id: 307, name: "Beverage", icon: "local_cafe" },
+			{ id: 308, name: "Non Veg", icon: "egg_alt" }
 
 		]
 	},
