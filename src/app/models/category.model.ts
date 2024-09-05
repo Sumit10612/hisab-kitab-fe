@@ -29,45 +29,45 @@ export const categoriesByGroup: CategoryGroup[] = [
 	{
 		name: "",
 		categories: [
-			{ id: 101, name: "Others", icon: "format_list_bulleted" },
-			{ id: 102, name: "Travel", icon: "airport_shuttle" },
-			{ id: 103, name: "Fuel", icon: "local_gas_station" },
-			{ id: 104, name: "Investment", icon: "savings" },
-			{ id: 105, name: "Bills", icon: "receipt_long" },
-			{ id: 106, name: "EMI", icon: "incomplete_circle" },
+			{ id: 101, name: "Others", icon: "●" },
+			{ id: 102, name: "Travel", icon: "✈️" },
+			{ id: 103, name: "Fuel", icon: "⛽" },
+			{ id: 104, name: "Investment", icon: "🏦" },
+			{ id: 105, name: "Bills", icon: "🧾" },
+			{ id: 106, name: "EMI", icon: "💸" },
 		]
 	},
 	{
 		name: "Entertainment",
 		categories: [
-			{ id: 201, name: "Shopping", icon: "shopping_cart" },
-			{ id: 202, name: "Movies", icon: "movie" },
-			{ id: 203, name: "Entertainment", icon: "confirmation_number" },
-			{ id: 204, name: "Sports", icon: "sports_soccer" },
-			{ id: 205, name: "Salon", icon: "content_cut" },
+			{ id: 201, name: "Shopping", icon: "🛍️" },
+			{ id: 202, name: "Movies", icon: "🎥" },
+			{ id: 203, name: "Entertainment", icon: "🎞️" },
+			{ id: 204, name: "Sports", icon: "🏸" },
+			{ id: 205, name: "Salon", icon: "💇‍♀️" },
 		]
 	},
 	{
 		name: "Food & drink",
 		categories: [
-			{ id: 301, name: "Dining", icon: "dining" },
-			{ id: 302, name: "Groceries", icon: "trolley" },
-			{ id: 303, name: "Liquor", icon: "liquor" },
-			{ id: 304, name: "Vegitable", icon: "eco" },
-			{ id: 305, name: "Dairy", icon: "local_drink" },
-			{ id: 306, name: "Food", icon: "fastfood" },
-			{ id: 307, name: "Beverage", icon: "local_cafe" },
-			{ id: 308, name: "Non Veg", icon: "egg_alt" }
-
+			{ id: 301, name: "Dining", icon: "🍽️" },
+			{ id: 302, name: "Groceries", icon: "🛒" },
+			{ id: 303, name: "Liquor", icon: "🍺" },
+			{ id: 304, name: "Vegitable", icon: "🫛" },
+			{ id: 305, name: "Dairy", icon: "🥛" },
+			{ id: 306, name: "Food", icon: "🍔" },
+			{ id: 307, name: "Beverage", icon: "🍵" },
+			{ id: 308, name: "Non Veg", icon: "🍗" },
+			{ id: 309, name: "Fruits", icon: "🍇 " }
 		]
 	},
 	{
 		name: "Home",
 		categories: [
-			{ id: 401, name: "Electronics", icon: "tv_gen" },
-			{ id: 402, name: "Furniture", icon: "chair" },
-			{ id: 403, name: "Household supplies", icon: "household_supplies" },
-			{ id: 404, name: "Maintenance", icon: "engineering" },
+			{ id: 401, name: "Electronics", icon: "📺" },
+			{ id: 402, name: "Furniture", icon: "🪑" },
+			{ id: 403, name: "Household supplies", icon: "🏠" },
+			{ id: 404, name: "Maintenance", icon: "🛠️" },
 		]
 	}
 ];

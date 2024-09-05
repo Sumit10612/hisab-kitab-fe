@@ -23,7 +23,7 @@ import { categoriesByGroup } from "../../models/category.model";
                     @for (category of group.categories; track category) {
                         <div  class="category">
                             <button mat-icon-button (click)="onCategorySelected(category.id)">
-                                <mat-icon>{{category.icon}}</mat-icon>
+								{{category.icon}}
                             </button>
                             <span>{{category.name}}</span>
                         </div>
@@ -44,10 +44,6 @@ import { categoriesByGroup } from "../../models/category.model";
             display: flex;
             gap: 16px;
             flex-wrap: wrap;
-
-            .mat-icon {
-                transform: scale(1.2);
-            }
 
             .category {
                 display: flex;

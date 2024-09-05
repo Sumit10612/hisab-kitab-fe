@@ -51,7 +51,7 @@ import { FilterExpenseCriteriaComponent } from "./widgets/filter-expense-criteri
 				@for (kvp of expenseSummary | keyvalue; track kvp) {
 					<div class="summary-record">
 						<div class="summary-record-name">
-							<mat-icon>{{getCategoryById(+kvp.key)?.icon}}</mat-icon>
+							<span>{{getCategoryById(+kvp.key)?.icon}}</span>
 							<span>{{getCategoryById(+kvp.key)?.name}}</span>
 						</div>
 						<span>&#8377; {{kvp.value | number: '1.2-2'}}</span>
