@@ -7,6 +7,7 @@ import { MatIconModule } from "@angular/material/icon";
 
 import { getCategoryById } from "../models/category.model";
 import { DateOption, FilterCriteria } from "../models/filter-criteria.model";
+import { Group } from "../models/group.model";
 import { ExpenseService } from "../services/expense.service";
 import { getEndOfMonth, getPreviousMonth, getStartOfMonth } from "../utilities/date";
 
@@ -23,12 +24,28 @@ import { FilterExpenseCriteriaComponent } from "./widgets/filter-expense-criteri
 	],
 	template: `
 		<div class="date-selection-section">
-			{{ filterCriteria?.fromDate | date: "dd/MMM/yy" }} - {{ filterCriteria?.toDate | date: "dd/MMM/yy" }}
+			<h4>{{ filterCriteria?.fromDate | date: "dd/MMM/yy" }} - {{ filterCriteria?.toDate | date: "dd/MMM/yy" }}</h4>
 			<button mat-icon-button (click)="changeCriteria()">
 				<mat-icon>tune</mat-icon>
 			</button>
 		</div>
 
+		<div class="summary-container">
+			@for (kvp of paidBySummary | keyvalue; track kvp) {
+				<div class="summary-record">
+					<span>{{kvp.key}}</span>
+					<span>&#8377; {{kvp.value | number: '1.2-2'}}</span>
+				</div>
+				<mat-divider></mat-divider>
+			}
+
+			<div class="summary-record">
+				<span>Total</span>
+				<span>&#8377; {{totalAmount | number: '1.2-2'}}</span>
+			</div>
+		</div>
+
+		<h4>Spends by Categories:</h4>
 		<div class="summary-container">
 			@if (hasData) {
 				@for (kvp of expenseSummary | keyvalue; track kvp) {
@@ -82,8 +99,10 @@ export class ExpensesSummaryComponent implements OnInit {
 	protected getCategoryById = getCategoryById;
 	protected filterCriteria?: FilterCriteria;
 	protected expenseSummary: Record<number, number> = {};
+	protected paidBySummary: Record<string, number> = {};
+	protected totalAmount: number = 0;
 
-	@Input() groupId?: string;
+	@Input() group?: Group;
 
 	ngOnInit() {
 		const today = new Date();
@@ -126,17 +145,19 @@ export class ExpensesSummaryComponent implements OnInit {
 			this.filterCriteria.toDate = getEndOfMonth(lastMonth);
 		}
 
-		if(!this.groupId || !this.filterCriteria?.fromDate || !this.filterCriteria.toDate) {
+		if(!this.group?.id || !this.filterCriteria?.fromDate || !this.filterCriteria.toDate) {
 			return;
 		}
 
 		const expenses = await this.expenseService.getByDateRange(
-			this.groupId, 
+			this.group.id, 
 			this.filterCriteria?.fromDate, 
 			this.filterCriteria?.toDate
 		);
 
 		this.expenseSummary = {};
+		this.paidBySummary = {};
+		this.totalAmount = 0;
 		expenses.forEach(expense => {
 			if (expense.category) {
 				if (!this.expenseSummary[expense.category]) {
@@ -145,6 +166,14 @@ export class ExpensesSummaryComponent implements OnInit {
 
 				this.expenseSummary[expense.category] += expense.amount;
 			}
+
+			const memberName = this.group?.members[expense.paidBy].name ?? "";
+			if(!this.paidBySummary[memberName]) {
+				this.paidBySummary[memberName] = 0;
+			}
+
+			this.paidBySummary[memberName] += expense.amount;
+			this.totalAmount += expense.amount;
 		});
 	}
 

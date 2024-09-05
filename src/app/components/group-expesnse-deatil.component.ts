@@ -45,51 +45,49 @@ import { GroupBalancesComponent } from "./widgets/group-balances.component";
 		RouterLink
 	],
 	template: `
-		<app-layout [headerHeight]="selectedTab === 'summary' ? '0px' : '160px'">
+		<app-layout [headerHeight]="'160px'">
 			<div section="header" class="header-section">
-				@if (selectedTab !== "summary") {
-					<div class="header-section-page-info">
-						<img width="50" height="50" [src]="getGroupImage(group?.imageUrl).src"
-							[alt]="getGroupImage(group?.imageUrl).alt" />
-						
-						<span class="header-section-page-info-name">{{group?.name}}</span>
+				<div class="header-section-page-info">
+					<img width="50" height="50" [src]="getGroupImage(group?.imageUrl).src"
+						[alt]="getGroupImage(group?.imageUrl).alt" />
+					
+					<span class="header-section-page-info-name">{{group?.name}}</span>
 
-						<a mat-icon-button [routerLink]="['/group', group?.id]" [disabled]="!group">
-							<mat-icon>settings</mat-icon>
-						</a>
+					<a mat-icon-button [routerLink]="['/group', group?.id]" [disabled]="!group">
+						<mat-icon>settings</mat-icon>
+					</a>
+				</div>
+
+				<div class="header-section-group-info">
+					<div class="header-section-group-info-total">
+						<span class="header-section-group-info-total-amount">
+							&#8377; {{ isExpenseTracker ? lastMonthTotal : youPaid }}
+						</span>
+						<span class="label">{{ isExpenseTracker ? "last month" : "you paid" }}</span>
 					</div>
 
-					<div class="header-section-group-info">
-						<div class="header-section-group-info-total">
-							<span class="header-section-group-info-total-amount">
-								&#8377; {{ isExpenseTracker ? lastMonthTotal : youPaid }}
-							</span>
-							<span class="label">{{ isExpenseTracker ? "last month" : "you paid" }}</span>
-						</div>
-
-						<div class="header-section-group-info-month">
-							<span class="header-section-group-info-month-amount">
-								&#8377; {{ isExpenseTracker ? currentMonthTotal : totalBalance }}
-							</span>
-							<span class="label">{{ isExpenseTracker ? "this month" : "total balance" }}</span>
-						</div>
-
-						<div class="header-section-group-info-total">
-							<span class="header-section-group-info-total-amount">
-								&#8377; {{ isExpenseTracker ? group?.groupTotal : yourShare }}
-							</span>
-							<span class="label">{{ isExpenseTracker ? "total" : "your share" }}</span>
-						</div>
+					<div class="header-section-group-info-month">
+						<span class="header-section-group-info-month-amount">
+							&#8377; {{ isExpenseTracker ? currentMonthTotal : totalBalance }}
+						</span>
+						<span class="label">{{ isExpenseTracker ? "this month" : "total balance" }}</span>
 					</div>
 
-					<div class="header-section-tab">
-						<mat-button-toggle-group [(value)]="selectedTab" hideSingleSelectionIndicator="true">
-							<mat-button-toggle value="expense">Expense</mat-button-toggle>
-							<mat-button-toggle *ngIf="!isExpenseTracker" value="balance">Balance</mat-button-toggle>
-							<mat-button-toggle value="summary">Summary</mat-button-toggle>
-						</mat-button-toggle-group>
+					<div class="header-section-group-info-total">
+						<span class="header-section-group-info-total-amount">
+							&#8377; {{ isExpenseTracker ? group?.groupTotal : yourShare }}
+						</span>
+						<span class="label">{{ isExpenseTracker ? "total" : "your share" }}</span>
 					</div>
-				}
+				</div>
+
+				<div class="header-section-tab">
+					<mat-button-toggle-group [(value)]="selectedTab" hideSingleSelectionIndicator="true">
+						<mat-button-toggle value="expense">Expense</mat-button-toggle>
+						<mat-button-toggle *ngIf="!isExpenseTracker" value="balance">Balance</mat-button-toggle>
+						<mat-button-toggle value="summary">Summary</mat-button-toggle>
+					</mat-button-toggle-group>
+				</div>
 			</div>
 
 			<div section="detail" class="detail-section" #scrollContainer (scroll)="onScroll()">
@@ -98,7 +96,7 @@ import { GroupBalancesComponent } from "./widgets/group-balances.component";
 				} @else if (selectedTab === "balance") {
 					<app-group-balances [group]="group"></app-group-balances>
 				} @else {
-					<app-expenses-summary [groupId]="group?.id"></app-expenses-summary>
+					<app-expenses-summary [group]="group"></app-expenses-summary>
 				}
 
 				@if(loading$ | async) {
@@ -269,7 +267,7 @@ export class GroupExpenseDetailComponent implements OnInit {
 	}
 
 	protected onScroll() {
-		if (this.loading || !this.scrollContainer?.nativeElement.scrollTop) {
+		if (this.loading || !this.scrollContainer?.nativeElement.scrollTop || this.selectedTab !== "expense") {
 			return;
 		}
 
