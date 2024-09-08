@@ -24,7 +24,7 @@ import { FilterExpenseCriteriaComponent } from "./widgets/filter-expense-criteri
 	],
 	template: `
 		<div class="date-selection-section">
-			<h4>{{ filterCriteria?.fromDate | date: "dd/MMM/yy" }} - {{ filterCriteria?.toDate | date: "dd/MMM/yy" }}</h4>
+			<span>{{ filterCriteria?.fromDate | date: "dd/MMM/yy" }} - {{ filterCriteria?.toDate | date: "dd/MMM/yy" }}</span>
 			<button mat-icon-button (click)="changeCriteria()">
 				<mat-icon>tune</mat-icon>
 			</button>
@@ -51,7 +51,7 @@ import { FilterExpenseCriteriaComponent } from "./widgets/filter-expense-criteri
 				@for (kvp of expenseSummary | keyvalue; track kvp) {
 					<div class="summary-record">
 						<div class="summary-record-name">
-							<span>{{getCategoryById(+kvp.key)?.icon}}</span>
+							<span class="emojis">{{getCategoryById(+kvp.key)?.icon}}</span>
 							<span>{{getCategoryById(+kvp.key)?.name}}</span>
 						</div>
 						<span>&#8377; {{kvp.value | number: '1.2-2'}}</span>
@@ -87,7 +87,7 @@ import { FilterExpenseCriteriaComponent } from "./widgets/filter-expense-criteri
 			}
 
 			> mat-divider {
-				margin: 8px 16px;
+				margin: 8px 0;
 			}
 		}
 	`]

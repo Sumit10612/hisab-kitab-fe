@@ -51,7 +51,7 @@ export const categoriesByGroup: CategoryGroup[] = [
 		name: "Food & drink",
 		categories: [
 			{ id: 301, name: "Dining", icon: "🍽️" },
-			{ id: 302, name: "Groceries", icon: "🛒" },
+			{ id: 302, name: "Groceries", icon: "🧺" },
 			{ id: 303, name: "Liquor", icon: "🍺" },
 			{ id: 304, name: "Vegitable", icon: "🫛" },
 			{ id: 305, name: "Dairy", icon: "🥛" },

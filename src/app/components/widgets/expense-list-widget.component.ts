@@ -1,6 +1,5 @@
 import { CommonModule } from "@angular/common";
 import { Component, Input } from "@angular/core";
-import { MatButtonModule } from "@angular/material/button";
 import { MatDividerModule } from "@angular/material/divider";
 import { MatIconModule } from "@angular/material/icon";
 import { RouterLink } from "@angular/router";
@@ -15,8 +14,7 @@ import { Expense } from "../../models/expense.model";
 		CommonModule,
 		MatDividerModule,
 		MatIconModule,
-		RouterLink,
-		MatButtonModule
+		RouterLink
 	],
 	template: `
 		@for (kvp of expensesByMonth | keyvalue: noSort; track kvp) {
@@ -28,7 +26,7 @@ import { Expense } from "../../models/expense.model";
 							<span class="expense-date-month">{{expense.expenseDate | date: "MMM" | uppercase}}</span>
 							<span class="expense-date-date">{{expense.expenseDate | date: "dd"}}</span>
 						</span>
-						<button mat-icon-button>{{getCategory(expense?.category ?? 0)?.icon}}</button>
+						<span class="emojis">{{getCategory(expense?.category ?? 0)?.icon}}</span>
 						<span class="expense-desc">
 							<span>{{expense.description}}</span>
 							@if (expense.where) {
@@ -58,7 +56,7 @@ import { Expense } from "../../models/expense.model";
 			}
 
 			> mat-divider {
-				margin: 8px 16px;
+				margin: 4px 16px;
 			}
 
 			.expense-record {
