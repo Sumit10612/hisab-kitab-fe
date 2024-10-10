@@ -69,5 +69,14 @@ export const categoriesByGroup: CategoryGroup[] = [
 			{ id: 403, name: "Household supplies", icon: "🏠" },
 			{ id: 404, name: "Maintenance", icon: "🛠️" },
 		]
+	},
+	{
+		name: "Investment",
+		categories: [
+			{ id: 501, name: "Bank", icon: "🏦" },
+			{ id: 502, name: "Stocks", icon: "📈" },
+			{ id: 503, name: "MFs", icon: "📊"},
+			{ id: 504, name: "Gold", icon: "🪙"}
+		]
 	}
 ];
