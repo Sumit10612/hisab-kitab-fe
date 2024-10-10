@@ -35,6 +35,10 @@ export namespace GroupAction {
 	);
 
 	export const addMember = createAction(`${ACTION_PREFIX} Add Member`, props<{ code: number }>());
+	export const addVirtualMember = createAction(
+		`${ACTION_PREFIX} Add Virtual Member`, 
+		props<{ groupId: string; name: string }>()
+	);
 	export const addMemberSuccess = createAction(`${ACTION_PREFIX} Add Member Success`);
 
 	export const removeMember = createAction(

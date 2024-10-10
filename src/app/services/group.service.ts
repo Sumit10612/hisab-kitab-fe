@@ -125,7 +125,7 @@ export class GroupService {
 		});
 	}
 
-	async addMemeberToGroup(userId: string, name: string, code: number): Promise<string> {
+	async addMemeberToGroupViaCode(userId: string, name: string, code: number): Promise<string> {
 		const ref = collection(this.firestore, GROUP_CODE_COLLECTION_NAME);
 		const q = query(ref, where("code", "==", code), limit(1));
 
@@ -142,7 +142,11 @@ export class GroupService {
 			throw "Invalide code";
 		}
 
-		const groupRef = doc(this.firestore, GROUP_COLLECTION_NAME, groupCodeDoc.id);
+		return this.addMemberToGroup(groupCodeDoc.id, userId, name);
+	}
+
+	async addMemberToGroup(groupId: string, userId: string, name: string, isVirtual?: boolean): Promise<string> {
+		const groupRef = doc(this.firestore, GROUP_COLLECTION_NAME, groupId);
 		const groupSnapshot = await getDoc(groupRef);
 		const group = throwIfNotFound(groupSnapshot).data() as Group;
 		const existingMemberId = group.memberIds.find(id => id === userId);
@@ -150,7 +154,7 @@ export class GroupService {
 			const memberIds = [...group.memberIds, userId];
 			const members = { ...group.members };
 			if (!group.members[userId]) {
-				members[userId] = { id: userId, name, paid: 0, share: 0 };
+				members[userId] = { id: userId, name, paid: 0, share: 0, isVirtual };
 			} else {
 				members[userId].role = MemberRole.user;
 			}

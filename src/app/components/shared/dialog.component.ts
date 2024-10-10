@@ -36,7 +36,7 @@ import { DialogButtonType, DialogData } from "../../models/dialog.model";
 		<mat-dialog-actions>
 			@for (actionButton of data.actionButtons; track $index) {
 				@if (actionButton.type === buttonType.Close) {
-					<button mat-flat-button mat-dialog-close>{{actionButton.label}}</button>
+					<button mat-raised-button mat-dialog-close>{{actionButton.label}}</button>
 				}
 
 				@if(actionButton.type === buttonType.Primary) {

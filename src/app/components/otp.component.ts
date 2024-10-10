@@ -28,7 +28,7 @@ import { Otp } from "../models/otp.model";
 		MatFormFieldModule,
 		MatInputModule
 	],
-	template: `  
+	template: `
 	<div class="heading">Please enter a four digit code</div>
 	<form [formGroup]="otpForm">
 		<div class="container">

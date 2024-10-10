@@ -1,7 +1,7 @@
 import { inject, Injectable } from "@angular/core";
 import { Actions, createEffect, ofType } from "@ngrx/effects";
 import { Store } from "@ngrx/store";
-import { round } from "lodash-es";
+import { random, round, sample, times } from "lodash-es";
 import {
 	map,
 	mergeMap,
@@ -182,7 +182,32 @@ export class GroupEffects {
 							throw ErrorCode.NOT_FOUND;
 						}
 
-						await this.groupService.addMemeberToGroup(user.uid, user.name ?? "", code);
+						await this.groupService.addMemeberToGroupViaCode(user.uid, user.name ?? "", code);
+						return GroupAction.addMemberSuccess();
+					} catch (error) {
+						return AppActions.handleError({ error });
+					} finally {
+						this.notification.hideLoading();
+					}
+				})
+			))
+		);
+	});
+
+	addVirtualMember$ = createEffect(() => {
+		return this.action$.pipe(
+			ofType(GroupAction.addVirtualMember),
+			switchMap(({ groupId, name }) => this.store.select(UserSelector.select).pipe(
+				take(1),
+				switchMap(async user => {
+					this.notification.showLoading();
+					try {
+						if (!user) {
+							throw ErrorCode.NOT_FOUND;
+						}
+						const segment = () => random(0, 15).toString(16);
+						const uid = `${times(8, segment).join("")}-${times(4, segment).join("")}-4${times(3, segment).join("")}-${sample(["8", "9", "a", "b"])}${times(3, segment).join("")}-${times(12, segment).join("")}`;
+						await this.groupService.addMemberToGroup(groupId, uid, name, true);
 						return GroupAction.addMemberSuccess();
 					} catch (error) {
 						return AppActions.handleError({ error });

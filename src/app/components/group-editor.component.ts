@@ -6,7 +6,7 @@ import {
 	TemplateRef,
 	ViewChild
 } from "@angular/core";
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
+import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatCardModule } from "@angular/material/card";
 import { MatDividerModule } from "@angular/material/divider";
@@ -42,6 +42,7 @@ import { LayoutComponent } from "./shared/layout.component";
 	standalone: true,
 	imports: [
 		CommonModule,
+		FormsModule,
 		ReactiveFormsModule,
 		LayoutComponent,
 		MatButtonModule,
@@ -52,7 +53,7 @@ import { LayoutComponent } from "./shared/layout.component";
 		MatIconModule,
 		MatRadioModule,
 		MatSlideToggleModule,
-		OtpComponent
+		OtpComponent,
 	],
 	template: `
 		<app-layout headerHeight="224px" [pageTitle]="isEdit ? 'Settings' : 'Create a group'">
@@ -82,7 +83,7 @@ import { LayoutComponent } from "./shared/layout.component";
 					[formControl]="form.controls.groupType"
 					[hidden]="isEdit">
 					<mat-radio-button [value]="groupType.ExpenseTracker">Track Expenses</mat-radio-button>
-					<mat-radio-button [value]="groupType.SpiltExpense" disabled>Split Bills</mat-radio-button>
+					<mat-radio-button [value]="groupType.SpiltExpense">Split Bills</mat-radio-button>
 				</mat-radio-group>
 
 				@if (form.controls.groupType.value === groupType.ExpenseTracker &&
@@ -90,12 +91,6 @@ import { LayoutComponent } from "./shared/layout.component";
 					<mat-slide-toggle [formControl]="form.controls.excludeTotal">
 						&nbsp;&nbsp;exclude from combined total
 					</mat-slide-toggle>
-				}
-						
-				@if (currentUser?.role === "admin") {
-					<button mat-raised-button color="primary" class="rounded-button" (click)="openAddMemberDialog()">
-						Invite Member
-					</button>
 				}
 
 				<mat-card *ngIf="group$ | async as group">
@@ -115,7 +110,7 @@ import { LayoutComponent } from "./shared/layout.component";
 											{{isAdmin(member) ? "Remove" : "Make"}} admin
 										</button>
 										<button mat-button color="warn" [disabled]="isCurrentUser(member)"
-											(click)="removeMember(member.id)">
+											(click)="removeMember(member.id, member.name)">
 											<mat-icon>person_remove</mat-icon>
 										</button>
 									</div>
@@ -126,10 +121,15 @@ import { LayoutComponent } from "./shared/layout.component";
 					</mat-card-content>
 				</mat-card>
 
-				@if (isEdit) {
-					<button mat-raised-button color="warn" class="rounded-button" (click)="removeMember()">
-						Leave Group
-					</button>
+				@if (currentUser?.role === "admin") {
+					<div class="btn-group">
+						<button mat-raised-button color="primary" (click)="openAddVirtualMemberDialog()">
+							Add Virtual Member
+						</button>
+						<button mat-raised-button color="primary" (click)="openAddMemberDialog()">
+							Invite Member
+						</button>
+					</div>
 				}
 			</div>
 		</app-layout>
@@ -146,6 +146,13 @@ import { LayoutComponent } from "./shared/layout.component";
 					Please wait, generating new code...
 				</ng-template>
 			</div>
+		</ng-template>
+
+		<ng-template #addVirtualMemberToGroupDialogTemplate>
+			<mat-form-field>
+				<mat-label>Name</mat-label>
+				<input matInput [(ngModel)]="virtualMemberName" />
+			</mat-form-field>
 		</ng-template>
 
 		<ng-template #joinGroupDialogTemplate>
@@ -187,7 +194,7 @@ import { LayoutComponent } from "./shared/layout.component";
 
 			> mat-card {
 				width: 100%;
-				height: 250px;
+				height: 300px;
 				border-radius: 24px;
 
 				> mat-card-content {
@@ -222,6 +229,11 @@ import { LayoutComponent } from "./shared/layout.component";
 					}
 				}
 			}
+
+			.btn-group {
+				display: flex;
+				gap: 8px;
+			}
 		}
 
 		.add-user-to-group-template {
@@ -243,6 +255,7 @@ import { LayoutComponent } from "./shared/layout.component";
 export class GroupEditorComponent implements OnInit {
 	@ViewChild("joinGroupDialogTemplate") joinGroupDialogTemplate: TemplateRef<unknown> | undefined;
 	@ViewChild("addUserToGroupDialogTemplate") addUserToGroupDialogTemplate: TemplateRef<unknown> | undefined;
+	@ViewChild("addVirtualMemberToGroupDialogTemplate") addVirtualMemberToGroupDialogTemplate: TemplateRef<unknown> | undefined;
 
 	private readonly dialog = inject(DialogService);
 	private readonly toolbar = inject(ToolbarConfigurationService);
@@ -262,6 +275,7 @@ export class GroupEditorComponent implements OnInit {
 	protected members: GroupMember[] | undefined;
 	protected currentUser: GroupMember | undefined;
 	protected groupType = GroupType;
+	protected virtualMemberName?: string;
 
 	protected group$ = this.store.select(RouterSelector.selectParams).pipe(
 		filter(params => !!params["id"]),
@@ -298,7 +312,13 @@ export class GroupEditorComponent implements OnInit {
 				},
 				{
 					type: ToolbarButtonType.Warn,
-					label: "Delete Group",
+					label: "Leave",
+					visible: () => this.isEdit,
+					action: () => this.removeMember()
+				},
+				{
+					type: ToolbarButtonType.Warn,
+					label: "Delete",
 					visible: () => this.isEdit && this.currentUser?.role === "admin",
 					action: () => this.deleteGroup()
 				},
@@ -376,6 +396,33 @@ export class GroupEditorComponent implements OnInit {
 		});
 	}
 
+	openAddVirtualMemberDialog() {
+		const dialogRef = this.dialog.open({
+			data: {
+				template: this.addVirtualMemberToGroupDialogTemplate,
+				actionButtons: [
+					{
+						type: DialogButtonType.Close,
+						label: "Close"
+					},
+					{
+						type: DialogButtonType.Primary,
+						label: "Add",
+						disabled: () => !this.virtualMemberName,
+						action: () => {
+							const groupId = this.form.controls.id.value;
+							if(groupId && this.virtualMemberName) {
+								this.store.dispatch(GroupAction.addVirtualMember({ groupId, name: this.virtualMemberName }));
+							}
+						}
+					}
+				]
+			}
+		});
+
+		dialogRef.afterClosed().subscribe(_ => this.virtualMemberName = undefined);
+	}
+
 	openJoinGroupDialog() {
 		this.dialog.open<DialogData<Otp>>({
 			data: {
@@ -416,8 +463,23 @@ export class GroupEditorComponent implements OnInit {
 		}));
 	}
 
-	removeMember(memberId?: string) {
-		this.store.dispatch(GroupAction.removeMember({ id: this.form.controls.id.value, memberId }));
+	removeMember(memberId?: string, name?: string) {
+		this.dialog.open({
+			data: {
+				message: memberId ? `Are you sure want to remove ${name} from this group?` : "Are you sure want to leave this group?",
+				actionButtons: [
+					{
+						type: DialogButtonType.Close,
+						label: "Cancel"
+					},
+					{
+						type: DialogButtonType.Primary,
+						label: "Yes",
+						action: () => this.store.dispatch(GroupAction.removeMember({ id: this.form.controls.id.value, memberId }))
+					}
+				]
+			}
+		});
 	}
 
 	deleteGroup() {

@@ -29,6 +29,7 @@ export interface GroupMember {
 	paid: number;
 	share: number;
 	role?: MemberRole;
+	isVirtual?: boolean;
 }
 
 export enum MemberRole {
