@@ -23,7 +23,7 @@ import { getYearMonth } from "../../utilities/date";
 				<span class="group-name">{{group?.name}}</span>
 
 				<div class="group-total">
-					<span>&#8377;{{group?.groupType === groupType.SpiltExpense ? group?.groupTotal ?? 0 : currentMonthTotal(group)}}</span>
+					<span>&#8377;{{group?.groupType === groupType.SpiltExpense ? group.groupTotal : currentMonthTotal(group)}}</span>
 					<span class="group-total-text">
 						{{group?.groupType === groupType.SpiltExpense ? "total balance" : "this month"}}
 					</span>

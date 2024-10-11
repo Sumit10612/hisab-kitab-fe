@@ -47,12 +47,23 @@ import { PaidByShareComponent } from "./widgets/paid-by-share.component";
 	providers: [provideNativeDateAdapter()],
 	template: `
 		@if (expense$ | async) {}
-		<app-layout [pageTitle]="(form.controls.id.value ? 'Update' : 'Add') + ' an expense'">
+		<app-layout [pageTitle]="(form.controls.id.value ? 'Update' : 'Add') + ' an expense'"  headerHeight="160px">
 			@if (form.controls.groupType.value === groupType.SpiltExpense) {
 				<div section="header" class="header-section">
+					<div class="split">
+						<mat-label>Split:</mat-label>
+						<mat-button-toggle-group
+							[(value)]="selectedSplitType"
+							hideSingleSelectionIndicator="true"
+							(change)="onSplitTypeChanged($event)">
+							<mat-button-toggle [value]="splitType.Equally">Equally</mat-button-toggle>
+							<mat-button-toggle [value]="splitType.ByShare">By share</mat-button-toggle>
+						</mat-button-toggle-group>
+					</div>
+
 					<div class="shares">
 						@for (member of members; track member) {
-							<mat-card>
+							<mat-card (click)="onSplitTypeChanged()">
 								<div class="shares-share">
 									<span>{{member.name.split(' ')[0]}}</span>
 									<span>&#8377;{{userShare[member.id] || 0 | number: '1.2-2'}}</span>
@@ -115,27 +126,38 @@ import { PaidByShareComponent } from "./widgets/paid-by-share.component";
 							<mat-datepicker #dp></mat-datepicker>
 						</mat-form-field>
 					</div>
-
-					@if (form.controls.groupType.value === groupType.SpiltExpense) {
-						<div class="split">
-							<mat-label>Split:</mat-label>
-							<mat-button-toggle-group
-								[(value)]="selectedSplitType"
-								hideSingleSelectionIndicator="true"
-								(change)="onSplitTypeChanged($event)">
-								<mat-button-toggle [value]="splitType.Equally">Equally</mat-button-toggle>
-								<mat-button-toggle [value]="splitType.ByShare">By share</mat-button-toggle>
-							</mat-button-toggle-group>
-						</div>
-					}
 				</form>
 			</div>
 		</app-layout>
 	`,
 	styles: [`
 		.header-section {
+			display: flex;
+			flex-direction: column;
+			gap: 16px;
+			
+			.split {
+				display: flex;
+				align-items: center;
+				gap: 16px;
+
+				> mat-label {
+					flex: 1;
+				}
+
+				.mat-button-toggle-group {
+					height: 32px;
+					border-radius: 16px;
+					align-items: center;
+				}
+			}
+
+			.split::after{
+				content: '';
+				flex: 1
+			}
+			
 			.shares {
-				padding: 16px 0;
 				display: flex;
 				gap: 8px;
 				width: 100%;
@@ -152,36 +174,16 @@ import { PaidByShareComponent } from "./widgets/paid-by-share.component";
 
 		.detail-section {
 			margin: 32px 16px;
-			
-			.split {
-				display: flex;
-				align-items: center;
-				gap: 16px;
 
-				> mat-label {
-					flex: 1;
-				}
-
-				.mat-button-toggle-group {
-					border-radius: 16px;
-					align-items: center;
-				}
+			.row {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				grid-gap: 16px;
 			}
 
-			.split::after{
-				content: '';
-				flex: 1
+			.amount-input {
+				text-align: right;
 			}
-		}
-
-		.row {
-			display: grid;
-			grid-template-columns: 1fr 1fr;
-			grid-gap: 16px;
-		}
-
-		.amount-input {
-			text-align: right;
 		}
 	`,
 	],

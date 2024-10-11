@@ -1,7 +1,7 @@
 import { inject, Injectable } from "@angular/core";
 import { Actions, createEffect, ofType } from "@ngrx/effects";
 import { Store } from "@ngrx/store";
-import { random, round, sample, times } from "lodash-es";
+import { random, round, sample, times, values } from "lodash-es";
 import {
 	map,
 	mergeMap,
@@ -10,7 +10,7 @@ import {
 	tap
 } from "rxjs";
 
-import { Group, MemberRole } from "../../models/group.model";
+import { Group, GroupType, MemberRole } from "../../models/group.model";
 import { GroupService } from "../../services/group.service";
 import { NavigationService } from "../../services/navigation.service";
 import { NotificationService } from "../../services/notification.service";
@@ -46,6 +46,11 @@ export class GroupEffects {
 							])
 						)
 					} as Group;
+
+					if(group.groupType === GroupType.SpiltExpense) {
+						const you = values(group.members).find(member => member.id === userId);
+						group.groupTotal = round((you?.paid ?? 0) - (you?.share ?? 0));
+					}
 
 					switch (changeDoc.type) {
 						case "added": return GroupAction.added({ group });

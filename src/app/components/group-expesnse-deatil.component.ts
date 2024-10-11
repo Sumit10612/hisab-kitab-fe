@@ -68,7 +68,7 @@ import { GroupBalancesComponent } from "./widgets/group-balances.component";
 
 					<div class="header-section-group-info-month">
 						<span class="header-section-group-info-month-amount">
-							&#8377; {{ isExpenseTracker ? currentMonthTotal : totalBalance }}
+							&#8377; {{ isExpenseTracker ? currentMonthTotal : group?.groupTotal}}
 						</span>
 						<span class="label">{{ isExpenseTracker ? "this month" : "total balance" }}</span>
 					</div>
@@ -244,11 +244,6 @@ export class GroupExpenseDetailComponent implements OnInit {
 	protected get currentMonthTotal(): number {
 		const currentMonth = getYearMonth(new Date());
 		return this.group?.monthTotal[currentMonth] ?? 0;
-	}
-
-	protected get totalBalance(): number {
-		const you = values(this.group?.members).find(member => member.name === "You");
-		return (you?.paid ?? 0) - (you?.share ?? 0);
 	}
 
 	protected get lastMonthTotal() {

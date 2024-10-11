@@ -1,15 +1,13 @@
-import { Component, Input } from "@angular/core";
+import { ChangeDetectionStrategy, Component, Input } from "@angular/core";
 import { keys } from "lodash-es";
 
 import { Group } from "../../models/group.model";
 
-
 @Component({
 	selector: "app-group-balances",
 	standalone: true,
-	imports: [
-
-	],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [ ],
 	template: `
 		@if(group) {
 			<div class="container">
@@ -28,7 +26,10 @@ import { Group } from "../../models/group.model";
 			</div>
 
 			@for (payment of settleExpenses(); track payment) {
-				{{payment.from}} -> {{payment.to}} : {{payment.amount}}
+				<div>
+					{{getUsername(payment.from)}} -> {{getUsername(payment.to)}} : 
+					<span class="right">&#8377; {{payment.amount}}</span>
+				</div>
 			}
 		}
 	`,
@@ -101,6 +102,10 @@ export class GroupBalancesComponent {
 		}
 
 		return payments;
+	}
+
+	protected getUsername(id: string) {
+		return this.group?.members[id].name;
 	}
 }
 
