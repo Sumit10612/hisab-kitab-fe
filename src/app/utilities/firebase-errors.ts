@@ -15,6 +15,8 @@ export const getFirebaseErrorMessage = (err: unknown): string => {
 		}
 	}
 
+	console.log(err);
+
 	return "An unspecified error occurred. Please contact the system administrator.";
 };
 

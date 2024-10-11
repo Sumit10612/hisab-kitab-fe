@@ -145,7 +145,7 @@ export class GroupService {
 		return this.addMemberToGroup(groupCodeDoc.id, userId, name);
 	}
 
-	async addMemberToGroup(groupId: string, userId: string, name: string, isVirtual?: boolean): Promise<string> {
+	async addMemberToGroup(groupId: string, userId: string, name: string, isVirtual: boolean = false): Promise<string> {
 		const groupRef = doc(this.firestore, GROUP_COLLECTION_NAME, groupId);
 		const groupSnapshot = await getDoc(groupRef);
 		const group = throwIfNotFound(groupSnapshot).data() as Group;
