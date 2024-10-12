@@ -68,4 +68,7 @@ export const groupImages: Image[] = [
 	{ src: "https://img.icons8.com/fluency/96/ping-pong.png", alt: "Sports" },
 	{ src: "https://img.icons8.com/color-glass/96/rupee.png", alt: "Investment" },
 	{ src: "https://img.icons8.com/color/96/group.png", alt: "Others" },
+	{ src: "https://img.icons8.com/color/96/car.png", alt: "Vehicle" },
+	{ src: "https://img.icons8.com/fluency/96/transfer-between-users.png", alt: "Exchange" },
+	{ src: "https://img.icons8.com/fluency/96/gift.png", alt: "Gifts" },
 ];
