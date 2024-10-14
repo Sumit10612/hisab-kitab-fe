@@ -84,6 +84,9 @@ export class GroupEffects {
 									id: user.uid,
 									name: user.name,
 									role: MemberRole.admin,
+									paid: 0,
+									share: 0,
+									isVirtual: false
 								}
 							}
 						} as Group;
