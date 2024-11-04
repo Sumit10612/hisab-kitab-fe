@@ -27,14 +27,24 @@ export const getCategoryById = (id: number): Category | undefined => {
 
 export const categoriesByGroup: CategoryGroup[] = [
 	{
-		name: "",
+		name: "Misc",
 		categories: [
 			{ id: 101, name: "Others", icon: "●" },
-			{ id: 102, name: "Travel", icon: "✈️" },
 			{ id: 103, name: "Fuel", icon: "⛽" },
 			{ id: 104, name: "Investment", icon: "🏦" },
 			{ id: 105, name: "Bills", icon: "🧾" },
 			{ id: 106, name: "EMI", icon: "💸" },
+		]
+	},
+	{
+		name: "Travel",
+		categories: [
+			{ id: 102, name: "Travel", icon: "🚀" },
+			{ id: 601, name: "Bus", icon: "🚎" },
+			{ id: 602, name: "Train", icon: "🚂" },
+			{ id: 603, name: "Flight", icon: "🛩️" },
+			{ id: 604, name: "Cab", icon: "🚕" },
+			{ id: 605, name: "Ferry", icon: "🚢" }
 		]
 	},
 	{
