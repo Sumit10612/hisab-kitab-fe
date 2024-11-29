@@ -137,7 +137,6 @@ import { PaidByShareComponent } from "./widgets/paid-by-share.component";
 			flex-direction: column;
 			justify-content: center;
 			align-items: center;
-			height: calc(100% - 48px);
 
 			.row {
 				display: grid;
@@ -172,7 +171,7 @@ import { PaidByShareComponent } from "./widgets/paid-by-share.component";
 			}
 		}
 	`,
-	],
+	]
 })
 export class ExpenseEditorComponent implements OnInit, AfterViewInit {
 	private readonly bottomSheet = inject(MatBottomSheet);
