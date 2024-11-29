@@ -38,3 +38,19 @@ mat-form-field {
 	font-size: 20px;
 	text-align: center;
 }
+
+::-webkit-input-placeholder {
+	font-style: italic;
+}
+
+:-moz-placeholder {
+	font-style: italic;  
+}
+
+::-moz-placeholder {
+	font-style: italic;  
+}
+
+:-ms-input-placeholder {  
+	font-style: italic; 
+}

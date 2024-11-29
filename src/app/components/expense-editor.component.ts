@@ -1,5 +1,12 @@
 import { CommonModule } from "@angular/common";
-import { Component, inject, OnInit } from "@angular/core";
+import {
+	AfterViewInit,
+	Component,
+	ElementRef,
+	inject,
+	OnInit,
+	ViewChild
+} from "@angular/core";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { MatBottomSheet } from "@angular/material/bottom-sheet";
 import { MatButtonToggleChange, MatButtonToggleModule } from "@angular/material/button-toggle";
@@ -47,42 +54,32 @@ import { PaidByShareComponent } from "./widgets/paid-by-share.component";
 	providers: [provideNativeDateAdapter()],
 	template: `
 		@if (expense$ | async) {}
-		<app-layout [pageTitle]="(form.controls.id.value ? 'Update' : 'Add') + ' an expense'"  headerHeight="160px">
-			@if (form.controls.groupType.value === groupType.SpiltExpense) {
-				<div section="header" class="header-section">
-					<div class="split">
-						<mat-label>Split:</mat-label>
-						<mat-button-toggle-group
-							[(value)]="selectedSplitType"
-							hideSingleSelectionIndicator="true"
-							(change)="onSplitTypeChanged($event)">
-							<mat-button-toggle [value]="splitType.Equally">Equally</mat-button-toggle>
-							<mat-button-toggle [value]="splitType.ByShare">By share</mat-button-toggle>
-						</mat-button-toggle-group>
-					</div>
-
-					<div class="shares">
-						@for (member of members; track member) {
-							<mat-card (click)="onSplitTypeChanged()">
-								<div class="shares-share">
-									<span>{{member.name.split(' ')[0]}}</span>
-									<span>&#8377;{{userShare[member.id] || 0 | number: '1.2-2'}}</span>
-								</div>
-							</mat-card>
-						}
-					</div>
-				</div>
-			}
-
+		<app-layout [pageTitle]="(form.controls.id.value ? 'Update' : 'Add') + ' an expense'"  headerHeight="48px">
 			<div section="detail" class="detail-section">
 				<form [formGroup]="form">
+					<div class="row">
+						<mat-form-field>
+							<mat-label>Paid by</mat-label>
+							<mat-select [formControl]="form.controls.paidBy">
+								@for (member of members; track member) {
+									<mat-option [value]="member.id">
+										{{member.name}}
+									</mat-option>
+								}
+							</mat-select>
+						</mat-form-field>
+						<mat-form-field>
+							<input matInput [matDatepicker]="dp" [formControl]="form.controls.expenseDate">
+							<mat-datepicker-toggle matIconSuffix [for]="dp"></mat-datepicker-toggle>
+							<mat-datepicker #dp></mat-datepicker>
+						</mat-form-field>
+					</div>
+
 					<mat-form-field>
-						<mat-label>Description</mat-label>
-						<input matInput [formControl]="form.controls.description" />
+						<input matInput placeholder="What is this expense for?" [formControl]="form.controls.description" #focusInput />
 					</mat-form-field>
 					<mat-form-field>
-						<mat-label>Paid at</mat-label>
-						<input matInput [formControl]="form.controls.where" />
+						<input matInput placeholder="Where did you pay this?" [formControl]="form.controls.where" />
 					</mat-form-field>
 					<div class="row">
 						<mat-form-field appearance="fill" floatLabel="always">
@@ -108,60 +105,63 @@ import { PaidByShareComponent } from "./widgets/paid-by-share.component";
 							<mat-icon matSuffix (click)="openCategorySheet()">arrow_drop_down</mat-icon>
 						</mat-form-field>
 					</div>
-
-					<div class="row">
-						<mat-form-field>
-							<mat-label>Paid by</mat-label>
-							<mat-select [formControl]="form.controls.paidBy">
-								@for (member of members; track member) {
-									<mat-option [value]="member.id">
-										{{member.name}}
-									</mat-option>
-								}
-							</mat-select>
-						</mat-form-field>
-						<mat-form-field>
-							<input matInput [matDatepicker]="dp" [formControl]="form.controls.expenseDate">
-							<mat-datepicker-toggle matIconSuffix [for]="dp"></mat-datepicker-toggle>
-							<mat-datepicker #dp></mat-datepicker>
-						</mat-form-field>
-					</div>
 				</form>
+
+				@if (form.controls.groupType.value === groupType.SpiltExpense) {
+					<mat-button-toggle-group
+						[(value)]="selectedSplitType"
+						hideSingleSelectionIndicator="true"
+						(change)="onSplitTypeChanged($event)">
+						<mat-button-toggle [value]="splitType.Equally">Split equally</mat-button-toggle>
+						<mat-button-toggle [value]="splitType.ByShare">By share</mat-button-toggle>
+					</mat-button-toggle-group>
+
+					<div class="shares">
+						@for (member of members; track member) {
+							<mat-card (click)="onSplitTypeChanged()">
+								<div class="shares-share">
+									<span>{{member.name.split(' ')[0]}}</span>
+									<span>&#8377;{{userShare[member.id] || 0 | number: '1.2-2'}}</span>
+								</div>
+							</mat-card>
+						}
+					</div>
+				}
 			</div>
 		</app-layout>
 	`,
 	styles: [`
-		.header-section {
+		.detail-section {
+			margin: 32px 16px;
 			display: flex;
 			flex-direction: column;
-			gap: 16px;
-			
-			.split {
-				display: flex;
+			justify-content: center;
+			align-items: center;
+			height: calc(100% - 48px);
+
+			.row {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				grid-gap: 16px;
+			}
+
+			.mat-button-toggle-group {
+				height: 32px;
+				border-radius: 16px;
 				align-items: center;
-				gap: 16px;
-
-				> mat-label {
-					flex: 1;
-				}
-
-				.mat-button-toggle-group {
-					height: 32px;
-					border-radius: 16px;
-					align-items: center;
-				}
 			}
 
-			.split::after{
-				content: '';
-				flex: 1
+			.amount-input {
+				text-align: right;
 			}
-			
+
 			.shares {
 				display: flex;
 				gap: 8px;
 				width: 100%;
-				overflow-x: scroll;
+				padding-top: 16px;
+				justify-content: center;
+				align-items: center;
 
 				&-share {
 					padding: 8px;
@@ -171,24 +171,10 @@ import { PaidByShareComponent } from "./widgets/paid-by-share.component";
 				}
 			}
 		}
-
-		.detail-section {
-			margin: 32px 16px;
-
-			.row {
-				display: grid;
-				grid-template-columns: 1fr 1fr;
-				grid-gap: 16px;
-			}
-
-			.amount-input {
-				text-align: right;
-			}
-		}
 	`,
 	],
 })
-export class ExpenseEditorComponent implements OnInit {
+export class ExpenseEditorComponent implements OnInit, AfterViewInit {
 	private readonly bottomSheet = inject(MatBottomSheet);
 	private readonly formBuilder = inject(FormBuilder);
 	private readonly toolbar = inject(ToolbarConfigurationService);
@@ -241,6 +227,8 @@ export class ExpenseEditorComponent implements OnInit {
 		))
 	);
 
+	@ViewChild("focusInput") focusInput?: ElementRef;
+
 	ngOnInit(): void {
 		this.toolbar.configure({
 			back: { visible: () => true },
@@ -264,6 +252,10 @@ export class ExpenseEditorComponent implements OnInit {
 				}
 			]
 		});
+	}
+
+	ngAfterViewInit(): void {
+		this.focusInput?.nativeElement.focus();
 	}
 
 	onSplitTypeChanged(event?: MatButtonToggleChange) {
