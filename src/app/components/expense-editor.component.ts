@@ -297,6 +297,7 @@ export class ExpenseEditorComponent implements OnInit, AfterViewInit {
 				if (selectedCategoryId && typeof selectedCategoryId === "number" && selectedCategoryId > 0) {
 					this.selectedCategory = getCategoryById(selectedCategoryId);
 					this.form.controls.category.setValue(this.selectedCategory?.name || "");
+					this.form.markAsDirty();
 				}
 			});
 	}
