@@ -81,6 +81,19 @@ import { PaidByShareComponent } from "./widgets/paid-by-share.component";
 					<mat-form-field>
 						<input matInput placeholder="Where did you pay this?" [formControl]="form.controls.where" />
 					</mat-form-field>
+
+					@if (form.controls.groupType.value === groupType.SpiltExpense) {
+						<div class="shares-tab">
+							<mat-button-toggle-group
+								[(value)]="selectedSplitType"
+								hideSingleSelectionIndicator="true"
+								(change)="onSplitTypeChanged($event)">
+								<mat-button-toggle [value]="splitType.Equally">Split equally</mat-button-toggle>
+								<mat-button-toggle [value]="splitType.ByShare">By share</mat-button-toggle>
+							</mat-button-toggle-group>
+						</div>
+					}
+
 					<div class="row">
 						<mat-form-field appearance="fill" floatLabel="always">
 							<mat-label>Amount</mat-label>
@@ -108,22 +121,12 @@ import { PaidByShareComponent } from "./widgets/paid-by-share.component";
 				</form>
 
 				@if (form.controls.groupType.value === groupType.SpiltExpense) {
-					<mat-button-toggle-group
-						[(value)]="selectedSplitType"
-						hideSingleSelectionIndicator="true"
-						(change)="onSplitTypeChanged($event)">
-						<mat-button-toggle [value]="splitType.Equally">Split equally</mat-button-toggle>
-						<mat-button-toggle [value]="splitType.ByShare">By share</mat-button-toggle>
-					</mat-button-toggle-group>
-
 					<div class="shares">
 						@for (member of members; track member) {
-							<mat-card (click)="onSplitTypeChanged()">
-								<div class="shares-share">
-									<span>{{member.name.split(' ')[0]}}</span>
-									<span>&#8377;{{userShare[member.id] || 0 | number: '1.2-2'}}</span>
-								</div>
-							</mat-card>
+							<div class="shares-share" (click)="onSplitTypeChanged()">
+								<span>{{member.name.split(' ')[0]}}</span>
+								<span>&#8377;{{userShare[member.id] || 0 | number: '1.2-2'}}</span>
+							</div>
 						}
 					</div>
 				}
@@ -154,19 +157,20 @@ import { PaidByShareComponent } from "./widgets/paid-by-share.component";
 				text-align: right;
 			}
 
+			.shares-tab {
+				display: flex;
+				padding-bottom: 24px;
+				justify-content: center;
+			}
+
 			.shares {
 				display: flex;
-				gap: 8px;
+				flex-direction: column;
 				width: 100%;
-				padding-top: 16px;
-				justify-content: center;
-				align-items: center;
 
 				&-share {
-					padding: 8px;
 					display: flex;
-					flex-direction: column;
-					text-align: center;
+					justify-content: space-between;
 				}
 			}
 		}
