@@ -3,6 +3,7 @@ import { Component, Input } from "@angular/core";
 import { MatDividerModule } from "@angular/material/divider";
 import { MatIconModule } from "@angular/material/icon";
 import { RouterLink } from "@angular/router";
+import { map, pickBy, size } from "lodash-es";
 
 import { getCategoryById } from "../../models/category.model";
 import { Expense } from "../../models/expense.model";
@@ -30,8 +31,11 @@ import { Expense } from "../../models/expense.model";
 						<span class="expense-desc">
 							<span>{{expense.description}}</span>
 							@if (expense.where) {
-							<span class="expense-desc-where">at {{expense.where}}</span>
+								<span class="expense-desc-where">at {{expense.where}}</span>
 							}
+							<span class="expense-desc-user-shares">
+								{{getUserSharesToDisplay(expense)}}
+							</span>
 						</span>
 						<span class="expense-amount">
 							<span class="expense-amount-paid-by">{{expense.paidBy.split(' ')[0] | lowercase}} paid</span>
@@ -90,6 +94,10 @@ import { Expense } from "../../models/expense.model";
 					&-where {
 						font-size: 0.6rem;
 					}
+
+					&-user-shares {
+						font-size: 0.6rem;
+					}
 				}
 
 				.expense-amount {
@@ -107,10 +115,19 @@ import { Expense } from "../../models/expense.model";
 export class ExpenseListComponent {
 	protected getCategory = getCategoryById;
 
+	@Input() groupId?: string;
+	@Input() expensesByMonth?: Record<string, Expense[]> | null;
+
+	protected getUserSharesToDisplay(expense: Expense): string | undefined {
+		const usersShare = pickBy(expense.usersShare, value => value > 0);
+		if(size(usersShare) === 0) {
+			return undefined;
+		}
+
+		return map(usersShare, (value, key) => `${key}: ${value}`).join(" | ");
+	}
+
 	protected noSort() {
 		return 0;
 	}
-
-	@Input() groupId?: string;
-	@Input() expensesByMonth?: Record<string, Expense[]> | null;
 }

@@ -12,7 +12,13 @@ import { MatIconModule } from "@angular/material/icon";
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 import { RouterLink } from "@angular/router";
 import { Store } from "@ngrx/store";
-import { groupBy, mapValues, pick, values } from "lodash-es";
+import {
+	groupBy,
+	mapKeys,
+	mapValues,
+	pick,
+	values
+} from "lodash-es";
 import { filter, map, switchMap, tap } from "rxjs";
 
 import { getGroupImage, Group, GroupType } from "../models/group.model";
@@ -209,7 +215,11 @@ export class GroupExpenseDetailComponent implements OnInit {
 					const members = pick(group?.members ?? {}, group?.memberIds ?? []);
 					return mapValues(
 						groupBy(expenses, e => getYearMonth(e.expenseDate)),
-						es => es.map(e => ({ ...e, paidBy: members[e.paidBy].name }))
+						es => es.map(e => ({
+							...e, 
+							paidBy: members[e.paidBy].name,
+							usersShare: this.isExpenseTracker ? {} : mapKeys(e.usersShare, (_value, key) => members[key].name)
+						}))
 					);
 				})
 			))
@@ -229,7 +239,7 @@ export class GroupExpenseDetailComponent implements OnInit {
 				},
 				{
 					type: ToolbarButtonType.Secondary,
-					visible: () => this.selectedTab === "summary",
+					visible: () => this.selectedTab !== "expense",
 					icon: "arrow_back",
 					action: () => this.selectedTab = "expense"
 				}
