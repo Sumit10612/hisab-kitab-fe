@@ -33,7 +33,7 @@ import { DialogButtonType, DialogData } from "../../models/dialog.model";
 			}
 		</mat-dialog-content>
 		
-		<mat-dialog-actions>
+		<mat-dialog-actions *ngIf="data.actionButtons?.length">
 			@for (actionButton of data.actionButtons; track $index) {
 				@if (actionButton.type === buttonType.Close) {
 					<button mat-raised-button mat-dialog-close>{{actionButton.label}}</button>

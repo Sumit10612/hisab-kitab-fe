@@ -96,6 +96,11 @@ import { LayoutComponent } from "./shared/layout.component";
 				<mat-card *ngIf="group$ | async as group">
 					<mat-card-header>
 						<mat-card-subtitle>Members:</mat-card-subtitle>
+						<button mat-mini-fab color="primary"
+							[hidden]="!currentUser || !isAdmin(currentUser)"
+							(click)="openAddMemberDialog()">
+							<mat-icon>person_add</mat-icon>
+						</button>
 					</mat-card-header>
 					<mat-card-content>
 						@for (member of group.members; track member) {
@@ -106,7 +111,7 @@ import { LayoutComponent } from "./shared/layout.component";
 								</div>
 								@if (currentUser && isAdmin(currentUser)) {
 									<div class="user-actions">
-										<button mat-button [hidden]="isCurrentUser(member)" (click)="toggelAdmin(member)">
+										<button mat-button [hidden]="isCurrentUser(member) || member.isVirtual" (click)="toggelAdmin(member)">
 											{{isAdmin(member) ? "Remove" : "Make"}} admin
 										</button>
 										<button mat-button color="warn" [disabled]="isCurrentUser(member)"
@@ -120,19 +125,19 @@ import { LayoutComponent } from "./shared/layout.component";
 						}
 					</mat-card-content>
 				</mat-card>
-
-				@if (currentUser?.role === "admin") {
-					<div class="btn-group">
-						<button mat-raised-button color="primary" (click)="openAddVirtualMemberDialog()">
-							Add Virtual Member
-						</button>
-						<button mat-raised-button color="primary" (click)="openAddMemberDialog()">
-							Invite Member
-						</button>
-					</div>
-				}
 			</div>
 		</app-layout>
+
+		<ng-template #addMemberDialogTemplate>
+			<div class="btn-group">
+				<button mat-raised-button color="primary" (click)="openInviteMemberDialog()">
+					Invite Member
+				</button>
+				<button mat-raised-button color="primary" (click)="openAddVirtualMemberDialog()">
+					Add Virtual Member
+				</button>
+			</div>
+		</ng-template>
 
 		<ng-template #addUserToGroupDialogTemplate>
 			<div class="add-user-to-group-template">
@@ -197,15 +202,22 @@ import { LayoutComponent } from "./shared/layout.component";
 				height: 300px;
 				border-radius: 24px;
 
+				> mat-card-header {
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+				}
+
 				> mat-card-content {
 					display: flex;
 					flex-direction: column;
+					overflow-y: auto;
 
 					.user-info {
 						display: flex;
 						align-items: center;
 						justify-content: space-between;
-						margin: 8px 0;
+						margin: 4px 0;
 					}
 
 					.user-details {
@@ -229,11 +241,13 @@ import { LayoutComponent } from "./shared/layout.component";
 					}
 				}
 			}
+		}
 
-			.btn-group {
-				display: flex;
-				gap: 8px;
-			}
+		.btn-group {
+			display: flex;
+			flex-direction: column;
+			gap: 16px;
+			padding: 0 16px 16px 16px;
 		}
 
 		.add-user-to-group-template {
@@ -253,6 +267,7 @@ import { LayoutComponent } from "./shared/layout.component";
 	`]
 })
 export class GroupEditorComponent implements OnInit {
+	@ViewChild("addMemberDialogTemplate") addMemberDialogTemplate: TemplateRef<unknown> | undefined;
 	@ViewChild("joinGroupDialogTemplate") joinGroupDialogTemplate: TemplateRef<unknown> | undefined;
 	@ViewChild("addUserToGroupDialogTemplate") addUserToGroupDialogTemplate: TemplateRef<unknown> | undefined;
 	@ViewChild("addVirtualMemberToGroupDialogTemplate") addVirtualMemberToGroupDialogTemplate: TemplateRef<unknown> | undefined;
@@ -295,6 +310,7 @@ export class GroupEditorComponent implements OnInit {
 			})
 		))
 	);
+
 	protected groupCode$ = this.store.select(RouterSelector.selectParams).pipe(
 		filter(params => !!params["id"]),
 		switchMap(params => this.store.select(GroupSelector.selectCode(params["id"])))
@@ -361,21 +377,29 @@ export class GroupEditorComponent implements OnInit {
 		return { name, imageUrl, groupType, excludeTotal };
 	}
 
-	isAdmin(member: GroupMember | undefined) {
+	protected isAdmin(member: GroupMember | undefined) {
 		return member && member.role === "admin";
 	}
 
-	isCurrentUser(member: GroupMember | undefined) {
+	protected isCurrentUser(member: GroupMember | undefined) {
 		return member && member.name === "You";
 	}
 
-	selectImage(index: number) {
+	protected selectImage(index: number) {
 		this.selectedIndex = index;
 		this.form.controls.imageUrl.setValue(groupImages[index].alt);
 		this.form.markAsDirty();
 	}
 
-	openAddMemberDialog() {
+	protected openAddMemberDialog() {
+		this.dialog.open({
+			data: {
+				template: this.addMemberDialogTemplate
+			}
+		});
+	}
+
+	protected openInviteMemberDialog() {
 		const addMemberDialogRef = this.dialog.open({
 			data: {
 				template: this.addUserToGroupDialogTemplate,
@@ -396,7 +420,7 @@ export class GroupEditorComponent implements OnInit {
 		});
 	}
 
-	openAddVirtualMemberDialog() {
+	protected openAddVirtualMemberDialog() {
 		const dialogRef = this.dialog.open({
 			data: {
 				template: this.addVirtualMemberToGroupDialogTemplate,
@@ -423,7 +447,7 @@ export class GroupEditorComponent implements OnInit {
 		dialogRef.afterClosed().subscribe(_ => this.virtualMemberName = undefined);
 	}
 
-	openJoinGroupDialog() {
+	protected openJoinGroupDialog() {
 		this.dialog.open<DialogData<Otp>>({
 			data: {
 				template: this.joinGroupDialogTemplate,
@@ -446,7 +470,7 @@ export class GroupEditorComponent implements OnInit {
 		});
 	}
 
-	create() {
+	protected create() {
 		const { name, imageUrl, groupType, excludeTotal } = this.form.value;
 		if (!name || !imageUrl) {
 			return;
@@ -455,7 +479,7 @@ export class GroupEditorComponent implements OnInit {
 		this.store.dispatch(GroupAction.create({ upsertGroup: { name, imageUrl, groupType, excludeTotal } }));
 	}
 
-	toggelAdmin(member: GroupMember) {
+	protected toggelAdmin(member: GroupMember) {
 		this.store.dispatch(GroupAction.updateRole({
 			id: this.form.controls.id.value,
 			memberId: member.id,
@@ -463,7 +487,7 @@ export class GroupEditorComponent implements OnInit {
 		}));
 	}
 
-	removeMember(memberId?: string, name?: string) {
+	protected removeMember(memberId?: string, name?: string) {
 		this.dialog.open({
 			data: {
 				message: memberId ? `Are you sure want to remove ${name} from this group?` : "Are you sure want to leave this group?",
@@ -482,7 +506,7 @@ export class GroupEditorComponent implements OnInit {
 		});
 	}
 
-	deleteGroup() {
+	protected deleteGroup() {
 		this.dialog.open({
 			data: {
 				message: "Are you sure want to delete this group?",
