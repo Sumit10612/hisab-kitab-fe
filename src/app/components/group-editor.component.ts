@@ -199,7 +199,7 @@ import { LayoutComponent } from "./shared/layout.component";
 
 			> mat-card {
 				width: 100%;
-				height: 300px;
+				max-height: 300px;
 				border-radius: 24px;
 
 				> mat-card-header {
