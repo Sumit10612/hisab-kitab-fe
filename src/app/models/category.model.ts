@@ -1,21 +1,21 @@
-export interface CategoryGroup {
+export interface Category {
 	name: string;
-	categories: Category[];
+	categories: SubCategory[];
 }
 
-export interface Category {
+export interface SubCategory {
 	id: number;
 	name: string;
 	icon: string;
 }
 
-export const filterCategories = (opt: Category[], value: string): Category[] => {
+export const filterCategories = (opt: SubCategory[], value: string): SubCategory[] => {
 	const filterValue = value.toLowerCase();
 
 	return opt.filter(item => item.name.toLowerCase().includes(filterValue));
 };
 
-export const getCategoryById = (id: number): Category | undefined => {
+export const getCategoryById = (id: number): SubCategory | undefined => {
 	for (const group of categoriesByGroup) {
 		const category = group.categories.find(cat => cat.id === id);
 		if (category) {
@@ -25,7 +25,7 @@ export const getCategoryById = (id: number): Category | undefined => {
 	return undefined;
 };
 
-export const categoriesByGroup: CategoryGroup[] = [
+export const categoriesByGroup: Category[] = [
 	{
 		name: "Misc",
 		categories: [
