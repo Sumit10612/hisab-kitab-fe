@@ -1,7 +1,13 @@
 import { inject, Injectable } from "@angular/core";
 import { Actions, createEffect, ofType } from "@ngrx/effects";
 import { Store } from "@ngrx/store";
-import { random, round, sample, times, values } from "lodash-es";
+import {
+	random,
+	round,
+	sample,
+	times,
+	values
+} from "lodash-es";
 import {
 	map,
 	mergeMap,
@@ -10,6 +16,7 @@ import {
 	tap
 } from "rxjs";
 
+import { DEFAULT_CATEGORY } from "../../models/category.model";
 import { Group, GroupType, MemberRole } from "../../models/group.model";
 import { GroupService } from "../../services/group.service";
 import { NavigationService } from "../../services/navigation.service";
@@ -88,7 +95,8 @@ export class GroupEffects {
 									share: 0,
 									isVirtual: false
 								}
-							}
+							},
+							categories: [DEFAULT_CATEGORY]
 						} as Group;
 
 						await this.groupService.create(group);
@@ -271,4 +279,28 @@ export class GroupEffects {
 			})
 		);
 	}, { dispatch: false });
+
+	addCategory$ = createEffect(() => {
+		return this.action$.pipe(
+			ofType(GroupAction.addCategory),
+			switchMap(({ groupId, subCategoryName, icon, categoryId, categoryName }) => this.store.select(UserSelector.select).pipe(
+				take(1),
+				switchMap(async user => {
+					this.notification.showLoading();
+					try {
+						if (!user) {
+							throw ErrorCode.NOT_FOUND;
+						}
+						
+						await this.groupService.addCategoryToGroup(groupId, subCategoryName, icon, categoryId, categoryName);
+						return GroupAction.addCategorySuccess();
+					} catch (error) {
+						return AppActions.handleError({ error });
+					} finally {
+						this.notification.hideLoading();
+					}
+				})
+			))
+		);
+	});
 }

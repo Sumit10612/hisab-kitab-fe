@@ -5,7 +5,7 @@ import { MatButtonModule } from "@angular/material/button";
 import { MatDividerModule } from "@angular/material/divider";
 import { MatIconModule } from "@angular/material/icon";
 
-import { getCategoryById } from "../models/category.model";
+import { DEFAULT_CATEGORY, SubCategory } from "../models/category.model";
 import { DateOption, FilterCriteria } from "../models/filter-criteria.model";
 import { Group } from "../models/group.model";
 import { ExpenseService } from "../services/expense.service";
@@ -51,8 +51,8 @@ import { FilterExpenseCriteriaComponent } from "./widgets/filter-expense-criteri
 				@for (kvp of expenseSummary | keyvalue; track kvp) {
 					<div class="summary-record">
 						<div class="summary-record-name">
-							<span class="emojis">{{getCategoryById(+kvp.key)?.icon}}</span>
-							<span>{{getCategoryById(+kvp.key)?.name}}</span>
+							<span class="emojis">{{getCategoryById(+kvp.key).icon}}</span>
+							<span>{{getCategoryById(+kvp.key).name}}</span>
 						</div>
 						<span>&#8377; {{kvp.value | number: '1.2-2'}}</span>
 					</div>
@@ -96,7 +96,6 @@ export class ExpensesSummaryComponent implements OnInit {
 	private readonly bottomSheet = inject(MatBottomSheet);
 	private readonly expenseService = inject(ExpenseService);
 
-	protected getCategoryById = getCategoryById;
 	protected filterCriteria?: FilterCriteria;
 	protected expenseSummary: Record<number, number> = {};
 	protected paidBySummary: Record<string, number> = {};
@@ -132,6 +131,13 @@ export class ExpensesSummaryComponent implements OnInit {
 				this.getExpenses();
 			}
 		});
+	}
+
+	protected getCategoryById(id: number): SubCategory {
+		return (this.group?.categories
+			.flatMap(category => category.subCategories)
+			.find(subCategory => subCategory.id === id)
+		?? DEFAULT_CATEGORY.subCategories[0]);
 	}
 
 	private async getExpenses() {

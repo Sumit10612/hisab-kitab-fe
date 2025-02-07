@@ -1,10 +1,8 @@
 import { CommonModule } from "@angular/common";
 import {
 	Component,
-	EventEmitter,
 	inject,
 	Input,
-	Output,
 	TemplateRef,
 	ViewChild
 } from "@angular/core";
@@ -15,15 +13,22 @@ import { MatDialogRef } from "@angular/material/dialog";
 import { MatDividerModule } from "@angular/material/divider";
 import { MatIconModule } from "@angular/material/icon";
 import { MatInputModule } from "@angular/material/input";
+import { Store } from "@ngrx/store";
 import { at, orderBy } from "lodash-es";
+import { filter, switchMap } from "rxjs";
 
 import { DialogButtonType } from "../../models/dialog.model";
 import { Group, GroupMember, MemberRole } from "../../models/group.model";
 import { DialogService } from "../../services/dialog.service";
+import { RouterSelector } from "../../store/app.selector";
+import { GroupAction } from "../../store/group/group.action";
+import { GroupSelector } from "../../store/group/group.selector";
 import { DialogComponent } from "../shared/dialog.component";
 
+import { GroupUserManager } from "./group-user-manager.util";
+
 @Component({
-	selector: "app-group-user",
+	selector: "app-group-user-manager",
 	standalone: true,
 	imports: [
 		CommonModule,
@@ -35,11 +40,11 @@ import { DialogComponent } from "../shared/dialog.component";
 		MatIconModule,
 	],
 	template: `
-		<mat-card *ngIf="_group">
+		<mat-card>
 			<mat-card-header>
 				<mat-card-subtitle>Members:</mat-card-subtitle>
 				<button mat-mini-fab color="primary"
-					[hidden]="!currentUser || !isAdmin(currentUser)"
+					[hidden]="!userManager.isAdmin(currentUser)"
 					(click)="openAddMemberDialog()">
 					<mat-icon>person_add</mat-icon>
 				</button>
@@ -49,16 +54,19 @@ import { DialogComponent } from "../shared/dialog.component";
 					<div class="user-info">
 						<div class="user-details">
 							<span>{{ member.name }}</span>
-							@if (isAdmin(member)) { <span class="role">(admin)</span> }
+							@if (userManager.isAdmin(member)) { <span class="role">(admin)</span> }
 						</div>
-						@if (currentUser && isAdmin(currentUser)) {
+						@if (userManager.isAdmin(currentUser)) {
 							<div class="user-actions">
-								<button mat-button [hidden]="isCurrentUser(member) || member.isVirtual" (click)="toggelAdmin(member)">
-									{{isAdmin(member) ? "Remove" : "Make"}} admin
+								<button mat-button
+										[hidden]="userManager.isCurrentUser(member) || userManager.isVirtualMember(member)"
+										(click)="toggelAdmin(member)">
+											{{userManager.isAdmin(member) ? "Remove" : "Make"}} admin
 								</button>
-								<button mat-button color="warn" [disabled]="isCurrentUser(member)"
-									(click)="removeMemberFromGroup(member.id, member.name)">
-									<mat-icon>person_remove</mat-icon>
+								<button mat-button color="warn" 
+										[disabled]="userManager.isCurrentUser(member)"
+										(click)="removeMemberFromGroup(member.id, member.name)">
+											<mat-icon>person_remove</mat-icon>
 								</button>
 							</div>
 						}
@@ -84,8 +92,8 @@ import { DialogComponent } from "../shared/dialog.component";
 
 		<ng-template #addUserToGroupDialogTemplate>
 			<div class="add-user-to-group-template">
-				<ng-container *ngIf="groupCode; else loading">
-					<div class="code">{{groupCode}}</div>
+				<ng-container *ngIf="groupCode$ | async as code; else loading">
+					<div class="code">{{code}}</div>
 					<div class="timer">code is valid only for 5 minutes</div>
 					<p>Others can join this group <br />
 						using the above code</p>
@@ -124,7 +132,7 @@ import { DialogComponent } from "../shared/dialog.component";
 					display: flex;
 					align-items: center;
 					justify-content: space-between;
-					margin: 4px 0;
+					margin-top: 4px;
 				}
 
 				.user-details {
@@ -161,15 +169,11 @@ import { DialogComponent } from "../shared/dialog.component";
 		}
 	`],
 })
-export class GroupUserComponent {
+export class GroupUserManagerComponent {
 	private readonly dialog = inject(DialogService);
+	private readonly store = inject(Store);
 
 	private addMemberDialogRef: MatDialogRef<DialogComponent, unknown> | undefined;
-	
-	protected _group: Group | null | undefined;
-	protected currentUser: GroupMember | undefined;
-	protected members: GroupMember[] = [];
-	protected virtualMemberName?: string;
 
 	@ViewChild("addMemberDialogTemplate")
 	private readonly addMemberDialogTemplate: TemplateRef<unknown> | undefined;
@@ -180,29 +184,21 @@ export class GroupUserComponent {
 	@ViewChild("addVirtualMemberToGroupDialogTemplate")
 	private readonly addVirtualMemberToGroupDialogTemplate: TemplateRef<unknown> | undefined;
 
-	@Input() set group(value: Group | null | undefined) {
-		this._group = value;
-		if(this._group?.members) {
-			this.members = orderBy(at(this._group.members, this._group.memberIds), "name");
-		}
+	protected virtualMemberName?: string;
+	protected userManager = GroupUserManager;
+	protected groupCode$ = this.store.select(RouterSelector.selectParams).pipe(
+		filter(params => !!params["id"]),
+		switchMap(params => this.store.select(GroupSelector.selectCode(params["id"])))
+	);
 
-		this.currentUser = Object.values(value?.members ?? {})
-			.find(member => this.isCurrentUser(member));
+	@Input() group: Group | undefined;
+
+	protected get members(): GroupMember[] {
+		return orderBy(at(this.group?.members ?? {}, this.group?.memberIds ?? []), "name");
 	}
 
-	@Input() groupCode: number | null | undefined;
-
-	@Output() updateRole = new EventEmitter<GroupMember>();
-	@Output() removeMember = new EventEmitter<string>();
-	@Output() addVirutalMember = new EventEmitter<string>();
-	@Output() getGroupCode = new EventEmitter<void>();
-
-	protected isAdmin(member: GroupMember | undefined) {
-		return member && member.role === MemberRole.admin;
-	}
-
-	protected isCurrentUser(member: GroupMember | undefined) {
-		return member && member.name === "You";
+	protected get currentUser(): GroupMember | undefined {
+		return this.userManager.getCurrentUser(this.group?.members);
 	}
 
 	protected openAddMemberDialog() {
@@ -227,10 +223,12 @@ export class GroupUserComponent {
 		});
 
 		addMemberDialogRef.afterOpened().subscribe(async _ => {
-			this.getGroupCode.emit();
-			setTimeout(() => {
-				addMemberDialogRef.close();
-			}, 300000);
+			if(this.group?.id) {
+				this.store.dispatch(GroupAction.getCode({ id: this.group.id }));
+				setTimeout(() => {
+					addMemberDialogRef.close();
+				}, 300000);
+			}
 		});
 
 		addMemberDialogRef.afterClosed().subscribe(_ => this.addMemberDialogRef?.close());
@@ -250,8 +248,11 @@ export class GroupUserComponent {
 						label: "Add",
 						disabled: () => !this.virtualMemberName,
 						action: () => {
-							if(this.virtualMemberName) {
-								this.addVirutalMember.emit(this.virtualMemberName);
+							if(this.virtualMemberName  && this.group?.id) {
+								this.store.dispatch(GroupAction.addVirtualMember({ 
+									groupId: this.group.id, 
+									name: this.virtualMemberName 
+								}));
 							}
 						}
 					}
@@ -263,13 +264,21 @@ export class GroupUserComponent {
 			this.virtualMemberName = undefined;
 			this.addMemberDialogRef?.close();
 		});
-	}
+	}	
 
 	protected toggelAdmin(member: GroupMember) {
-		this.updateRole.emit(member);
+		if(!this.group?.id) {
+			return;
+		}
+
+		this.store.dispatch(GroupAction.updateRole({
+			id: this.group?.id,
+			memberId: member.id,
+			role: member.role === MemberRole.admin ? MemberRole.user : MemberRole.admin
+		}));
 	}
 	
-	protected removeMemberFromGroup(memberId: string, name?: string) {
+	protected removeMemberFromGroup(memberId: string, name: string) {
 		this.dialog.open({
 			data: {
 				message: `Are you sure want to remove ${name} from this group?`,
@@ -281,7 +290,11 @@ export class GroupUserComponent {
 					{
 						type: DialogButtonType.Primary,
 						label: "Yes",
-						action: () => this.removeMember.emit(memberId)
+						action: () => {
+							if(this.group?.id) {
+								this.store.dispatch(GroupAction.removeMember({ id: this.group.id, memberId }));
+							}
+						}
 					}
 				]
 			}

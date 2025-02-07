@@ -27,6 +27,7 @@ import {
 import { generateRandomNumber } from "../utilities/common";
 import { ErrorCode } from "../utilities/error-codes";
 import { throwIfNotFound } from "../utilities/firebase-errors";
+import { maxBy } from "lodash-es";
 
 export const GROUP_COLLECTION_NAME = "groups";
 const GROUP_CODE_COLLECTION_NAME = "group_code";
@@ -161,6 +162,37 @@ export class GroupService {
 
 			await updateDoc(groupRef, { memberIds, members });
 		}
+
+		return group.id;
+	}
+
+	async addCategoryToGroup(groupId: string, subCategoryName: string, icon: string, categoryId?: number,  categoryName?: string): Promise<string> {
+		const groupRef = doc(this.firestore, GROUP_COLLECTION_NAME, groupId);
+		const groupSnapshot = await getDoc(groupRef);
+		const group = throwIfNotFound(groupSnapshot).data() as Group;
+		group.categories ??= [];
+		const subCategoryToAdd = {
+			id: (maxBy(group.categories.flatMap(cat => cat.subCategories), cat => cat.id)?.id ?? 0) + 1,
+			name: subCategoryName,
+			icon
+		};
+
+		if(!categoryId) {
+			if(!categoryName) {
+				throw "Category name is required";
+			}
+
+			group.categories.push({ 
+				id: (maxBy(group.categories, cat => cat.id)?.id ?? 0) + 1, 
+				name: categoryName, 
+				subCategories: [subCategoryToAdd] 
+			});
+		} else {
+			const existingCategory = group.categories.find(c => c.id === categoryId);
+			existingCategory?.subCategories.push(subCategoryToAdd);
+		}
+
+		await updateDoc(groupRef, { categories: group.categories });
 
 		return group.id;
 	}

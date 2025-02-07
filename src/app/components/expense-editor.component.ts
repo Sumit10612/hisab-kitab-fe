@@ -21,9 +21,9 @@ import { Store } from "@ngrx/store";
 import { pick, uniq, values } from "lodash-es";
 import { filter, switchMap, tap } from "rxjs";
 
-import { categoriesByGroup, getCategoryById } from "../models/category.model";
+import { DEFAULT_CATEGORY, SubCategory } from "../models/category.model";
 import { Expense, SplitType } from "../models/expense.model";
-import { GroupMember, GroupType } from "../models/group.model";
+import { Group, GroupMember, GroupType } from "../models/group.model";
 import { ToolbarButtonType } from "../models/toolbar.model";
 import { ToolbarConfigurationService } from "../services/toolbar-configuration.service";
 import { RouterSelector } from "../store/app.selector";
@@ -183,7 +183,8 @@ export class ExpenseEditorComponent implements OnInit, AfterViewInit {
 	private readonly toolbar = inject(ToolbarConfigurationService);
 	private readonly store = inject(Store);
 
-	private selectedCategory = getCategoryById(101);
+	private selectedSubCategory = DEFAULT_CATEGORY.subCategories[0];
+	private group: Group | undefined;
 
 	protected groupType = GroupType;
 	protected readonly form = this.formBuilder.group({
@@ -195,29 +196,31 @@ export class ExpenseEditorComponent implements OnInit, AfterViewInit {
 		amount: this.formBuilder.control<number | null>(null, {
 			validators: [Validators.required],
 		}),
-		category: this.selectedCategory?.name,
+		category: this.selectedSubCategory?.name,
 		paidBy: ["", Validators.required],
 		expenseDate: [new Date(), Validators.required],
 	});
-	protected categoryGroups = categoriesByGroup;
 	protected splitType = SplitType;
 	protected selectedSplitType = SplitType.Equally;
-	protected getCategoryById = getCategoryById;
-	protected members?: GroupMember[];
 	protected userShare: Record<string, number> = {};
 	protected expense$ = this.store.select(RouterSelector.selectParams).pipe(
 		switchMap(params => this.store.select(GroupSelector.selectGroup(params["groupId"])).pipe(
 			filter(group => !!group),
 			switchMap((group) => this.store.select(ExpenseSelector.selectExpense(params["id"])).pipe(
 				tap(expense => {
-					this.selectedCategory = getCategoryById(expense?.category ?? 101);
-					this.members = values(pick(group?.members ?? {}, group?.memberIds ?? []));
+					const subCategory = group?.categories
+						.flatMap(category => category.subCategories)
+						.find(subCat => subCat.id === expense?.category);
+					if(subCategory) {
+						this.selectedSubCategory = subCategory;
+					}
+
+					this.group = group;
 					this.userShare = expense?.usersShare ?? {};
-					const currentUser = this.members?.find(m => m.name === "You");
 					this.form.patchValue({
 						...expense,
-						category: this.selectedCategory?.name,
-						paidBy: expense ? expense.paidBy : currentUser?.id,
+						category: this.selectedSubCategory.name,
+						paidBy: expense ? expense.paidBy : this.currentUser?.id,
 						groupId: group?.id,
 						groupType: group?.groupType
 					});
@@ -231,6 +234,14 @@ export class ExpenseEditorComponent implements OnInit, AfterViewInit {
 	);
 
 	@ViewChild("focusInput") focusInput?: ElementRef;
+
+	protected get members(): GroupMember[] {
+		return values(pick(this.group?.members ?? {}, this.group?.memberIds ?? []));
+	}
+
+	protected get currentUser(): GroupMember | undefined {
+		return this.members.find(m => m.name === "You");
+	}
 
 	ngOnInit(): void {
 		this.toolbar.configure({
@@ -295,15 +306,13 @@ export class ExpenseEditorComponent implements OnInit, AfterViewInit {
 	}
 
 	openCategorySheet() {
-		this.bottomSheet.open(CategorySelectorComponent)
-			.afterDismissed()
-			.subscribe(selectedCategoryId => {
-				if (selectedCategoryId && typeof selectedCategoryId === "number" && selectedCategoryId > 0) {
-					this.selectedCategory = getCategoryById(selectedCategoryId);
-					this.form.controls.category.setValue(this.selectedCategory?.name || "");
-					this.form.markAsDirty();
-				}
-			});
+		this.bottomSheet.open(CategorySelectorComponent, {
+			data: this.group?.categories ?? []
+		}).afterDismissed().subscribe((subCategory: SubCategory) => {
+			this.selectedSubCategory = subCategory;
+			this.form.controls.category.setValue(subCategory.name || "");
+			this.form.markAsDirty();
+		});
 	}
 
 	submit() {
@@ -316,7 +325,7 @@ export class ExpenseEditorComponent implements OnInit, AfterViewInit {
 			description,
 			where,
 			amount: +(amount ?? 0),
-			category: this.selectedCategory?.id,
+			category: this.selectedSubCategory?.id,
 			expenseDate,
 			paidBy,
 			usersShare: this.userShare

@@ -1,5 +1,6 @@
 import { Timestamp } from "@angular/fire/firestore";
 
+import { Category } from "./category.model";
 import { Image } from "./image.model";
 
 export enum GroupType {
@@ -21,6 +22,7 @@ export interface Group extends UpsertGroup {
 	groupTotal: number;
 	monthTotal: Record<string, number>;
 	modifiedAt?: Timestamp;
+	categories: Category[];
 }
 
 export interface GroupMember {

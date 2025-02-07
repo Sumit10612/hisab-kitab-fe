@@ -14,25 +14,26 @@ import { MatSlideToggleModule } from "@angular/material/slide-toggle";
 import { Store } from "@ngrx/store";
 import { filter, switchMap, tap } from "rxjs";
 
-import { DialogButtonType, DialogData } from "../models/dialog.model";
+import { DialogButtonType, DialogData } from "../../models/dialog.model";
 import {
 	groupImages,
 	GroupMember,
 	GroupType,
-	MemberRole,
 	UpsertGroup
-} from "../models/group.model";
-import { Otp } from "../models/otp.model";
-import { ToolbarButtonType } from "../models/toolbar.model";
-import { DialogService } from "../services/dialog.service";
-import { ToolbarConfigurationService } from "../services/toolbar-configuration.service";
-import { RouterSelector } from "../store/app.selector";
-import { GroupAction } from "../store/group/group.action";
-import { GroupSelector } from "../store/group/group.selector";
+} from "../../models/group.model";
+import { Otp } from "../../models/otp.model";
+import { ToolbarButtonType } from "../../models/toolbar.model";
+import { DialogService } from "../../services/dialog.service";
+import { ToolbarConfigurationService } from "../../services/toolbar-configuration.service";
+import { RouterSelector } from "../../store/app.selector";
+import { GroupAction } from "../../store/group/group.action";
+import { GroupSelector } from "../../store/group/group.selector";
+import { OtpComponent } from "../otp.component";
+import { LayoutComponent } from "../shared/layout.component";
 
-import { OtpComponent } from "./otp.component";
-import { LayoutComponent } from "./shared/layout.component";
-import { GroupUserComponent } from "./widgets/group-user.component";
+import { GroupCategoryManagerComponent } from "./group-category-manager.conponent";
+import { GroupUserManagerComponent } from "./group-user-manager.component";
+import { GroupUserManager } from "./group-user-manager.util";
 
 @Component({
 	selector: "app-group-editor",
@@ -46,7 +47,8 @@ import { GroupUserComponent } from "./widgets/group-user.component";
 		MatRadioModule,
 		MatSlideToggleModule,
 		OtpComponent,
-		GroupUserComponent
+		GroupUserManagerComponent,
+		GroupCategoryManagerComponent
 	],
 	template: `
 		<app-layout headerHeight="224px" [pageTitle]="isEdit ? 'Settings' : 'Create a group'">
@@ -55,7 +57,7 @@ import { GroupUserComponent } from "./widgets/group-user.component";
 					<mat-label>Group Name</mat-label>
 					<input matInput
 						[formControl]="form.controls.name"
-						[readonly]="isEdit && !isAdmin(currentUser)" />
+						[readonly]="isEdit && !userManager.isAdmin(currentUser)" />
 				</mat-form-field>
 				<div class="image-container">
 					@for (item of groupImages; track item) {
@@ -79,20 +81,17 @@ import { GroupUserComponent } from "./widgets/group-user.component";
 					<mat-radio-button [value]="groupType.SpiltExpense">Split Bills</mat-radio-button>
 				</mat-radio-group>
 
-				@if (form.controls.groupType.value === groupType.ExpenseTracker &&
-						(!isEdit || currentUser?.role === "admin")) {
+				@if (form.controls.groupType.value === groupType.ExpenseTracker && (!isEdit || userManager.isAdmin(currentUser))) {
 					<mat-slide-toggle [formControl]="form.controls.excludeTotal">
 						&nbsp;&nbsp;exclude from combined total
 					</mat-slide-toggle>
 				}
 
-				<app-group-user class="group-user"
-					(addVirutalMember)="addVirutalMember($event)"
-					(getGroupCode)="getGroupCode()"
-					(removeMember)="removeMember($event)"
-					[groupCode]="groupCode$ | async"
-					[group]="group$ | async">
-				</app-group-user>
+				<ng-container *ngIf="group$ | async as group">
+					<app-group-user-manager class="group-manager" [group]="group"></app-group-user-manager>
+					<app-group-category-manager *ngIf="userManager.isAdmin(currentUser)" [group]="group" class="group-manager">
+					</app-group-category-manager>
+				</ng-container>
 			</div>
 		</app-layout>
 
@@ -133,7 +132,7 @@ import { GroupUserComponent } from "./widgets/group-user.component";
 			margin: 16px;
 			align-items: center;
 
-			.group-user {
+			.group-manager {
 				width: 100%;
 			}
 		}
@@ -159,6 +158,7 @@ export class GroupEditorComponent implements OnInit {
 	protected selectedIndex: number | undefined;
 	protected currentUser: GroupMember | undefined;
 	protected groupType = GroupType;
+	protected userManager = GroupUserManager;
 
 	protected group$ = this.store.select(RouterSelector.selectParams).pipe(
 		filter(params => !!params["id"]),
@@ -167,14 +167,9 @@ export class GroupEditorComponent implements OnInit {
 				this.isEdit = true;
 				this.form.patchValue({ ...group });
 				this.selectedIndex = groupImages.findIndex(g => g.alt === group?.imageUrl);
-				this.currentUser = Object.values(group?.members ?? {}).find(member => this.isCurrentUser(member));
+				this.currentUser = this.userManager.getCurrentUser(group?.members);
 			})
 		))
-	);
-
-	protected groupCode$ = this.store.select(RouterSelector.selectParams).pipe(
-		filter(params => !!params["id"]),
-		switchMap(params => this.store.select(GroupSelector.selectCode(params["id"])))
 	);
 
 	ngOnInit(): void {
@@ -196,14 +191,14 @@ export class GroupEditorComponent implements OnInit {
 				{
 					type: ToolbarButtonType.Warn,
 					label: "Delete",
-					visible: () => this.isEdit && this.currentUser?.role === "admin",
+					visible: () => this.isEdit && this.userManager.isAdmin(this.currentUser),
 					action: () => this.deleteGroup()
 				},
 				{
 					type: ToolbarButtonType.Primary,
 					label: "Update",
 					disabled: () => !this.form.dirty || !this.form.valid,
-					visible: () => this.isEdit && this.currentUser?.role === "admin",
+					visible: () => this.isEdit && this.userManager.isAdmin(this.currentUser),
 					action: () => {
 						if (this.upsertGroup) {
 							this.store.dispatch(GroupAction.update({
@@ -238,26 +233,10 @@ export class GroupEditorComponent implements OnInit {
 		return { name, imageUrl, groupType, excludeTotal };
 	}
 
-	protected isAdmin(member: GroupMember | undefined) {
-		return member && member.role === "admin";
-	}
-
-	protected isCurrentUser(member: GroupMember | undefined) {
-		return member && member.name === "You";
-	}
-
 	protected selectImage(index: number) {
 		this.selectedIndex = index;
 		this.form.controls.imageUrl.setValue(groupImages[index].alt);
 		this.form.markAsDirty();
-	}
-
-	protected getGroupCode() {
-		this.store.dispatch(GroupAction.getCode({ id: this.form.controls.id.value }));
-	}
-
-	protected addVirutalMember(name: string) {
-		this.store.dispatch(GroupAction.addVirtualMember({ groupId: this.form.controls.id.value, name }));
 	}
 
 	protected openJoinGroupDialog() {
@@ -292,18 +271,6 @@ export class GroupEditorComponent implements OnInit {
 		this.store.dispatch(GroupAction.create({ upsertGroup: { name, imageUrl, groupType, excludeTotal } }));
 	}
 
-	protected toggelAdmin(member: GroupMember) {
-		this.store.dispatch(GroupAction.updateRole({
-			id: this.form.controls.id.value,
-			memberId: member.id,
-			role: member.role === MemberRole.admin ? MemberRole.user : MemberRole.admin
-		}));
-	}
-
-	protected removeMember(memberId?: string) {
-		this.store.dispatch(GroupAction.removeMember({ id: this.form.controls.id.value, memberId }));
-	}
-
 	protected leaveGroup() {
 		this.dialog.open({
 			data: {
@@ -316,7 +283,7 @@ export class GroupEditorComponent implements OnInit {
 					{
 						type: DialogButtonType.Primary,
 						label: "Yes",
-						action: () => this.removeMember()
+						action: () => this.store.dispatch(GroupAction.removeMember({ id: this.form.controls.id.value }))
 					}
 				]
 			}

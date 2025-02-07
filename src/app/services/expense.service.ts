@@ -31,7 +31,7 @@ const COLLECTION_NAME = "expenses";
 	providedIn: "root"
 })
 export class ExpenseService {
-	private firestore = inject(Firestore);
+	private readonly firestore = inject(Firestore);
 
 	private lastRetrievedDoc: DocumentData | null = null;
 	private lastPageRetrieved = false;

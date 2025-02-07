@@ -5,8 +5,9 @@ import { MatIconModule } from "@angular/material/icon";
 import { RouterLink } from "@angular/router";
 import { map, pickBy, size } from "lodash-es";
 
-import { getCategoryById } from "../../models/category.model";
+import { DEFAULT_CATEGORY } from "../../models/category.model";
 import { Expense } from "../../models/expense.model";
+import { Group } from "../../models/group.model";
 
 @Component({
 	selector: "app-expense-list",
@@ -22,12 +23,12 @@ import { Expense } from "../../models/expense.model";
 			<div class="expense-record-container">
 				<div class="month-group">{{ kvp.key | date: "MMMM yyyy" | uppercase }}</div>
 				@for (expense of kvp.value; track expense) {
-					<a class="expense-record" [routerLink]="['/group', groupId, 'expense', expense.id]">
+					<a class="expense-record" [routerLink]="['/group', group?.id, 'expense', expense.id]">
 						<span class="expense-date">
 							<span class="expense-date-month">{{expense.expenseDate | date: "MMM" | uppercase}}</span>
 							<span class="expense-date-date">{{expense.expenseDate | date: "dd"}}</span>
 						</span>
-						<span class="emojis">{{getCategory(expense?.category ?? 0)?.icon}}</span>
+						<span class="emojis">{{getCategoryIcon(expense?.category ?? 0)}}</span>
 						<span class="expense-desc">
 							<span>{{expense.description}}</span>
 							@if (expense.where) {
@@ -113,9 +114,7 @@ import { Expense } from "../../models/expense.model";
 	`]
 })
 export class ExpenseListComponent {
-	protected getCategory = getCategoryById;
-
-	@Input() groupId?: string;
+	@Input() group?: Group;
 	@Input() expensesByMonth?: Record<string, Expense[]> | null;
 
 	protected getUserSharesToDisplay(expense: Expense): string | undefined {
@@ -125,6 +124,13 @@ export class ExpenseListComponent {
 		}
 
 		return map(usersShare, (value, key) => `${key}: ${value}`).join(" | ");
+	}
+
+	protected getCategoryIcon(id: number): string {
+		return (this.group?.categories
+			.flatMap(category => category.subCategories)
+			.find(subCategory => subCategory.id === id)
+		?? DEFAULT_CATEGORY.subCategories[0]).icon;
 	}
 
 	protected noSort() {

@@ -21,19 +21,19 @@ import {
 } from "lodash-es";
 import { filter, map, switchMap, tap } from "rxjs";
 
-import { getGroupImage, Group, GroupType } from "../models/group.model";
-import { ToolbarButtonType } from "../models/toolbar.model";
-import { ToolbarConfigurationService } from "../services/toolbar-configuration.service";
-import { RouterSelector } from "../store/app.selector";
-import { ExpenseAction } from "../store/expense/expense.action";
-import { ExpenseSelector } from "../store/expense/expense.selector";
-import { GroupSelector } from "../store/group/group.selector";
-import { getPreviousMonth, getYearMonth } from "../utilities/date";
+import { getGroupImage, Group, GroupType } from "../../models/group.model";
+import { ToolbarButtonType } from "../../models/toolbar.model";
+import { ToolbarConfigurationService } from "../../services/toolbar-configuration.service";
+import { RouterSelector } from "../../store/app.selector";
+import { ExpenseAction } from "../../store/expense/expense.action";
+import { ExpenseSelector } from "../../store/expense/expense.selector";
+import { GroupSelector } from "../../store/group/group.selector";
+import { getPreviousMonth, getYearMonth } from "../../utilities/date";
+import { ExpensesSummaryComponent } from "../expenses-summary.component";
+import { LayoutComponent } from "../shared/layout.component";
+import { ExpenseListComponent } from "../widgets/expense-list-widget.component";
 
-import { ExpensesSummaryComponent } from "./expenses-summary.component";
-import { LayoutComponent } from "./shared/layout.component";
-import { ExpenseListComponent } from "./widgets/expense-list-widget.component";
-import { GroupBalancesComponent } from "./widgets/group-balances.component";
+import { GroupBalancesComponent } from "./group-balances.component";
 
 @Component({
 	selector: "app-group-expesnse-detail",
@@ -98,7 +98,7 @@ import { GroupBalancesComponent } from "./widgets/group-balances.component";
 
 			<div section="detail" class="detail-section" #scrollContainer (scroll)="onScroll()">
 				@if (selectedTab === "expense") {
-					<app-expense-list [groupId]="group?.id" [expensesByMonth]="expenses$ | async"></app-expense-list>
+					<app-expense-list [group]="group" [expensesByMonth]="expenses$ | async"></app-expense-list>
 				} @else if (selectedTab === "balance") {
 					<app-group-balances [group]="group"></app-group-balances>
 				} @else {

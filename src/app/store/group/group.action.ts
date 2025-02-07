@@ -49,4 +49,16 @@ export namespace GroupAction {
 		`${ACTION_PREFIX} Remove Member Success`,
 		props<{ memberId?: string }>()
 	);
+
+	export const addCategory = createAction(
+		`${ACTION_PREFIX} Add Category`,
+		props<{
+			groupId: string;
+			subCategoryName: string;
+			icon: string;
+			categoryId?: number;
+			categoryName?: string;
+		}>()
+	);
+	export const addCategorySuccess = createAction(`${ACTION_PREFIX} Add Category Success`);
 }
