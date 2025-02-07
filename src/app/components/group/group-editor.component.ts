@@ -93,17 +93,19 @@ import { GroupUserManager } from "./group-user-manager.util";
 					</app-group-category-manager>
 				</ng-container>
 
-				@if (isEdit) {
-					<button class="action-button" mat-raised-button color="warn" (click)="leaveGroup()">
-						Leave Group
-					</button>
-
-					@if (userManager.isAdmin(this.currentUser)) {
-						<button class="action-button" mat-raised-button color="warn" (click)="deleteGroup()">
-							Delete Group
+				<div class="action-buttons">
+					@if (isEdit) {
+						<button mat-raised-button color="warn" (click)="leaveGroup()">
+							Leave Group
 						</button>
+
+						@if (userManager.isAdmin(this.currentUser)) {
+							<button mat-raised-button color="warn" (click)="deleteGroup()">
+								Delete Group
+							</button>
+						}
 					}
-				}
+				</div>
 			</div>
 		</app-layout>
 
@@ -138,7 +140,7 @@ import { GroupUserManager } from "./group-user-manager.util";
 		}
 
 		.detail-section {
-			height: calc(100vh - 328px);
+			height: calc(100vh - 324px);
 			overflow-y: auto;
 			display: flex;
 			flex-direction: column;
@@ -150,7 +152,10 @@ import { GroupUserManager } from "./group-user-manager.util";
 				width: 100%;
 			}
 
-			.action-button {
+			.action-buttons {
+				display: flex;
+				gap: 16px;
+				flex-direction: column;
 				width: 100%;
 			}
 		}

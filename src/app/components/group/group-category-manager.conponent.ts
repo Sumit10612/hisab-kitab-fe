@@ -25,6 +25,7 @@ import { DialogService } from "../../services/dialog.service";
 import { GroupAction } from "../../store/group/group.action";
 import { DialogComponent } from "../shared/dialog.component";
 import { DisableControlDirective } from "../shared/disable-control.directive";
+import { DividerComponent } from "../shared/divider.component";
 
 @Component({
 	selector: "app-group-category-manager",
@@ -39,25 +40,28 @@ import { DisableControlDirective } from "../shared/disable-control.directive";
 		MatInputModule,
 		MatSelectModule,
 		MatAutocompleteModule,
-		DisableControlDirective
+		DisableControlDirective,
+		DividerComponent
 	],
 	template: `
 		<mat-card>
 			<mat-card-header>
 				<mat-card-subtitle>Categories:</mat-card-subtitle>
 				<button mat-mini-fab color="primary" (click)="openAddCategoryDialog()">
-					<mat-icon>add</mat-icon>
+					<mat-icon>playlist_add</mat-icon>
 				</button>
 			</mat-card-header>
 			<mat-card-content>
 				@for (category of group?.categories ?? []; track category;) {
-					@for (subCategory of category.subCategories; track subCategory;) {
-						<div class="category-row">
-							<span>{{category.name}}</span>
-							<span>{{subCategory.name}}</span>
-							<span>{{subCategory.icon}}</span>
-						</div>
-					}
+					<app-divider [text]="category.name"></app-divider>
+					<div class="category-group">
+						@for (subCategory of category.subCategories; track subCategory;) {
+							<div class="category">
+								<span class="category-name">{{subCategory.icon}}</span>
+								<span class="category-icon">{{subCategory.name}}</span>
+							</div>
+						}
+					</div>
 				}
 			</mat-card-content>
 		</mat-card>
@@ -150,12 +154,16 @@ import { DisableControlDirective } from "../shared/disable-control.directive";
 				flex-direction: column;
 				overflow-y: auto;
 
-				.category-row {
+				.category-group {
 					display: flex;
-					align-items: center;
-					gap: 4px;
-					justify-content: space-between;
-					margin: 4px 16px 0 0;
+					gap: 16px;
+					flex-wrap: wrap;
+
+					.category {
+						display: flex;
+						flex-direction: column;
+						align-items: center;
+					}
 				}
 			}
 		}

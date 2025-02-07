@@ -5,6 +5,7 @@ import { MatDividerModule } from "@angular/material/divider";
 import { MatIconModule } from "@angular/material/icon";
 
 import { Category, SubCategory } from "../../models/category.model";
+import { DividerComponent } from "../shared/divider.component";
 
 @Component({
 	selector: "app-category-selector",
@@ -12,13 +13,13 @@ import { Category, SubCategory } from "../../models/category.model";
 	imports: [
 		MatIconModule,
 		MatDividerModule,
-		MatButtonModule
+		MatButtonModule,
+		DividerComponent
 	],
 	template: `
 		<div class="container">
-			<span>Select Category</span>
 			@for (category of data; track category) {
-				<mat-divider></mat-divider>
+				<app-divider [text]="category.name"></app-divider>
 				<div class="category-group">
 					@for (subCategory of category.subCategories; track subCategory) {
 						<div  class="category">
