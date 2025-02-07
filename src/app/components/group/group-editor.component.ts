@@ -92,6 +92,18 @@ import { GroupUserManager } from "./group-user-manager.util";
 					<app-group-category-manager *ngIf="userManager.isAdmin(currentUser)" [group]="group" class="group-manager">
 					</app-group-category-manager>
 				</ng-container>
+
+				@if (isEdit) {
+					<button class="action-button" mat-raised-button color="warn" (click)="leaveGroup()">
+						Leave Group
+					</button>
+
+					@if (userManager.isAdmin(this.currentUser)) {
+						<button class="action-button" mat-raised-button color="warn" (click)="deleteGroup()">
+							Delete Group
+						</button>
+					}
+				}
 			</div>
 		</app-layout>
 
@@ -126,6 +138,8 @@ import { GroupUserManager } from "./group-user-manager.util";
 		}
 
 		.detail-section {
+			height: calc(100vh - 328px);
+			overflow-y: auto;
 			display: flex;
 			flex-direction: column;
 			gap: 16px;
@@ -133,6 +147,10 @@ import { GroupUserManager } from "./group-user-manager.util";
 			align-items: center;
 
 			.group-manager {
+				width: 100%;
+			}
+
+			.action-button {
 				width: 100%;
 			}
 		}
@@ -181,18 +199,6 @@ export class GroupEditorComponent implements OnInit {
 					label: "Join",
 					visible: () => !this.isEdit,
 					action: () => this.openJoinGroupDialog()
-				},
-				{
-					type: ToolbarButtonType.Warn,
-					label: "Leave",
-					visible: () => this.isEdit,
-					action: () => this.leaveGroup()
-				},
-				{
-					type: ToolbarButtonType.Warn,
-					label: "Delete",
-					visible: () => this.isEdit && this.userManager.isAdmin(this.currentUser),
-					action: () => this.deleteGroup()
 				},
 				{
 					type: ToolbarButtonType.Primary,
