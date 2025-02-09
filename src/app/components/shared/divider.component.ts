@@ -23,7 +23,7 @@ import { MatDividerModule } from "@angular/material/divider";
 			justify-content: center;
 			align-items: center;
 			gap: 16px;
-			margin-top: 8px;
+			margin: 8px 0;
 		}
 		
 		.divider {

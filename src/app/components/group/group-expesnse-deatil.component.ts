@@ -189,14 +189,12 @@ import { GroupBalancesComponent } from "./group-balances.component";
 	`
 })
 export class GroupExpenseDetailComponent implements OnInit {
-	@ViewChild("scrollContainer", { static: false }) scrollContainer: ElementRef | undefined;
-
 	private readonly toolbar = inject(ToolbarConfigurationService);
 	private readonly store = inject(Store);
 
 	protected group: Group | undefined;
 	protected getGroupImage = getGroupImage;
-	protected selectedTab: string = "expense";
+	protected selectedTab: "expense" | "summary" | "balance" = "expense";
 	protected loading = false;
 	protected loading$ = this.store.select(ExpenseSelector.isLoading).pipe(
 		tap(loading => this.loading = loading)
@@ -225,6 +223,8 @@ export class GroupExpenseDetailComponent implements OnInit {
 			))
 		))
 	);
+	
+	@ViewChild("scrollContainer", { static: false }) scrollContainer: ElementRef | undefined;
 
 	ngOnInit() {
 		this.toolbar.configure({

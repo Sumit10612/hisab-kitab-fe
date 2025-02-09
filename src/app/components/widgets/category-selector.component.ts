@@ -35,10 +35,8 @@ import { DividerComponent } from "../shared/divider.component";
 	`,
 	styles: [`
 		.container {
-			margin: 16px;
 			display: flex;
 			flex-direction: column;
-			gap: 8px;
 		}
 
 		.category-group {

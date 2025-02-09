@@ -10,7 +10,6 @@ import { FormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatCardModule } from "@angular/material/card";
 import { MatDialogRef } from "@angular/material/dialog";
-import { MatDividerModule } from "@angular/material/divider";
 import { MatIconModule } from "@angular/material/icon";
 import { MatInputModule } from "@angular/material/input";
 import { Store } from "@ngrx/store";
@@ -24,6 +23,7 @@ import { RouterSelector } from "../../store/app.selector";
 import { GroupAction } from "../../store/group/group.action";
 import { GroupSelector } from "../../store/group/group.selector";
 import { DialogComponent } from "../shared/dialog.component";
+import { DividerComponent } from "../shared/divider.component";
 
 import { GroupUserManager } from "./group-user-manager.util";
 
@@ -35,9 +35,9 @@ import { GroupUserManager } from "./group-user-manager.util";
 		FormsModule,
 		MatButtonModule,
 		MatInputModule,
-		MatDividerModule,
 		MatCardModule,
 		MatIconModule,
+		DividerComponent
 	],
 	template: `
 		<mat-card>
@@ -73,7 +73,7 @@ import { GroupUserManager } from "./group-user-manager.util";
 					</div>
 
 					@if($index !== members.length - 1) {
-						<mat-divider></mat-divider>
+						<app-divider></app-divider>
 					}
 				}
 			</mat-card-content>
@@ -132,7 +132,6 @@ import { GroupUserManager } from "./group-user-manager.util";
 					display: flex;
 					align-items: center;
 					justify-content: space-between;
-					margin-top: 4px;
 				}
 
 				.user-details {
