@@ -4,17 +4,16 @@ import { MatBottomSheet } from "@angular/material/bottom-sheet";
 import { MatButtonModule } from "@angular/material/button";
 import { MatIconModule } from "@angular/material/icon";
 
-import { Category, DEFAULT_CATEGORY, SubCategory } from "../models/category.model";
-import { DateOption, FilterCriteria } from "../models/filter-criteria.model";
-import { Group } from "../models/group.model";
-import { ExpenseService } from "../services/expense.service";
-import { getEndOfMonth, getPreviousMonth, getStartOfMonth } from "../utilities/date";
-
-import { DividerComponent } from "./shared/divider.component";
-import { FilterExpenseCriteriaComponent } from "./widgets/filter-expense-criteria.component";
+import { Category, DEFAULT_CATEGORY } from "../../models/category.model";
+import { DateOption, FilterCriteria } from "../../models/filter-criteria.model";
+import { Group } from "../../models/group.model";
+import { ExpenseService } from "../../services/expense.service";
+import { getEndOfMonth, getPreviousMonth, getStartOfMonth } from "../../utilities/date";
+import { DividerComponent } from "../shared/divider.component";
+import { FilterExpenseCriteriaComponent } from "../widgets/filter-expense-criteria.component";
 
 @Component({
-	selector: "app-expenses-summary",
+	selector: "app-group-expenses-summary",
 	standalone: true,
 	imports: [
 		CommonModule,
@@ -107,7 +106,7 @@ import { FilterExpenseCriteriaComponent } from "./widgets/filter-expense-criteri
 		}
 	`]
 })
-export class ExpensesSummaryComponent implements OnInit {
+export class GroupExpensesSummaryComponent implements OnInit {
 	private readonly bottomSheet = inject(MatBottomSheet);
 	private readonly expenseService = inject(ExpenseService);
 

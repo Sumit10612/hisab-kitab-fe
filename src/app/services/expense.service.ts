@@ -19,7 +19,7 @@ import {
 import { keys } from "lodash-es";
 
 import { Expense, FirestoreExpense, fromFirestoreModel, toFirestoreModel } from "../models/expense.model";
-import { Group, GroupType } from "../models/group.model";
+import { Group } from "../models/group.model";
 import { getYearMonth } from "../utilities/date";
 import { throwIfNotFound } from "../utilities/firebase-errors";
 
@@ -99,12 +99,10 @@ export class ExpenseService {
 			monthTotal[monthKey] = +(monthTotal[monthKey] ?? 0) + expense.amount;
 
 			// Handle split expense type
-			if (groupDoc.groupType === GroupType.SpiltExpense) {
-				groupDoc.members[expense.paidBy].paid += expense.amount;
-				keys(expense.usersShare).forEach(memberId => {
-					groupDoc.members[memberId].share += expense.usersShare[memberId];
-				});
-			}
+			groupDoc.members[expense.paidBy].paid += expense.amount;
+			keys(expense.usersShare).forEach(memberId => {
+				groupDoc.members[memberId].share += expense.usersShare[memberId];
+			});
 
 			transaction.update(groupRef, {
 				groupTotal,
@@ -137,19 +135,17 @@ export class ExpenseService {
 				monthTotal[newKey] = +(monthTotal[newKey] ?? 0) + updateExpense.amount;
 
 				// Handle split expense type
-				if (groupDoc.groupType === GroupType.SpiltExpense) {
-					// Update the paid amount for the user who paid
-					groupDoc.members[expenseDoc.paidBy].paid -= expenseDoc.amount;
-					groupDoc.members[updateExpense.paidBy].paid += updateExpense.amount;
+				// Update the paid amount for the user who paid
+				groupDoc.members[expenseDoc.paidBy].paid -= expenseDoc.amount;
+				groupDoc.members[updateExpense.paidBy].paid += updateExpense.amount;
 
-					// Update the share for each user involved
-					keys(expenseDoc.usersShare).forEach(memberId => {
-						groupDoc.members[memberId].share -= expenseDoc.usersShare[memberId];
-					});
-					keys(updateExpense.usersShare).forEach(memberId => {
-						groupDoc.members[memberId].share += updateExpense.usersShare[memberId];
-					});
-				}
+				// Update the share for each user involved
+				keys(expenseDoc.usersShare).forEach(memberId => {
+					groupDoc.members[memberId].share -= expenseDoc.usersShare[memberId];
+				});
+				keys(updateExpense.usersShare).forEach(memberId => {
+					groupDoc.members[memberId].share += updateExpense.usersShare[memberId];
+				});
 
 				transaction.update(groupRef, {
 					groupTotal,
@@ -177,15 +173,13 @@ export class ExpenseService {
 			monthTotal[key] = monthTotal[key] - expenseDoc.amount;
 
 			// Handle split expense type
-			if (groupDoc.groupType === GroupType.SpiltExpense) {
-				// Update the paid amount for the user who paid
-				groupDoc.members[expenseDoc.paidBy].paid -= expenseDoc.amount;
+			// Update the paid amount for the user who paid
+			groupDoc.members[expenseDoc.paidBy].paid -= expenseDoc.amount;
 
-				// Update the share for each user involved
-				keys(expenseDoc.usersShare).forEach(memberId => {
-					groupDoc.members[memberId].share -= expenseDoc.usersShare[memberId];
-				});
-			}
+			// Update the share for each user involved
+			keys(expenseDoc.usersShare).forEach(memberId => {
+				groupDoc.members[memberId].share -= expenseDoc.usersShare[memberId];
+			});
 
 			transaction.update(groupRef, {
 				groupTotal,

@@ -1,16 +1,30 @@
 import { CommonModule } from "@angular/common";
-import { Component, Input } from "@angular/core";
+import { Component, inject, Input } from "@angular/core";
 import { MatDividerModule } from "@angular/material/divider";
 import { MatIconModule } from "@angular/material/icon";
 import { RouterLink } from "@angular/router";
-import { map, pickBy, size } from "lodash-es";
+import { Store } from "@ngrx/store";
+import {
+	groupBy,
+	map as loadshMap,
+	mapKeys,
+	mapValues,
+	pick,
+	pickBy,
+	size
+} from "lodash-es";
+import { map, switchMap, tap } from "rxjs";
 
 import { DEFAULT_CATEGORY } from "../../models/category.model";
 import { Expense } from "../../models/expense.model";
-import { Group } from "../../models/group.model";
+import { Group, GroupType } from "../../models/group.model";
+import { RouterSelector } from "../../store/app.selector";
+import { ExpenseAction } from "../../store/expense/expense.action";
+import { ExpenseSelector } from "../../store/expense/expense.selector";
+import { getYearMonth } from "../../utilities/date";
 
 @Component({
-	selector: "app-expense-list",
+	selector: "app-group-expense-list",
 	standalone: true,
 	imports: [
 		CommonModule,
@@ -19,7 +33,7 @@ import { Group } from "../../models/group.model";
 		RouterLink
 	],
 	template: `
-		@for (kvp of expensesByMonth | keyvalue: noSort; track kvp) {
+		@for (kvp of (expenses$ | async) | keyvalue: noSort; track kvp) {
 			<div class="expense-record-container">
 				<div class="month-group">{{ kvp.key | date: "MMMM yyyy" | uppercase }}</div>
 				@for (expense of kvp.value; track expense) {
@@ -113,9 +127,40 @@ import { Group } from "../../models/group.model";
 		}
 	`]
 })
-export class ExpenseListComponent {
+export class GroupExpenseListComponent {
+	private readonly store = inject(Store);
+
+	protected expenses$ = this.store.select(RouterSelector.selectParams).pipe(
+		switchMap(params => this.store.select(ExpenseSelector.selectAllExpenses).pipe(
+			tap(expenses => {
+				if (!expenses.length && params["id"]) {
+					this.store.dispatch(ExpenseAction.getNext({ groupId: params["id"], initialGet: true }));
+				}
+			}),
+			map(expenses => {
+				const members = pick(this.group?.members ?? {}, this.group?.memberIds ?? []);
+				return mapValues(
+					groupBy(expenses, e => getYearMonth(e.expenseDate)),
+					es => es.map(e => ({
+						...e, 
+						paidBy: members[e.paidBy].name,
+						usersShare: this.group?.groupType === GroupType.ExpenseTracker 
+							? {}
+							: mapKeys(e.usersShare, (_value, key) => members[key].name)
+					}))
+				);
+				
+			})
+		))
+	);
+
 	@Input() group?: Group;
-	@Input() expensesByMonth?: Record<string, Expense[]> | null;
+	@Input()
+	set triggerOnScroll(value: boolean) {
+		if(value && this.group?.id) {
+			this.store.dispatch(ExpenseAction.getNext({ groupId: this.group?.id, initialGet: false }));
+		}
+	}
 
 	protected getUserSharesToDisplay(expense: Expense): string | undefined {
 		const usersShare = pickBy(expense.usersShare, value => value > 0);
@@ -123,7 +168,7 @@ export class ExpenseListComponent {
 			return undefined;
 		}
 
-		return map(usersShare, (value, key) => `${key}: ${value}`).join(" | ");
+		return loadshMap(usersShare, (value, key) => `${key}: ${value}`).join(" | ");
 	}
 
 	protected getCategoryIcon(id: number): string {
