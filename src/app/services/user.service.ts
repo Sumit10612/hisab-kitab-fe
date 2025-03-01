@@ -1,6 +1,5 @@
 import { inject, Injectable } from "@angular/core";
-import { Firestore, getDoc } from "@angular/fire/firestore";
-import { doc, setDoc, updateDoc } from "firebase/firestore";
+import { doc, Firestore, getDoc, setDoc, updateDoc } from "@angular/fire/firestore";
 import { docData,  } from "rxfire/firestore";
 import { Observable, switchMap } from "rxjs";
 
