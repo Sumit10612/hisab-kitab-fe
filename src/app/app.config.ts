@@ -1,4 +1,4 @@
-import { APP_INITIALIZER, ApplicationConfig, importProvidersFrom, isDevMode } from "@angular/core";
+import { APP_INITIALIZER, ApplicationConfig, isDevMode } from "@angular/core";
 import { initializeApp, provideFirebaseApp } from "@angular/fire/app";
 import { getAuth, provideAuth } from "@angular/fire/auth";
 import { getFirestore, provideFirestore } from "@angular/fire/firestore";
@@ -32,12 +32,10 @@ const initializer = (pwaService: PwaService) => () => pwaService.initPwaPrompt()
 export const appConfig: ApplicationConfig = {
 	providers: [
 		provideRouter(routes, withComponentInputBinding()),
-		provideAnimationsAsync(),
-		importProvidersFrom([
-			provideFirebaseApp(() => initializeApp(firebaseConfig)),
-			provideAuth(() => getAuth()),
-			provideFirestore(() => getFirestore())
-		]),
+		provideAnimationsAsync(),		
+		provideFirebaseApp(() => initializeApp(firebaseConfig)),
+		provideAuth(() => getAuth()),
+		provideFirestore(() => getFirestore()),
 		MatSnackBarModule,
 		MatBottomSheetModule,
 		provideServiceWorker("ngsw-worker.js", {
