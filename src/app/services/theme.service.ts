@@ -1,20 +1,23 @@
-import { Injectable, signal } from "@angular/core";
+import { effect, inject, Injectable, signal } from "@angular/core";
 
-import { UserService } from "./user.service";
+import { UserSelector } from "../store/user/user.selector";
+import { Store } from "@ngrx/store";
 
 @Injectable({
 	providedIn: "root"
 })
 export class ThemeService {
-	constructor(userServive: UserService) {
-		userServive.get$.subscribe(user => {
-			const themeFromUser = user.preferences?.theme ?? "";
-			if (themeFromUser !== this.$theme()) {
-				localStorage.setItem("theme", themeFromUser);
-				this.$theme.set(themeFromUser);
-			}
-		});
-	}
+	private readonly store = inject(Store);
+
+    constructor() {
+        effect(() => {
+            const theme = this.store.selectSignal(UserSelector.select)().preferences?.theme;
+            if(theme && theme !== this.$theme()) {
+                localStorage.setItem("theme", theme);
+				this.$theme.set(theme);
+            }
+        });
+    }
 
 	$theme = signal(localStorage.getItem("theme"));
 }

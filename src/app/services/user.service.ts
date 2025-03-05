@@ -1,11 +1,7 @@
 import { inject, Injectable } from "@angular/core";
 import { doc, Firestore, getDoc, setDoc, updateDoc } from "@angular/fire/firestore";
-import { docData,  } from "rxfire/firestore";
-import { Observable, switchMap } from "rxjs";
 
 import { User } from "../models/user.model";
-
-import { AuthService } from "./auth.service";
 
 export const USER_COLLECTION_NAME = "users";
 
@@ -14,11 +10,6 @@ export const USER_COLLECTION_NAME = "users";
 })
 export class UserService {
 	private readonly firestore = inject(Firestore);
-	private readonly authService = inject(AuthService);
-
-	get$ = this.authService.user$.pipe(
-		switchMap(user => docData(doc(this.firestore, USER_COLLECTION_NAME, user.uid)) as Observable<User>)
-	);
 
 	async get(id: string): Promise<User> {
 		const docSnapshot = await getDoc(doc(this.firestore, USER_COLLECTION_NAME, id));

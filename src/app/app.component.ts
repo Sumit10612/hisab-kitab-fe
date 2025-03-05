@@ -1,4 +1,3 @@
-import { CommonModule } from "@angular/common";
 import {
 	Component,
 	effect,
@@ -28,7 +27,6 @@ import { UserSelector } from "./store/user/user.selector";
 	selector: "app-root",
 	standalone: true,
 	imports: [
-		CommonModule,
 		MatButtonModule,
 		MatIconModule,
 		MatProgressSpinner,
@@ -50,13 +48,13 @@ import { UserSelector } from "./store/user/user.selector";
 						</button>
 					}
 
-					@if (toolbar.config.profile?.visible) {
-						<a *ngIf="user$ | async as user" routerLink="/profile">
+					@if (toolbar.config.profile?.visible && $user()) {
+						<a routerLink="/profile">
 							<img
 								width="55" 
 								height="55"
-								[src]="getUserImage(user?.photoUrl).src"
-								[alt]="getUserImage(user?.photoUrl).alt" />
+								[src]="getUserImage($user().photoUrl).src"
+								[alt]="getUserImage($user().photoUrl).alt" />
 						</a>
 					}
 
@@ -133,14 +131,14 @@ export class AppComponent implements OnInit {
 	private readonly swUpdate = inject(SwUpdate);
 	private readonly renderer = inject(Renderer2);
 	private readonly store = inject(Store);
+	private readonly theme = inject(ThemeService);
 
 	protected readonly navigation = inject(NavigationService);
-	protected readonly theme = inject(ThemeService);
 	protected readonly notification = inject(NotificationService);
 	protected readonly toolbar = inject(ToolbarConfigurationService);
 
 	protected getUserImage = getUserImage;
-	protected user$ = this.store.select(UserSelector.select);
+	protected $user = this.store.selectSignal(UserSelector.select);
 
 	constructor() {
 		effect(() => {

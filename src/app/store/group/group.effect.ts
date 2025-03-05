@@ -1,4 +1,4 @@
-import { inject, Injectable } from "@angular/core";
+import { computed, inject, Injectable } from "@angular/core";
 import { Actions, createEffect, ofType } from "@ngrx/effects";
 import { Store } from "@ngrx/store";
 import {
@@ -12,7 +12,6 @@ import {
 	map,
 	mergeMap,
 	switchMap,
-	take,
 	tap
 } from "rxjs";
 
@@ -34,6 +33,8 @@ export class GroupEffects {
 	private readonly notification = inject(NotificationService);
 	private readonly navigation = inject(NavigationService);
 	private readonly store = inject(Store);
+
+	private readonly $user = this.store.selectSignal(UserSelector.select);
 
 	query$ = createEffect(() => {
 		return this.action$.pipe(
@@ -72,42 +73,34 @@ export class GroupEffects {
 	create$ = createEffect(() => {
 		return this.action$.pipe(
 			ofType(GroupAction.create),
-			switchMap(({ upsertGroup }) => this.store.select(UserSelector.select).pipe(
-				take(1),
-				switchMap(async user => {
-					this.notification.showLoading();
-					try {
-						if (!user) {
-							throw ErrorCode.NOT_FOUND;
-						}
-
-						const group = {
-							...upsertGroup,
-							groupTotal: 0,
-							monthTotal: {},
-							memberIds: [user.uid],
-							members: {
-								[user.uid]: {
-									id: user.uid,
-									name: user.name,
-									role: MemberRole.admin,
-									paid: 0,
-									share: 0,
-									isVirtual: false
-								}
-							},
-							categories: [DEFAULT_CATEGORY]
-						} as Group;
-
-						await this.groupService.create(group);
-						return GroupAction.createSuccess();
-					} catch (error) {
-						return AppActions.handleError({ error });
-					} finally {
-						this.notification.hideLoading();
-					}
-				})
-			))
+			switchMap(async ({ upsertGroup }) => {
+				this.notification.showLoading();
+				try {
+					await this.groupService.create({
+						...upsertGroup,
+						groupTotal: 0,
+						monthTotal: {},
+						memberIds: [this.$user().uid],
+						members: {
+							[this.$user().uid]: {
+								id: this.$user().uid,
+								name: this.$user().name,
+								role: MemberRole.admin,
+								paid: 0,
+								share: 0,
+								isVirtual: false
+							}
+						},
+						categories: [DEFAULT_CATEGORY]
+					} as Group);
+					
+					return GroupAction.createSuccess();
+				} catch (error) {
+					return AppActions.handleError({ error });
+				} finally {
+					this.notification.hideLoading();
+				}
+			})
 		);
 	});
 
@@ -148,24 +141,17 @@ export class GroupEffects {
 	delete$ = createEffect(() => {
 		return this.action$.pipe(
 			ofType(GroupAction.deleteGroup),
-			switchMap(({ id }) => this.store.select(UserSelector.select).pipe(
-				take(1),
-				switchMap(async user => {
-					this.notification.showLoading();
-					try {
-						if (!user?.uid) {
-							throw ErrorCode.NOT_FOUND;
-						}
-
-						await this.groupService.delete(user.uid, id);
-						return GroupAction.deleteSuccess();
-					} catch (error) {
-						return AppActions.handleError({ error });
-					} finally {
-						this.notification.hideLoading();
-					}
-				})
-			))
+			switchMap(async ({ id }) => {
+				this.notification.showLoading();
+				try {
+					await this.groupService.delete(this.$user().uid, id);
+					return GroupAction.deleteSuccess();
+				} catch (error) {
+					return AppActions.handleError({ error });
+				} finally {
+					this.notification.hideLoading();
+				}
+			})
 		);
 	});
 
@@ -189,49 +175,36 @@ export class GroupEffects {
 	addMember$ = createEffect(() => {
 		return this.action$.pipe(
 			ofType(GroupAction.addMember),
-			switchMap(({ code }) => this.store.select(UserSelector.select).pipe(
-				take(1),
-				switchMap(async user => {
-					this.notification.showLoading();
-					try {
-						if (!user) {
-							throw ErrorCode.NOT_FOUND;
-						}
-
-						await this.groupService.addMemeberToGroupViaCode(user.uid, user.name ?? "", code);
-						return GroupAction.addMemberSuccess();
-					} catch (error) {
-						return AppActions.handleError({ error });
-					} finally {
-						this.notification.hideLoading();
-					}
-				})
-			))
+			switchMap(async ({ code }) => {
+				this.notification.showLoading();
+				try {
+					await this.groupService.addMemeberToGroupViaCode(this.$user().uid, this.$user().name ?? "", code);
+					return GroupAction.addMemberSuccess();
+				} catch (error) {
+					return AppActions.handleError({ error });
+				} finally {
+					this.notification.hideLoading();
+				}
+			})
 		);
 	});
 
 	addVirtualMember$ = createEffect(() => {
 		return this.action$.pipe(
 			ofType(GroupAction.addVirtualMember),
-			switchMap(({ groupId, name }) => this.store.select(UserSelector.select).pipe(
-				take(1),
-				switchMap(async user => {
-					this.notification.showLoading();
-					try {
-						if (!user) {
-							throw ErrorCode.NOT_FOUND;
-						}
-						const segment = () => random(0, 15).toString(16);
-						const uid = `${times(8, segment).join("")}-${times(4, segment).join("")}-4${times(3, segment).join("")}-${sample(["8", "9", "a", "b"])}${times(3, segment).join("")}-${times(12, segment).join("")}`;
-						await this.groupService.addMemberToGroup(groupId, uid, name, true);
-						return GroupAction.addMemberSuccess();
-					} catch (error) {
-						return AppActions.handleError({ error });
-					} finally {
-						this.notification.hideLoading();
-					}
-				})
-			))
+			switchMap(async ({ groupId, name }) => {
+				this.notification.showLoading();
+				try {
+					const segment = () => random(0, 15).toString(16);
+					const uid = `${times(8, segment).join("")}-${times(4, segment).join("")}-4${times(3, segment).join("")}-${sample(["8", "9", "a", "b"])}${times(3, segment).join("")}-${times(12, segment).join("")}`;
+					await this.groupService.addMemberToGroup(groupId, uid, name, true);
+					return GroupAction.addMemberSuccess();
+				} catch (error) {
+					return AppActions.handleError({ error });
+				} finally {
+					this.notification.hideLoading();
+				}
+			})
 		);
 	});
 
@@ -245,27 +218,21 @@ export class GroupEffects {
 	removeMember$ = createEffect(() => {
 		return this.action$.pipe(
 			ofType(GroupAction.removeMember),
-			switchMap(({ id, memberId }) => this.store.select(UserSelector.select).pipe(
-				take(1),
-				switchMap(async user => {
-					try {
-						if (!user) {
-							throw ErrorCode.NOT_FOUND;
-						}
-
-						await this.groupService.removeMember(id, memberId ?? user.uid);
-						return GroupAction.removeMemberSuccess({ memberId });
-					} catch (error) {
-						if (error === ErrorCode.NO_OTHER_ADMIN_FOUND) {
-							this.notification.error("Cannot leave, you are the only admin here.");
-						}
-
-						return AppActions.handleError({ error });
-					} finally {
-						this.notification.hideLoading();
+			switchMap(async ({ id, memberId }) => {
+				try {
+					this.notification.showLoading();
+					await this.groupService.removeMember(id, memberId ?? this.$user().uid);
+					return GroupAction.removeMemberSuccess({ memberId });
+				} catch (error) {
+					if (error === ErrorCode.NO_OTHER_ADMIN_FOUND) {
+						this.notification.error("Cannot leave, you are the only admin here.");
 					}
-				})
-			))
+
+					return AppActions.handleError({ error });
+				} finally {
+					this.notification.hideLoading();
+				}
+			})
 		);
 	});
 
@@ -283,24 +250,17 @@ export class GroupEffects {
 	addCategory$ = createEffect(() => {
 		return this.action$.pipe(
 			ofType(GroupAction.addCategory),
-			switchMap(({ groupId, subCategoryName, icon, categoryId, categoryName }) => this.store.select(UserSelector.select).pipe(
-				take(1),
-				switchMap(async user => {
-					this.notification.showLoading();
-					try {
-						if (!user) {
-							throw ErrorCode.NOT_FOUND;
-						}
-						
-						await this.groupService.addCategoryToGroup(groupId, subCategoryName, icon, categoryId, categoryName);
-						return GroupAction.addCategorySuccess();
-					} catch (error) {
-						return AppActions.handleError({ error });
-					} finally {
-						this.notification.hideLoading();
-					}
-				})
-			))
+			switchMap(async ({ groupId, subCategoryName, icon, categoryId, categoryName }) => {
+				this.notification.showLoading();
+				try {
+					await this.groupService.addCategoryToGroup(groupId, subCategoryName, icon, categoryId, categoryName);
+					return GroupAction.addCategorySuccess();
+				} catch (error) {
+					return AppActions.handleError({ error });
+				} finally {
+					this.notification.hideLoading();
+				}
+			})
 		);
 	});
 }

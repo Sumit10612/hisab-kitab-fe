@@ -25,7 +25,8 @@ export const userReducer = createReducer<UserState>(
 				user: {
 					...state.user,
 					name: user.name,
-					photoUrl: user.photoUrl
+					photoUrl: user.photoUrl,
+					preferences: user.preferences
 				}
 			});
 		}

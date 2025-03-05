@@ -48,8 +48,7 @@ import { PaidByShareComponent } from "./widgets/paid-by-share.component";
 		MatSelectModule,
 		MatDatepickerModule,
 		MatButtonToggleModule,
-		LayoutComponent,
-		PaidByShareComponent
+		LayoutComponent
 	],
 	providers: [provideNativeDateAdapter()],
 	template: `
