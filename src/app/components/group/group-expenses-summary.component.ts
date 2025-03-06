@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component, inject, Input, OnInit } from "@angular/core";
+import { Component, inject, input, OnInit } from "@angular/core";
 import { MatBottomSheet } from "@angular/material/bottom-sheet";
 import { MatButtonModule } from "@angular/material/button";
 import { MatIconModule } from "@angular/material/icon";
@@ -8,7 +8,7 @@ import { Category, DEFAULT_CATEGORY } from "../../models/category.model";
 import { DateOption, FilterCriteria } from "../../models/filter-criteria.model";
 import { Group } from "../../models/group.model";
 import { ExpenseService } from "../../services/expense.service";
-import { getEndOfMonth, getPreviousMonth, getStartOfMonth } from "../../utilities/date";
+import { DateUtilities } from "../../utilities/date";
 import { DividerComponent } from "../shared/divider.component";
 import { FilterExpenseCriteriaComponent } from "../widgets/filter-expense-criteria.component";
 
@@ -30,7 +30,7 @@ import { FilterExpenseCriteriaComponent } from "../widgets/filter-expense-criter
 		</div>
 
 		<div class="summary-container">
-			@for (kvp of paidBySummary | keyvalue; track kvp) {
+			@for (kvp of paidBySummary | keyvalue; track kvp.key) {
 				<div class="summary-record">
 					<span>{{kvp.key}}</span>
 					<span>&#8377; {{kvp.value | number: '1.2-2'}}</span>
@@ -47,7 +47,7 @@ import { FilterExpenseCriteriaComponent } from "../widgets/filter-expense-criter
 		<h4>Spends by Categories:</h4>
 		<div class="summary-container">
 			@if (hasData) {
-				@for (kvp of expenseTotalByCategory | keyvalue; track kvp) {
+				@for (kvp of expenseTotalByCategory | keyvalue; track kvp.key) {
 					<div class="summary-record category">
 						<div class="summary-record-name">
 							<span>{{getCategoryById(+kvp.key).name}}</span>
@@ -56,7 +56,7 @@ import { FilterExpenseCriteriaComponent } from "../widgets/filter-expense-criter
 					</div>
 					<app-divider></app-divider>
 
-					@for (subCategory of getCategoryById(+kvp.key).subCategories; track subCategory) {
+					@for (subCategory of getCategoryById(+kvp.key).subCategories; track subCategory.id) {
 						@if (expenseTotalBySubCategory[subCategory.id]) {
 							<div class="summary-record sub-category">
 								<div class="summary-record-name">
@@ -116,14 +116,14 @@ export class GroupExpensesSummaryComponent implements OnInit {
 	protected expenseTotalByCategory: Record<number, number> = {};
 	protected expenseTotalBySubCategory: Record<number, number> = {};
 
-	@Input() group?: Group;
+	readonly group = input.required<Group>();
 
 	ngOnInit() {
 		const today = new Date();
 		this.filterCriteria = {
 			dateOption: DateOption.Current,
-			fromDate: getStartOfMonth(today),
-			toDate: getEndOfMonth(today)
+			fromDate: DateUtilities.startOfMonth(today),
+			toDate: DateUtilities.endOfMonth(today)
 		};
 
 		this.getExpenses();
@@ -131,7 +131,6 @@ export class GroupExpensesSummaryComponent implements OnInit {
 
 	protected changeCriteria() {
 		this.bottomSheet.open(FilterExpenseCriteriaComponent, {
-			disableClose: true,
 			data: {
 				criteria: { 
 					dateOption: this.filterCriteria?.dateOption,
@@ -140,7 +139,7 @@ export class GroupExpensesSummaryComponent implements OnInit {
 				} as FilterCriteria
 			}
 		}).afterDismissed().subscribe(criteria => {
-			if(criteria.dateOption !== this.filterCriteria?.dateOption) {
+			if(criteria && criteria.dateOption !== this.filterCriteria?.dateOption) {
 				this.filterCriteria = criteria;
 
 				this.getExpenses();
@@ -149,27 +148,27 @@ export class GroupExpensesSummaryComponent implements OnInit {
 	}
 
 	protected getCategoryById(id: number): Category {
-		return this.group?.categories.find(category => category.id === id)
+		return this.group().categories.find(category => category.id === id)
 			?? DEFAULT_CATEGORY;
 	}
 
 	private async getExpenses() {
 		const today = new Date();
 		if(this.filterCriteria?.dateOption === DateOption.Current) {
-			this.filterCriteria.fromDate = getStartOfMonth(today);
-			this.filterCriteria.toDate = getEndOfMonth(today);
+			this.filterCriteria.fromDate = DateUtilities.startOfMonth(today);
+			this.filterCriteria.toDate = DateUtilities.endOfMonth(today);
 		} else if(this.filterCriteria?.dateOption === DateOption.Last) {
-			const lastMonth = getPreviousMonth(today);
-			this.filterCriteria.fromDate = getStartOfMonth(lastMonth);
-			this.filterCriteria.toDate = getEndOfMonth(lastMonth);
+			const lastMonth = DateUtilities.previousMonth(today);
+			this.filterCriteria.fromDate = DateUtilities.startOfMonth(lastMonth);
+			this.filterCriteria.toDate = DateUtilities.endOfMonth(lastMonth);
 		}
 
-		if(!this.group?.id || !this.filterCriteria?.fromDate || !this.filterCriteria.toDate) {
+		if(!this.filterCriteria?.fromDate || !this.filterCriteria.toDate) {
 			return;
 		}
 
 		const expenses = await this.expenseService.getByDateRange(
-			this.group.id, 
+			this.group().id, 
 			this.filterCriteria?.fromDate, 
 			this.filterCriteria?.toDate
 		);
@@ -178,7 +177,7 @@ export class GroupExpensesSummaryComponent implements OnInit {
 		this.paidBySummary = {};
 		this.totalAmount = 0;
 		expenses.forEach(expense => {
-			const categoryId = this.group?.categories
+			const categoryId = this.group().categories
 				.find(category => category.subCategories.some(sc => sc.id === expense.category))?.id;
 			if (categoryId && expense.category) {
 				this.expenseTotalByCategory[categoryId] ??= 0;
@@ -188,7 +187,7 @@ export class GroupExpensesSummaryComponent implements OnInit {
 				this.expenseTotalBySubCategory[expense.category] += expense.amount;
 			}
 
-			const memberName = this.group?.members[expense.paidBy].name ?? "";
+			const memberName = this.group().members[expense.paidBy].name ?? "";
 			this.paidBySummary[memberName] ??= 0;
 			this.paidBySummary[memberName] += expense.amount;
 			this.totalAmount += expense.amount;

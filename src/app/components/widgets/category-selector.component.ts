@@ -18,10 +18,10 @@ import { DividerComponent } from "../shared/divider.component";
 	],
 	template: `
 		<div class="container">
-			@for (category of data; track category) {
+			@for (category of data; track category.id) {
 				<app-divider [text]="category.name"></app-divider>
 				<div class="category-group">
-					@for (subCategory of category.subCategories; track subCategory) {
+					@for (subCategory of category.subCategories; track subCategory.id) {
 						<div  class="category">
 							<button mat-icon-button (click)="onCategorySelected(subCategory)">
 								{{subCategory.icon}}

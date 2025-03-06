@@ -1,8 +1,9 @@
-import { CommonModule } from "@angular/common";
 import {
 	Component,
+	computed,
 	ElementRef,
 	inject,
+	input,
 	OnInit,
 	ViewChild
 } from "@angular/core";
@@ -12,27 +13,23 @@ import { MatIconModule } from "@angular/material/icon";
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 import { RouterLink } from "@angular/router";
 import { Store } from "@ngrx/store";
-import { switchMap, tap } from "rxjs";
 
-import { getGroupImage, Group, GroupType } from "../../models/group.model";
+import { getGroupImage, GroupType } from "../../models/group.model";
 import { ToolbarButtonType } from "../../models/toolbar.model";
 import { ToolbarConfigurationService } from "../../services/toolbar-configuration.service";
-import { RouterSelector } from "../../store/app.selector";
 import { ExpenseSelector } from "../../store/expense/expense.selector";
 import { GroupSelector } from "../../store/group/group.selector";
-import { getPreviousMonth, getYearMonth } from "../../utilities/date";
+import { DateUtilities } from "../../utilities/date";
 import { LayoutComponent } from "../shared/layout.component";
 
 import { GroupBalancesComponent } from "./group-balances.component";
 import { GroupExpenseListComponent } from "./group-expense-list.component";
 import { GroupExpensesSummaryComponent } from "./group-expenses-summary.component";
-import { GroupUserManager } from "./group-user-manager.util";
 
 @Component({
 	selector: "app-group-expesnse-detail",
 	standalone: true,
 	imports: [
-		CommonModule,
 		MatButtonToggleModule,
 		MatButtonModule,
 		MatIconModule,
@@ -44,68 +41,82 @@ import { GroupUserManager } from "./group-user-manager.util";
 		RouterLink
 	],
 	template: `
-		<app-layout [headerHeight]="'160px'" *ngIf="group$ | async as group">
-			<div section="header" class="header-section">
-				<div class="header-section-page-info">
-					<img width="50" height="50" [src]="getGroupImage(group.imageUrl).src"
-						[alt]="getGroupImage(group.imageUrl).alt" />
-					
-					<span class="header-section-page-info-name">{{group.name}}</span>
+		@if ($group(); as group) {
+			<app-layout [headerHeight]="'160px'">
+				<div section="header" class="header-section">
+					<div class="header-section-page-info">
+						<img width="50" height="50" [src]="getGroupImage(group.imageUrl).src"
+							[alt]="getGroupImage(group.imageUrl).alt" />
+						
+						<span class="header-section-page-info-name">{{group.name}}</span>
 
-					<a mat-icon-button [routerLink]="['/group', group?.id]" [disabled]="!group">
-						<mat-icon>settings</mat-icon>
-					</a>
+						<a mat-icon-button [routerLink]="['/group', group.id]">
+							<mat-icon>settings</mat-icon>
+						</a>
+					</div>
+
+					<div class="header-section-group-info">
+						<div class="header-section-group-info-total">
+							<span class="header-section-group-info-total-amount">
+								&#8377; 
+								{{ 
+									isExpenseTracker
+										? group.monthTotal[dateUtil.yearMonth(dateUtil.previousMonth())]
+										: group.currentMember.paid
+								}}
+							</span>
+							<span class="label">{{ isExpenseTracker ? "last month" : "you paid" }}</span>
+						</div>
+
+						<div class="header-section-group-info-month">
+							<span class="header-section-group-info-month-amount">
+								&#8377; 
+								{{ 
+									isExpenseTracker
+										? group.monthTotal[dateUtil.yearMonth()]
+										: group.groupTotal
+								}}
+							</span>
+							<span class="label">{{ isExpenseTracker ? "this month" : "total balance" }}</span>
+						</div>
+
+						<div class="header-section-group-info-total">
+							<span class="header-section-group-info-total-amount">
+								&#8377; {{ isExpenseTracker ? group.groupTotal : group.currentMember.share }}
+							</span>
+							<span class="label">{{ isExpenseTracker ? "total" : "your share" }}</span>
+						</div>
+					</div>
+
+					<div class="header-section-tab">
+						<mat-button-toggle-group [(value)]="selectedTab" hideSingleSelectionIndicator="true">
+							<mat-button-toggle value="expense">Expense</mat-button-toggle>
+							@if (!isExpenseTracker) {
+								<mat-button-toggle value="balance">Balance</mat-button-toggle>
+							}
+							<mat-button-toggle value="summary">Summary</mat-button-toggle>
+						</mat-button-toggle-group>
+					</div>
 				</div>
 
-				<div class="header-section-group-info">
-					<div class="header-section-group-info-total">
-						<span class="header-section-group-info-total-amount">
-							&#8377; {{ isExpenseTracker ? lastMonthTotal : youPaid }}
-						</span>
-						<span class="label">{{ isExpenseTracker ? "last month" : "you paid" }}</span>
-					</div>
+				<div section="detail" class="detail-section" #scrollContainer (scroll)="onScroll()">
+					@if (selectedTab === "expense") {
+						<app-group-expense-list [group]="group" [triggerOnScroll]="triggerOnScroll"></app-group-expense-list>
+					} @else if (selectedTab === "balance") {
+						<app-group-balances [group]="group"></app-group-balances>
+					} @else {
+						<app-group-expenses-summary [group]="group"></app-group-expenses-summary>
+					}
 
-					<div class="header-section-group-info-month">
-						<span class="header-section-group-info-month-amount">
-							&#8377; {{ isExpenseTracker ? currentMonthTotal : group?.groupTotal}}
-						</span>
-						<span class="label">{{ isExpenseTracker ? "this month" : "total balance" }}</span>
-					</div>
-
-					<div class="header-section-group-info-total">
-						<span class="header-section-group-info-total-amount">
-							&#8377; {{ isExpenseTracker? group?.groupTotal : yourShare }}
-						</span>
-						<span class="label">{{ isExpenseTracker ? "total" : "your share" }}</span>
-					</div>
+					@if($loading()) {
+						<div class="loading-spinner">
+							<mat-progress-spinner diameter="15" mode="indeterminate"></mat-progress-spinner>
+							<span class="loading-spinner-text">loading...</span>
+						</div>
+					}
 				</div>
-
-				<div class="header-section-tab">
-					<mat-button-toggle-group [(value)]="selectedTab" hideSingleSelectionIndicator="true">
-						<mat-button-toggle value="expense">Expense</mat-button-toggle>
-						<mat-button-toggle *ngIf="!isExpenseTracker" value="balance">Balance</mat-button-toggle>
-						<mat-button-toggle value="summary">Summary</mat-button-toggle>
-					</mat-button-toggle-group>
-				</div>
-			</div>
-
-			<div section="detail" class="detail-section" #scrollContainer (scroll)="onScroll()">
-				@if (selectedTab === "expense") {
-					<app-group-expense-list [group]="group" [triggerOnScroll]="triggerOnScroll"></app-group-expense-list>
-				} @else if (selectedTab === "balance") {
-					<app-group-balances [group]="group"></app-group-balances>
-				} @else {
-					<app-group-expenses-summary [group]="group"></app-group-expenses-summary>
-				}
-
-				@if(loading$ | async) {
-					<div class="loading-spinner">
-						<mat-progress-spinner diameter="15" mode="indeterminate"></mat-progress-spinner>
-						<span class="loading-spinner-text">loading...</span>
-					</div>
-				}
-			</div>
-		</app-layout>
+			</app-layout>
+		}
 	`,
 	styles: `
 		.header-section {
@@ -185,25 +196,16 @@ export class GroupExpenseDetailComponent implements OnInit {
 	private readonly toolbar = inject(ToolbarConfigurationService);
 	private readonly store = inject(Store);
 
-	private group: Group | undefined;
-
-	protected groupUserManager = GroupUserManager;
 	protected getGroupImage = getGroupImage;
 	protected selectedTab: "expense" | "summary" | "balance" = "expense";
-	protected isExpenseTracker = false;
-	protected loading = false;
-	protected loading$ = this.store.select(ExpenseSelector.isLoading).pipe(
-		tap(loading => this.loading = loading)
-	);
-	protected group$ = this.store.select(RouterSelector.selectParams).pipe(
-		switchMap(params => this.store.select(GroupSelector.selectGroup(params["id"])).pipe(
-			tap(group => {
-				this.group = group;
-				this.isExpenseTracker = group?.groupType === GroupType.ExpenseTracker;
-			})
-		))
-	);
 	protected triggerOnScroll = false;
+	protected readonly dateUtil = DateUtilities;
+	
+	protected readonly id = input.required<string>();
+	protected readonly $loading = this.store.selectSignal(ExpenseSelector.isLoading);
+	protected readonly $group = computed(() =>
+		this.store.selectSignal(GroupSelector.selectGroup(this.id()))()
+	);
 
 	@ViewChild("scrollContainer", { static: false }) scrollContainer: ElementRef | undefined;
 
@@ -214,9 +216,9 @@ export class GroupExpenseDetailComponent implements OnInit {
 				{
 					type: ToolbarButtonType.Primary,
 					label: "Add expense",
-					disabled: () => !this.group?.id,
+					disabled: () => !this.$group()?.id,
 					visible: () => this.selectedTab === "expense",
-					redirectTo: () => ["/group", this.group?.id ?? "", "expense"]
+					redirectTo: () => ["/group", this.id(), "expense"]
 				},
 				{
 					type: ToolbarButtonType.Secondary,
@@ -228,31 +230,17 @@ export class GroupExpenseDetailComponent implements OnInit {
 		});
 	}
 
-	protected get currentMonthTotal(): number {
-		const currentMonth = getYearMonth(new Date());
-		return this.group?.monthTotal[currentMonth] ?? 0;
-	}
-
-	protected get lastMonthTotal() {
-		const lastMonth = getPreviousMonth(new Date());
-		return this.group?.monthTotal[getYearMonth(lastMonth)] ?? 0;
-	}
-
-	protected get youPaid() {
-		return this.group ? GroupUserManager.getCurrentUser(this.group.members)?.paid ?? 0 : 0;
-	}
-
-	protected get yourShare() {
-		return this.group ? GroupUserManager.getCurrentUser(this.group.members)?.share ?? 0 : 0;
+	protected get isExpenseTracker(): boolean {
+		return this.$group()?.groupType === GroupType.ExpenseTracker;
 	}
 
 	protected onScroll() {
-		if (this.loading || !this.scrollContainer?.nativeElement.scrollTop) {
+		if (this.$loading() || !this.scrollContainer?.nativeElement.scrollTop) {
 			return;
 		}
 
 		const element = this.scrollContainer.nativeElement;
-		if ((element.scrollHeight - element.clientHeight <= element.scrollTop + 1) && this.group?.id) {
+		if ((element.scrollHeight - element.clientHeight <= element.scrollTop + 1) && this.id()) {
 			this.triggerOnScroll = true;
 			setTimeout(() => this.triggerOnScroll = false);
 		}

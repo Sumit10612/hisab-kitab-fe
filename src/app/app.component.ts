@@ -53,8 +53,8 @@ import { UserSelector } from "./store/user/user.selector";
 							<img
 								width="55" 
 								height="55"
-								[src]="getUserImage($user().photoUrl).src"
-								[alt]="getUserImage($user().photoUrl).alt" />
+								[src]="getUserImage($user()?.photoUrl).src"
+								[alt]="getUserImage($user()?.photoUrl).alt" />
 						</a>
 					}
 

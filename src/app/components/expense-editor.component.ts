@@ -2,8 +2,11 @@ import { CommonModule } from "@angular/common";
 import {
 	AfterViewInit,
 	Component,
+	computed,
+	effect,
 	ElementRef,
 	inject,
+	input,
 	OnInit,
 	ViewChild
 } from "@angular/core";
@@ -18,15 +21,13 @@ import { MatIconModule } from "@angular/material/icon";
 import { MatInputModule } from "@angular/material/input";
 import { MatSelectModule } from "@angular/material/select";
 import { Store } from "@ngrx/store";
-import { pick, uniq, values } from "lodash-es";
-import { filter, switchMap, tap } from "rxjs";
+import { uniq, values } from "lodash-es";
 
 import { DEFAULT_CATEGORY, SubCategory } from "../models/category.model";
 import { Expense, SplitType } from "../models/expense.model";
-import { Group, GroupMember, GroupType } from "../models/group.model";
+import { GroupType } from "../models/group.model";
 import { ToolbarButtonType } from "../models/toolbar.model";
 import { ToolbarConfigurationService } from "../services/toolbar-configuration.service";
-import { RouterSelector } from "../store/app.selector";
 import { ExpenseAction } from "../store/expense/expense.action";
 import { ExpenseSelector } from "../store/expense/expense.selector";
 import { GroupSelector } from "../store/group/group.selector";
@@ -52,7 +53,6 @@ import { PaidByShareComponent } from "./widgets/paid-by-share.component";
 	],
 	providers: [provideNativeDateAdapter()],
 	template: `
-		@if (expense$ | async) {}
 		<app-layout [pageTitle]="(form.controls.id.value ? 'Update' : 'Add') + ' an expense'"  headerHeight="48px">
 			<div section="detail" class="detail-section">
 				<form [formGroup]="form">
@@ -60,7 +60,7 @@ import { PaidByShareComponent } from "./widgets/paid-by-share.component";
 						<mat-form-field>
 							<mat-label>Paid by</mat-label>
 							<mat-select [formControl]="form.controls.paidBy">
-								@for (member of members; track member) {
+								@for (member of $group()?.activeMembers; track member.id) {
 									<mat-option [value]="member.id">
 										{{member.name}}
 									</mat-option>
@@ -121,7 +121,7 @@ import { PaidByShareComponent } from "./widgets/paid-by-share.component";
 
 				@if (form.controls.groupType.value === groupType.SpiltExpense) {
 					<div class="shares">
-						@for (member of members; track member) {
+						@for (member of $group()?.activeMembers; track member.id) {
 							<div class="shares-share" (click)="onSplitTypeChanged()">
 								<span>{{member.name.split(' ')[0]}}</span>
 								<span>&#8377;{{userShare[member.id] || 0 | number: '1.2-2'}}</span>
@@ -183,9 +183,8 @@ export class ExpenseEditorComponent implements OnInit, AfterViewInit {
 	private readonly store = inject(Store);
 
 	private selectedSubCategory = DEFAULT_CATEGORY.subCategories[0];
-	private group: Group | undefined;
 
-	protected groupType = GroupType;
+	protected readonly groupType = GroupType;
 	protected readonly form = this.formBuilder.group({
 		id: "",
 		groupId: "",
@@ -199,47 +198,44 @@ export class ExpenseEditorComponent implements OnInit, AfterViewInit {
 		paidBy: ["", Validators.required],
 		expenseDate: [new Date(), Validators.required],
 	});
-	protected splitType = SplitType;
+	protected readonly splitType = SplitType;
+	protected readonly id = input<string>("");
+	protected readonly groupId = input.required<string>();
+	protected readonly $group = computed(() => this.store.selectSignal(GroupSelector.selectGroup(this.groupId()))());
+
 	protected selectedSplitType = SplitType.Equally;
 	protected userShare: Record<string, number> = {};
-	protected expense$ = this.store.select(RouterSelector.selectParams).pipe(
-		switchMap(params => this.store.select(GroupSelector.selectGroup(params["groupId"])).pipe(
-			filter(group => !!group),
-			switchMap((group) => this.store.select(ExpenseSelector.selectExpense(params["id"])).pipe(
-				tap(expense => {
-					const subCategory = group?.categories
-						.flatMap(category => category.subCategories)
-						.find(subCat => subCat.id === expense?.category);
-					if(subCategory) {
-						this.selectedSubCategory = subCategory;
-					}
-
-					this.group = group;
-					this.userShare = expense?.usersShare ?? {};
-					this.form.patchValue({
-						...expense,
-						category: this.selectedSubCategory.name,
-						paidBy: expense ? expense.paidBy : this.currentUser?.id,
-						groupId: group?.id,
-						groupType: group?.groupType
-					});
-
-					if (uniq(values(expense?.usersShare)).length > 1) {
-						this.selectedSplitType = this.splitType.ByShare;
-					}
-				})
-			))
-		))
-	);
 
 	@ViewChild("focusInput") focusInput?: ElementRef;
 
-	protected get members(): GroupMember[] {
-		return values(pick(this.group?.members ?? {}, this.group?.memberIds ?? []));
-	}
+	constructor() {
+		effect(() => {
+			const group = this.$group();
+			const expense = this.store.selectSignal(ExpenseSelector.selectExpense(this.id()))();
+			if(!(group && expense)) {
+				return;
+			}
 
-	protected get currentUser(): GroupMember | undefined {
-		return this.members.find(m => m.name === "You");
+			const subCategory = group.categories
+				.flatMap(category => category.subCategories)
+				.find(subCat => subCat.id === expense?.category);
+			if(subCategory) {
+				this.selectedSubCategory = subCategory;
+			}
+
+			this.userShare = expense.usersShare ?? {};
+			this.form.patchValue({
+				...expense,
+				category: this.selectedSubCategory.name,
+				paidBy: expense ? expense.paidBy : group.currentMember.id,
+				groupId: group?.id,
+				groupType: group?.groupType
+			});
+
+			if (uniq(values(expense?.usersShare)).length > 1) {
+				this.selectedSplitType = this.splitType.ByShare;
+			}
+		});
 	}
 
 	ngOnInit(): void {
@@ -277,7 +273,7 @@ export class ExpenseEditorComponent implements OnInit, AfterViewInit {
 			this.bottomSheet.open(PaidByShareComponent, {
 				disableClose: true,
 				data: {
-					members: this.members,
+					members: this.$group()?.activeMembers ?? [],
 					userShare: { ...this.userShare }
 				}
 			}).afterDismissed().subscribe((userShare) => {
@@ -293,10 +289,11 @@ export class ExpenseEditorComponent implements OnInit, AfterViewInit {
 
 	onAmountChange() {
 		const amount = this.form.controls.amount.value;
-		if (amount && this.members?.length) {
-			const share = amount / this.members.length;
+		const members = this.$group()?.activeMembers;
+		if (amount && members?.length) {
+			const share = amount / members.length;
 			const userShare: Record<string, number> = {};
-			this.members.forEach(member => {
+			members.forEach(member => {
 				userShare[member.id] = share;
 			});
 
@@ -306,7 +303,7 @@ export class ExpenseEditorComponent implements OnInit, AfterViewInit {
 
 	openCategorySheet() {
 		this.bottomSheet.open(CategorySelectorComponent, {
-			data: this.group?.categories ?? []
+			data: this.$group()?.categories ?? []
 		}).afterDismissed().subscribe((subCategory: SubCategory) => {
 			this.selectedSubCategory = subCategory;
 			this.form.controls.category.setValue(subCategory.name || "");

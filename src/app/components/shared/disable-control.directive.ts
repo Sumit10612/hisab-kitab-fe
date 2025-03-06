@@ -1,7 +1,7 @@
 import {
 	Directive,
 	inject,
-	Input,
+	input,
 	OnChanges,
 	OnInit,
 	SimpleChanges
@@ -15,11 +15,11 @@ import { FormControl, NgControl } from "@angular/forms";
 export class DisableControlDirective implements OnInit, OnChanges {
 	private readonly ngControl = inject(NgControl);
 
-	@Input() appDisableControl: boolean = false;
+	readonly appDisableControl = input(false);
 
 	ngOnInit(): void {
 		if (this.ngControl.control) {
-			this.toggleControlState(this.appDisableControl);
+			this.toggleControlState(this.appDisableControl());
 		}
 	}
 
@@ -28,7 +28,7 @@ export class DisableControlDirective implements OnInit, OnChanges {
 			return;
 		}
 
-		this.toggleControlState(this.appDisableControl);
+		this.toggleControlState(this.appDisableControl());
 	}
 
 	private toggleControlState(disabled: boolean) {

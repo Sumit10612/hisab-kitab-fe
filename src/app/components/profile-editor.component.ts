@@ -1,14 +1,12 @@
-import { CommonModule } from "@angular/common";
-import { Component, inject, OnInit } from "@angular/core";
+import { Component, computed, inject, OnInit } from "@angular/core";
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
 import { MatRadioChange, MatRadioModule } from "@angular/material/radio";
 import { Store } from "@ngrx/store";
-import { tap } from "rxjs";
 
 import { ToolbarButtonType } from "../models/toolbar.model";
-import { avatars, User } from "../models/user.model";
+import { AVATARS, User } from "../models/user.model";
 import { ToolbarConfigurationService } from "../services/toolbar-configuration.service";
 import { AuthActions } from "../store/auth/auth.action";
 import { UserActions } from "../store/user/user.action";
@@ -20,51 +18,52 @@ import { LayoutComponent } from "./shared/layout.component";
 	selector: "app-profile-editor",
 	standalone: true,
 	imports: [
-		CommonModule,
 		LayoutComponent,
 		MatInputModule,
 		MatFormFieldModule,
 		MatRadioModule,
 		ReactiveFormsModule,
 	],
-	template: `
-		<app-layout headerHeight="320px" pageTitle="Profile">
-			<div section="header">
-				<form [formGroup]="form" *ngIf="user$ | async">
-					<mat-form-field>
-						<mat-label>Name</mat-label>
-						<input matInput [formControl]="form.controls.name"/>
-					</mat-form-field>
-					<mat-form-field>
-						<input matInput [formControl]="form.controls.email" readonly />
-					</mat-form-field>
-					<div class="image-container">
-						@for (item of avatars; track item) {
-							<img
-								width="50"
-								height="50"
-								[class.selected]="selectedIndex === $index"
-								[src]="item.src"
-								[alt]="item.alt"
-								(click)="selectImage($index)" />
-						}
-					</div>
-				</form>
-			</div>
-			<div section="detail" class="detail-section">
-				<div>
-					<span>Theme</span>
-					<mat-radio-group
-						name="themeSelector"
-						color="warn"
-						[value]="user?.preferences?.theme ?? 'light'"
-						(change)="onThemeChange($event)" >
-							<mat-radio-button value="light">Light</mat-radio-button>
-							<mat-radio-button value="dark">Dark</mat-radio-button>
-					</mat-radio-group>
+	template: `	
+		@if ($user(); as user) {
+			<app-layout headerHeight="320px" pageTitle="Profile">
+				<div section="header">
+					<form [formGroup]="form">
+						<mat-form-field>
+							<mat-label>Name</mat-label>
+							<input matInput [formControl]="form.controls.name"/>
+						</mat-form-field>
+						<mat-form-field>
+							<input matInput [formControl]="form.controls.email" readonly />
+						</mat-form-field>
+						<div class="image-container">
+							@for (item of avatars; track item.id) {
+								<img
+									width="50"
+									height="50"
+									[class.selected]="selectedIndex === $index"
+									[src]="item.src"
+									[alt]="item.alt"
+									(click)="selectImage($index)" />
+							}
+						</div>
+					</form>
 				</div>
-			</div>
-		</app-layout>
+				<div section="detail" class="detail-section">
+					<div>
+						<span>Theme</span>
+						<mat-radio-group
+							name="themeSelector"
+							color="warn"
+							[value]="user?.preferences?.theme ?? 'light'"
+							(change)="onThemeChange($event)" >
+								<mat-radio-button value="light">Light</mat-radio-button>
+								<mat-radio-button value="dark">Dark</mat-radio-button>
+						</mat-radio-group>
+					</div>
+				</div>
+			</app-layout>
+		}
 	`,
 	styles: [`
 		.image-container {
@@ -104,18 +103,16 @@ export class ProfileEditorComponent implements OnInit {
 		email: ["", [Validators.required]],
 		photoUrl: ["", [Validators.required]]
 	});
-	protected avatars = avatars;
+	protected avatars = AVATARS;
 	protected selectedIndex: number | undefined;
-	protected user?: User;
-	protected user$ = this.store.select(UserSelector.select).pipe(
-		tap(user => {
-			if (user) {
-				this.user = user;
-				this.form.patchValue({ ...user });
-				this.selectedIndex = avatars.findIndex(avatar => avatar.alt === user?.photoUrl);
-			}
-		})
-	);
+
+	protected readonly $user = computed(() => {
+		const user = this.store.selectSignal(UserSelector.select)();
+		this.form.patchValue({ ...user });
+		this.selectedIndex = this.avatars.findIndex(avatar => avatar.alt === user?.photoUrl);
+
+		return user;
+	});
 
 	ngOnInit(): void {
 		this.toolbar.configure({
@@ -147,12 +144,13 @@ export class ProfileEditorComponent implements OnInit {
 	}
 
 	onThemeChange($event: MatRadioChange) {
-		if (this.user) {
+		const user = this.$user();
+		if(user) {
 			const preferences = {
 				theme: $event.value
 			};
-
-			this.store.dispatch(UserActions.update({ user: { ...this.user, preferences } }));
+	
+			this.store.dispatch(UserActions.update({ user: { ...user, preferences } }));
 		}
 	}
 }

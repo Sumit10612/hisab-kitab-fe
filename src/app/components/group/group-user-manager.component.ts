@@ -1,8 +1,8 @@
-import { CommonModule } from "@angular/common";
 import {
 	Component,
+	computed,
 	inject,
-	Input,
+	input,
 	TemplateRef,
 	ViewChild
 } from "@angular/core";
@@ -14,24 +14,19 @@ import { MatIconModule } from "@angular/material/icon";
 import { MatInputModule } from "@angular/material/input";
 import { Store } from "@ngrx/store";
 import { at, orderBy } from "lodash-es";
-import { filter, switchMap } from "rxjs";
 
 import { DialogButtonType } from "../../models/dialog.model";
-import { Group, GroupMember, MemberRole } from "../../models/group.model";
+import { GroupInfo, GroupMember, MemberRole } from "../../models/group.model";
 import { DialogService } from "../../services/dialog.service";
-import { RouterSelector } from "../../store/app.selector";
 import { GroupAction } from "../../store/group/group.action";
 import { GroupSelector } from "../../store/group/group.selector";
 import { DialogComponent } from "../shared/dialog.component";
 import { DividerComponent } from "../shared/divider.component";
 
-import { GroupUserManager } from "./group-user-manager.util";
-
 @Component({
 	selector: "app-group-user-manager",
 	standalone: true,
 	imports: [
-		CommonModule,
 		FormsModule,
 		MatButtonModule,
 		MatInputModule,
@@ -40,44 +35,46 @@ import { GroupUserManager } from "./group-user-manager.util";
 		DividerComponent
 	],
 	template: `
-		<mat-card>
-			<mat-card-header>
-				<mat-card-subtitle>Members:</mat-card-subtitle>
-				<button mat-mini-fab color="primary"
-					[hidden]="!userManager.isAdmin(currentUser)"
-					(click)="openAddMemberDialog()">
-					<mat-icon>person_add</mat-icon>
-				</button>
-			</mat-card-header>
-			<mat-card-content>
-				@for (member of members; track $index) {
-					<div class="user-info">
-						<div class="user-details">
-							<span>{{ member.name }}</span>
-							@if (userManager.isAdmin(member)) { <span class="role">(admin)</span> }
-						</div>
-						@if (userManager.isAdmin(currentUser)) {
-							<div class="user-actions">
-								<button mat-button
-										[hidden]="userManager.isCurrentUser(member) || userManager.isVirtualMember(member)"
-										(click)="toggelAdmin(member)">
-											{{userManager.isAdmin(member) ? "Remove" : "Make"}} admin
-								</button>
-								<button mat-button color="warn" 
-										[disabled]="userManager.isCurrentUser(member)"
-										(click)="removeMemberFromGroup(member.id, member.name)">
-											<mat-icon>person_remove</mat-icon>
-								</button>
+		@if (group(); as group) {
+			<mat-card>
+				<mat-card-header>
+					<mat-card-subtitle>Members:</mat-card-subtitle>
+					<button mat-mini-fab color="primary"
+						[hidden]="!group.isCurrentMemberIsAdmin"
+						(click)="openAddMemberDialog()">
+						<mat-icon>person_add</mat-icon>
+					</button>
+				</mat-card-header>
+				<mat-card-content>
+					@for (member of members; track member.id) {
+						<div class="user-info">
+							<div class="user-details">
+								<span>{{ member.name }}</span>
+								@if (member.role === role.admin) { <span class="role">(admin)</span> }
 							</div>
-						}
-					</div>
+							@if (group.isCurrentMemberIsAdmin) {
+								<div class="user-actions">
+									<button mat-button
+											[hidden]="member.id === group.currentMember.id || member.isVirtual"
+											(click)="toggelAdmin(member)">
+												{{member.role === role.admin ? "Remove" : "Make"}} admin
+									</button>
+									<button mat-button color="warn" 
+											[disabled]="member.id === group.currentMember.id"
+											(click)="removeMemberFromGroup(member.id, member.name)">
+												<mat-icon>person_remove</mat-icon>
+									</button>
+								</div>
+							}
+						</div>
 
-					@if($index !== members.length - 1) {
-						<app-divider></app-divider>
+						@if($index !== members.length - 1) {
+							<app-divider></app-divider>
+						}
 					}
-				}
-			</mat-card-content>
-		</mat-card>
+				</mat-card-content>
+			</mat-card>
+		}
 
 		<ng-template #addMemberDialogTemplate>
 			<div class="btn-group">
@@ -92,15 +89,14 @@ import { GroupUserManager } from "./group-user-manager.util";
 
 		<ng-template #addUserToGroupDialogTemplate>
 			<div class="add-user-to-group-template">
-				<ng-container *ngIf="groupCode$ | async as code; else loading">
+				@if ($groupCode(); as code) {
 					<div class="code">{{code}}</div>
 					<div class="timer">code is valid only for 5 minutes</div>
 					<p>Others can join this group <br />
 						using the above code</p>
-				</ng-container>
-				<ng-template #loading>
+				} @else {
 					Please wait, generating new code...
-				</ng-template>
+				}
 			</div>
 		</ng-template>
 
@@ -184,20 +180,14 @@ export class GroupUserManagerComponent {
 	private readonly addVirtualMemberToGroupDialogTemplate: TemplateRef<unknown> | undefined;
 
 	protected virtualMemberName?: string;
-	protected userManager = GroupUserManager;
-	protected groupCode$ = this.store.select(RouterSelector.selectParams).pipe(
-		filter(params => !!params["id"]),
-		switchMap(params => this.store.select(GroupSelector.selectCode(params["id"])))
+	protected readonly role = MemberRole;
+	protected readonly $groupCode = computed(() =>
+		this.store.selectSignal(GroupSelector.selectCode(this.group().id))()
 	);
-
-	@Input() group: Group | undefined;
+	readonly group = input.required<GroupInfo>();
 
 	protected get members(): GroupMember[] {
-		return orderBy(at(this.group?.members ?? {}, this.group?.memberIds ?? []), "name");
-	}
-
-	protected get currentUser(): GroupMember | undefined {
-		return this.userManager.getCurrentUser(this.group?.members);
+		return orderBy(at(this.group()?.members ?? {}, this.group()?.memberIds ?? []), "name");
 	}
 
 	protected openAddMemberDialog() {
@@ -222,12 +212,10 @@ export class GroupUserManagerComponent {
 		});
 
 		addMemberDialogRef.afterOpened().subscribe(async _ => {
-			if(this.group?.id) {
-				this.store.dispatch(GroupAction.getCode({ id: this.group.id }));
-				setTimeout(() => {
-					addMemberDialogRef.close();
-				}, 300000);
-			}
+			this.store.dispatch(GroupAction.getCode({ id: this.group().id }));
+			setTimeout(() => {
+				addMemberDialogRef.close();
+			}, 300000);
 		});
 
 		addMemberDialogRef.afterClosed().subscribe(_ => this.addMemberDialogRef?.close());
@@ -247,9 +235,9 @@ export class GroupUserManagerComponent {
 						label: "Add",
 						disabled: () => !this.virtualMemberName,
 						action: () => {
-							if(this.virtualMemberName  && this.group?.id) {
+							if(this.virtualMemberName) {
 								this.store.dispatch(GroupAction.addVirtualMember({ 
-									groupId: this.group.id, 
+									groupId: this.group().id, 
 									name: this.virtualMemberName 
 								}));
 							}
@@ -266,12 +254,8 @@ export class GroupUserManagerComponent {
 	}	
 
 	protected toggelAdmin(member: GroupMember) {
-		if(!this.group?.id) {
-			return;
-		}
-
 		this.store.dispatch(GroupAction.updateRole({
-			id: this.group?.id,
+			id: this.group().id,
 			memberId: member.id,
 			role: member.role === MemberRole.admin ? MemberRole.user : MemberRole.admin
 		}));
@@ -289,11 +273,7 @@ export class GroupUserManagerComponent {
 					{
 						type: DialogButtonType.Primary,
 						label: "Yes",
-						action: () => {
-							if(this.group?.id) {
-								this.store.dispatch(GroupAction.removeMember({ id: this.group.id, memberId }));
-							}
-						}
+						action: () => this.store.dispatch(GroupAction.removeMember({ id: this.group().id, memberId }))
 					}
 				]
 			}

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from "@angular/core";
+import { ChangeDetectionStrategy, Component, input } from "@angular/core";
 import { keys } from "lodash-es";
 
 import { Group } from "../../models/group.model";
@@ -9,7 +9,7 @@ import { Group } from "../../models/group.model";
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ ],
 	template: `
-		@if(group) {
+		@if(group(); as group) {
 			<div class="container">
 				<div class="balance-info">
 					<span></span>
@@ -25,9 +25,9 @@ import { Group } from "../../models/group.model";
 				}
 			</div>
 
-			@for (payment of settleExpenses(); track payment) {
+			@for (payment of settleExpenses(group); track payment) {
 				<div>
-					{{getUsername(payment.from)}} -> {{getUsername(payment.to)}} : 
+					{{group.members[payment.from].name}} -> {{group.members[payment.to].name}} : 
 					<span class="right">&#8377; {{payment.amount}}</span>
 				</div>
 			}
@@ -57,18 +57,13 @@ import { Group } from "../../models/group.model";
 	`]
 })
 export class GroupBalancesComponent {
-	@Input() group?: Group;
+	readonly group = input.required<Group>();
 
-	protected settleExpenses() {
+	protected settleExpenses(group: Group) {
 		const payments: Payment[] = [];
-		const members = this.group?.members;
-		if (!this.group || !members) {
-			return payments;
-		}
-
 		const balance: Record<string, number> = {};
-		this.group.memberIds.forEach(id => {
-			balance[id] = (balance[id] || 0) + members[id].paid - members[id].share;
+		group.memberIds.forEach(id => {
+			balance[id] = (balance[id] || 0) + group.members[id].paid - group.members[id].share;
 		});
 
 		const membersOwed = keys(balance).filter(id => balance[id] < 0);
@@ -102,10 +97,6 @@ export class GroupBalancesComponent {
 		}
 
 		return payments;
-	}
-
-	protected getUsername(id: string) {
-		return this.group?.members[id].name;
 	}
 }
 

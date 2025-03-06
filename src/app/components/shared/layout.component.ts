@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component, Input } from "@angular/core";
+import { Component, input } from "@angular/core";
 
 @Component({
 	selector: "app-layout",
@@ -7,7 +7,7 @@ import { Component, Input } from "@angular/core";
 	imports: [CommonModule],
 	template: `
 		<div class="container" [ngStyle]="getHeaderHeight">
-			@if (pageTitle) {
+			@if (pageTitle(); as pageTitle) {
 				<h2>{{pageTitle}}</h2>
 			}
 			<ng-content select="[section='header']"></ng-content>
@@ -49,12 +49,12 @@ import { Component, Input } from "@angular/core";
 	`]
 })
 export class LayoutComponent {
-	@Input() pageTitle: string = "";
-	@Input() headerHeight = "154px";
+	readonly pageTitle = input("");
+	readonly headerHeight = input("154px");
 
 	protected get getHeaderHeight() {
 		return {
-			height: this.headerHeight
+			height: this.headerHeight()
 		};
 	}
 }

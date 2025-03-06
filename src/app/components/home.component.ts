@@ -1,4 +1,3 @@
-import { CommonModule } from "@angular/common";
 import { Component, inject, OnInit } from "@angular/core";
 import { Store } from "@ngrx/store";
 
@@ -15,13 +14,13 @@ import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
 	selector: "app-home",
 	standalone: true,
 	imports: [
-		CommonModule,
 		GroupListWidgetComponent,
 		OverviewWidgetComponent,
 		LayoutComponent,
 	],
 	template: `
-		<app-layout headerHeight="152px" *ngIf="((groups$ | async) || []) as groups">
+	@if ($groups(); as groups) {
+		<app-layout headerHeight="152px">
 			<div section="header">
 				<app-overview-widget [groups]="groups"></app-overview-widget>
 			</div>
@@ -31,6 +30,7 @@ import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
 				<app-group-list-selector [groups]="groups"></app-group-list-selector>
 			</div>
 		</app-layout>
+	}
 	`,
 	styles: [`
 		.detail-section {
@@ -50,7 +50,7 @@ export class HomeComponent implements OnInit {
 	private readonly toolbar = inject(ToolbarConfigurationService);
 	private readonly store = inject(Store);
 
-	protected groups$ = this.store.select(GroupSelector.selectAll);
+	protected $groups = this.store.selectSignal(GroupSelector.selectAll);
 
 	ngOnInit(): void {
 		this.store.dispatch(ExpenseAction.reset());

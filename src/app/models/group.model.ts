@@ -25,6 +25,12 @@ export interface Group extends UpsertGroup {
 	categories: Category[];
 }
 
+export interface GroupInfo extends Group {
+	currentMember: GroupMember;
+	isCurrentMemberIsAdmin: boolean;
+	activeMembers: GroupMember[];
+}
+
 export interface GroupMember {
 	id: string;
 	name: string;
@@ -59,18 +65,18 @@ export const getGroupImage = (alt?: string) => {
 		return { src: "https://img.icons8.com/ios-glyphs/90/image.png", alt: "image" };
 	}
 
-	return groupImages.filter(img => img.alt === alt)[0];
+	return GROUP_IMAGES.filter(img => img.alt === alt)[0];
 };
 
-export const groupImages: Image[] = [
-	{ src: "https://img.icons8.com/fluency/96/home.png", alt: "Home" },
-	{ src: "https://img.icons8.com/fluency/96/sunbathe.png", alt: "Vacation" },
-	{ src: "https://img.icons8.com/color/96/person-male.png", alt: "Personal" },
-	{ src: "https://img.icons8.com/fluency/96/office.png", alt: "Office" },
-	{ src: "https://img.icons8.com/fluency/96/ping-pong.png", alt: "Sports" },
-	{ src: "https://img.icons8.com/color-glass/96/rupee.png", alt: "Investment" },
-	{ src: "https://img.icons8.com/color/96/group.png", alt: "Others" },
-	{ src: "https://img.icons8.com/color/96/car.png", alt: "Vehicle" },
-	{ src: "https://img.icons8.com/fluency/96/transfer-between-users.png", alt: "Exchange" },
-	{ src: "https://img.icons8.com/fluency/96/gift.png", alt: "Gifts" },
+export const GROUP_IMAGES: Image[] = [
+	{ id: 1, src: "https://img.icons8.com/fluency/96/home.png", alt: "Home" },
+	{ id: 2, src: "https://img.icons8.com/fluency/96/sunbathe.png", alt: "Vacation" },
+	{ id: 3, src: "https://img.icons8.com/color/96/person-male.png", alt: "Personal" },
+	{ id: 4, src: "https://img.icons8.com/fluency/96/office.png", alt: "Office" },
+	{ id: 5, src: "https://img.icons8.com/fluency/96/ping-pong.png", alt: "Sports" },
+	{ id: 6, src: "https://img.icons8.com/color-glass/96/rupee.png", alt: "Investment" },
+	{ id: 7, src: "https://img.icons8.com/color/96/group.png", alt: "Others" },
+	{ id: 8, src: "https://img.icons8.com/color/96/car.png", alt: "Vehicle" },
+	{ id: 9, src: "https://img.icons8.com/fluency/96/transfer-between-users.png", alt: "Exchange" },
+	{ id: 10, src: "https://img.icons8.com/fluency/96/gift.png", alt: "Gifts" },
 ];

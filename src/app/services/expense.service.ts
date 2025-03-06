@@ -20,7 +20,7 @@ import { keys } from "lodash-es";
 
 import { Expense, FirestoreExpense, fromFirestoreModel, toFirestoreModel } from "../models/expense.model";
 import { Group } from "../models/group.model";
-import { getYearMonth } from "../utilities/date";
+import { DateUtilities } from "../utilities/date";
 import { throwIfNotFound } from "../utilities/firebase-errors";
 
 import { GROUP_COLLECTION_NAME } from "./group.service";
@@ -95,7 +95,7 @@ export class ExpenseService {
 
 			// Calculate new month total for the specific month of the expense
 			const monthTotal = groupDoc.monthTotal ?? {};
-			const monthKey = getYearMonth(expense.expenseDate);
+			const monthKey = DateUtilities.yearMonth(expense.expenseDate);
 			monthTotal[monthKey] = +(monthTotal[monthKey] ?? 0) + expense.amount;
 
 			// Handle split expense type
@@ -123,8 +123,8 @@ export class ExpenseService {
 		return runTransaction(this.firestore, async (transaction) => {
 			const { groupDoc, expenseDoc } = await this.getGroupExpense(transaction, groupId, id);
 
-			const oldKey = getYearMonth(expenseDoc.expenseDate);
-			const newKey = getYearMonth(updateExpense.expenseDate);
+			const oldKey = DateUtilities.yearMonth(expenseDoc.expenseDate);
+			const newKey = DateUtilities.yearMonth(updateExpense.expenseDate);
 
 			// update the group total & month total
 			if (expenseDoc.amount !== updateExpense.amount || oldKey !== newKey) {
@@ -166,7 +166,7 @@ export class ExpenseService {
 		return runTransaction(this.firestore, async (transaction) => {
 			const { groupDoc, expenseDoc } = await this.getGroupExpense(transaction, groupId, id);
 
-			const key = getYearMonth(expenseDoc.expenseDate);
+			const key = DateUtilities.yearMonth(expenseDoc.expenseDate);
 
 			const groupTotal = groupDoc.groupTotal - expenseDoc.amount;
 			const monthTotal = groupDoc.monthTotal ?? [];

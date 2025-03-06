@@ -1,11 +1,11 @@
-import { Component, Input } from "@angular/core";
+import { Component, computed, input } from "@angular/core";
 import { MatCardModule } from "@angular/material/card";
 import { MatDividerModule } from "@angular/material/divider";
 import { MatIconModule } from "@angular/material/icon";
-import { round } from "lodash-es";
+import { round, sumBy } from "lodash-es";
 
-import { Group, GroupType } from "../../models/group.model";
-import { getYearMonth } from "../../utilities/date";
+import { GroupInfo, GroupType } from "../../models/group.model";
+import { DateUtilities } from "../../utilities/date";
 
 @Component({
 	selector: "app-overview-widget",
@@ -35,7 +35,7 @@ import { getYearMonth } from "../../utilities/date";
 			<mat-divider vertical></mat-divider>
 			<div class="expense-tracker">
 				<div class="expense-tracker-header">
-					<span class="expense-tracker-header-total">&#8377; {{expnseTrackerTotal}}</span>
+					<span class="expense-tracker-header-total">&#8377; {{expenseTrackerTotal()}}</span>
 					<span class="expense-tracker-header-text">this month</span>
 				</div>
 			</div>
@@ -116,14 +116,14 @@ import { getYearMonth } from "../../utilities/date";
 	`]
 })
 export class OverviewWidgetComponent {
-	@Input() groups: Group[] | null = [];
+	readonly groups = input.required<GroupInfo[]>();
 
-	get expnseTrackerTotal(): number {
-		const currMonth = getYearMonth(new Date());
-		const total = (this.groups || [])
-			.filter(group => group.groupType !== GroupType.SpiltExpense && !group.excludeTotal)
-			.reduce((acc, group) => acc + (+group.monthTotal[currMonth] || 0), 0);
-
-		return round(total);
-	}
+	protected readonly expenseTrackerTotal = computed(() => {
+		const currMonth = DateUtilities.yearMonth();
+		return round(sumBy(this.groups(), group =>
+			group.groupType !== GroupType.SpiltExpense && !group.excludeTotal
+				? +group.monthTotal[currMonth] || 0
+				: 0
+		));
+	});
 }

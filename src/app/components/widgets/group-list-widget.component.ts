@@ -1,29 +1,29 @@
-import { Component, Input } from "@angular/core";
+import { Component, input } from "@angular/core";
 import { MatDividerModule } from "@angular/material/divider";
 import { RouterLink } from "@angular/router";
 import { round } from "lodash-es";
 
 import { getGroupImage, Group, GroupType } from "../../models/group.model";
-import { getYearMonth } from "../../utilities/date";
+import { DateUtilities } from "../../utilities/date";
 
 @Component({
 	selector: "app-group-list-selector",
 	standalone: true,
 	imports: [MatDividerModule, RouterLink],
 	template: `
-		@for (group of groups; track group) {
+		@for (group of groups(); track group) {
 			<div class="container" 
-				[routerLink]="['/group-detail', group?.id]">
+				[routerLink]="['/group-detail', group.id]">
 				<img
 					width="50"
 					height="50"
-					[src]="getGroupImage(group?.imageUrl).src"
-					[alt]="getGroupImage(group?.imageUrl).alt" />
+					[src]="getGroupImage(group.imageUrl).src"
+					[alt]="getGroupImage(group.imageUrl).alt" />
 				
 				<span class="group-name">{{group?.name}}</span>
 
 				<div class="group-total">
-					<span>&#8377;{{group?.groupType === groupType.SpiltExpense ? group.groupTotal : currentMonthTotal(group)}}</span>
+					<span>&#8377;{{getTotal(group)}}</span>
 					<span class="group-total-text">
 						{{group?.groupType === groupType.SpiltExpense ? "total balance" : "this month"}}
 					</span>
@@ -59,15 +59,16 @@ import { getYearMonth } from "../../utilities/date";
 	`]
 })
 export class GroupListWidgetComponent {
-	protected getGroupImage = getGroupImage;
-	protected groupType = GroupType;
+	protected readonly getGroupImage = getGroupImage;
+	protected readonly groupType = GroupType;
 
-	@Input() groups?: Group[] | null;
+	readonly groups = input.required<Group[]>();
 
-	currentMonthTotal(group: Group): number {
-		const currMonth = getYearMonth(new Date());
-		const total = group.monthTotal[currMonth] ?? 0;
-
-		return round(+total, 2);
+	protected getTotal(group: Group): number {
+		return round(
+			group.groupType === GroupType.ExpenseTracker
+				? group.monthTotal[DateUtilities.yearMonth()] ?? 0
+				: group.groupTotal
+		);
 	}
 }

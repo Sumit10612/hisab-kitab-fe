@@ -1,8 +1,8 @@
-import { CommonModule } from "@angular/common";
+import { AsyncPipe } from "@angular/common";
 import {
 	Component,
 	inject,
-	Input,
+	input,
 	OnInit,
 	TemplateRef,
 	ViewChild
@@ -31,7 +31,7 @@ import { DividerComponent } from "../shared/divider.component";
 	selector: "app-group-category-manager",
 	standalone: true,
 	imports: [
-		CommonModule,
+		AsyncPipe,
 		MatCardModule,
 		MatIconModule,
 		MatButtonModule,
@@ -44,27 +44,29 @@ import { DividerComponent } from "../shared/divider.component";
 		DividerComponent
 	],
 	template: `
-		<mat-card>
-			<mat-card-header>
-				<mat-card-subtitle>Categories:</mat-card-subtitle>
-				<button mat-mini-fab color="primary" (click)="openAddCategoryDialog()">
-					<mat-icon>playlist_add</mat-icon>
-				</button>
-			</mat-card-header>
-			<mat-card-content>
-				@for (category of group?.categories ?? []; track category;) {
-					<app-divider [text]="category.name"></app-divider>
-					<div class="category-group">
-						@for (subCategory of category.subCategories; track subCategory;) {
-							<div class="category">
-								<span class="category-name">{{subCategory.icon}}</span>
-								<span class="category-icon">{{subCategory.name}}</span>
-							</div>
-						}
-					</div>
-				}
-			</mat-card-content>
-		</mat-card>
+		@if (group(); as group) {
+			<mat-card>
+				<mat-card-header>
+					<mat-card-subtitle>Categories:</mat-card-subtitle>
+					<button mat-mini-fab color="primary" (click)="openAddCategoryDialog()">
+						<mat-icon>playlist_add</mat-icon>
+					</button>
+				</mat-card-header>
+				<mat-card-content>
+					@for (category of group.categories; track category.id) {
+						<app-divider [text]="category.name"></app-divider>
+						<div class="category-group">
+							@for (subCategory of category.subCategories; track subCategory.id) {
+								<div class="category">
+									<span class="category-name">{{subCategory.icon}}</span>
+									<span class="category-icon">{{subCategory.name}}</span>
+								</div>
+							}
+						</div>
+					}
+				</mat-card-content>
+			</mat-card>
+		}
 
 		<ng-template #addCategoryDialog>
 			<h2 class="title">Add new category</h2>
@@ -199,9 +201,9 @@ export class GroupCategoryManagerComponent implements OnInit {
 	protected filteredSubCategories: Observable<SubCategory[]> | undefined;
 	protected showAddSubCategoryOption = false;
 
-	@ViewChild("addCategoryDialog") addCategoryDialog: TemplateRef<unknown> | undefined;
+	readonly group = input.required<Group>();
 
-	@Input() group: Group | undefined;
+	@ViewChild("addCategoryDialog") addCategoryDialog: TemplateRef<unknown> | undefined;
 
 	ngOnInit(): void {
 		this.filteredCategories = this.form.controls.categoryName.valueChanges.pipe(
@@ -209,7 +211,8 @@ export class GroupCategoryManagerComponent implements OnInit {
 			filter(value => typeof value === "string"),
 			map(value => {
 				const filterValue = (value || "").toLowerCase();
-				const filtered = this.group?.categories.filter(category => category.name.toLowerCase().includes(filterValue)) ?? [];
+				const filtered = this.group().categories
+					.filter(category => category.name.toLowerCase().includes(filterValue)) ?? [];
 
 				this.showAddCategoryOption = filtered.length === 0 && filterValue.trim().length > 0;
 
@@ -224,7 +227,7 @@ export class GroupCategoryManagerComponent implements OnInit {
 				const filterValue = (value || "").toLowerCase();
 				let filtered = [] as SubCategory[];
 				if(this.form.controls.categoryId.value) {
-					filtered = this.group?.categories
+					filtered = this.group().categories
 						.find(c => c.id === this.form.controls.categoryId.value)?.subCategories
 						.filter(sc => sc.name.toLowerCase().includes(filterValue)) ?? [];
 				}
@@ -272,11 +275,17 @@ export class GroupCategoryManagerComponent implements OnInit {
 
 	protected saveCategory(): void {
 		const { categoryId, categoryName, subCategoryName, icon } = this.form.value;
-		if(!this.group?.id || !subCategoryName || !icon) {
+		if(!subCategoryName || !icon) {
 			return;
 		}
 
-		this.store.dispatch(GroupAction.addCategory({ groupId: this.group.id, subCategoryName, icon, categoryId, categoryName }));
+		this.store.dispatch(GroupAction.addCategory({
+			groupId: this.group().id, 
+			subCategoryName, 
+			icon, 
+			categoryId, 
+			categoryName 
+		}));
 
 		this.closeAddCategoryDialog();
 	}
