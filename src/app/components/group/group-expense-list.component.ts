@@ -1,27 +1,25 @@
 import { CommonModule } from "@angular/common";
-import { Component, inject, Input } from "@angular/core";
+import { Component, computed, inject, Input, input, OnInit } from "@angular/core";
 import { MatDividerModule } from "@angular/material/divider";
 import { MatIconModule } from "@angular/material/icon";
 import { RouterLink } from "@angular/router";
 import { Store } from "@ngrx/store";
 import {
 	groupBy,
-	map as loadshMap,
+	map,
 	mapKeys,
 	mapValues,
 	pick,
 	pickBy,
 	size
 } from "lodash-es";
-import { map, switchMap, tap } from "rxjs";
 
 import { DEFAULT_CATEGORY } from "../../models/category.model";
 import { Expense } from "../../models/expense.model";
 import { Group, GroupType } from "../../models/group.model";
-import { RouterSelector } from "../../store/app.selector";
 import { ExpenseAction } from "../../store/expense/expense.action";
 import { ExpenseSelector } from "../../store/expense/expense.selector";
-import { getYearMonth } from "../../utilities/date";
+import { DateUtilities } from "../../utilities/date";
 
 @Component({
 	selector: "app-group-expense-list",
@@ -33,11 +31,11 @@ import { getYearMonth } from "../../utilities/date";
 		RouterLink
 	],
 	template: `
-		@for (kvp of (expenses$ | async) | keyvalue: noSort; track kvp) {
+		@for (kvp of $expensesByMonth() | keyvalue: noSort; track kvp.key) {
 			<div class="expense-record-container">
 				<div class="month-group">{{ kvp.key | date: "MMMM yyyy" | uppercase }}</div>
-				@for (expense of kvp.value; track expense) {
-					<a class="expense-record" [routerLink]="['/group', group?.id, 'expense', expense.id]">
+				@for (expense of kvp.value; track expense.id) {
+					<a class="expense-record" [routerLink]="['/group', group().id, 'expense', expense.id]">
 						<span class="expense-date">
 							<span class="expense-date-month">{{expense.expenseDate | date: "MMM" | uppercase}}</span>
 							<span class="expense-date-date">{{expense.expenseDate | date: "dd"}}</span>
@@ -127,38 +125,30 @@ import { getYearMonth } from "../../utilities/date";
 		}
 	`]
 })
-export class GroupExpenseListComponent {
+export class GroupExpenseListComponent implements OnInit {
 	private readonly store = inject(Store);
 
-	protected expenses$ = this.store.select(RouterSelector.selectParams).pipe(
-		switchMap(params => this.store.select(ExpenseSelector.selectAllExpenses).pipe(
-			tap(expenses => {
-				if (!expenses.length && params["id"]) {
-					this.store.dispatch(ExpenseAction.getNext({ groupId: params["id"], initialGet: true }));
-				}
-			}),
-			map(expenses => {
-				const members = pick(this.group?.members ?? {}, this.group?.memberIds ?? []);
-				return mapValues(
-					groupBy(expenses, e => getYearMonth(e.expenseDate)),
-					es => es.map(e => ({
-						...e, 
-						paidBy: members[e.paidBy].name,
-						usersShare: this.group?.groupType === GroupType.ExpenseTracker 
-							? {}
-							: mapKeys(e.usersShare, (_value, key) => members[key].name)
-					}))
-				);
-				
-			})
-		))
-	);
+	private readonly $expenses = this.store.selectSignal(ExpenseSelector.selectAllExpenses);
 
-	@Input() group?: Group;
-	@Input()
-	set triggerOnScroll(value: boolean) {
-		if(value && this.group?.id) {
-			this.store.dispatch(ExpenseAction.getNext({ groupId: this.group?.id, initialGet: false }));
+	protected readonly $expensesByMonth = computed(() => {
+		const members = pick(this.group().members ?? {}, this.group().memberIds ?? []);
+		return mapValues(
+			groupBy(this.$expenses(), e => DateUtilities.yearMonth(e.expenseDate)),
+			es => es.map(e => ({
+				...e, 
+				paidBy: members[e.paidBy].name,
+				usersShare: this.group().groupType === GroupType.ExpenseTracker 
+					? {}
+					: mapKeys(e.usersShare, (_value, key) => members[key].name)
+			}))
+		);
+	});
+
+	readonly group = input.required<Group>();
+
+	ngOnInit(): void {
+		if(!this.$expenses().length) {
+			this.store.dispatch(ExpenseAction.getNext({ groupId: this.group().id, initialGet: true }));
 		}
 	}
 
@@ -168,17 +158,17 @@ export class GroupExpenseListComponent {
 			return undefined;
 		}
 
-		return loadshMap(usersShare, (value, key) => `${key}: ${value}`).join(" | ");
+		return map(usersShare, (value, key) => `${key}: ${value}`).join(" | ");
 	}
 
 	protected getCategoryIcon(id: number): string {
-		return (this.group?.categories
+		return (this.group()?.categories
 			.flatMap(category => category.subCategories)
 			.find(subCategory => subCategory.id === id)
 		?? DEFAULT_CATEGORY.subCategories[0]).icon;
 	}
 
-	protected noSort() {
+	protected noSort(): number {
 		return 0;
 	}
 }

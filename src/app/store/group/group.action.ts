@@ -1,13 +1,13 @@
 import { createAction, props } from "@ngrx/store";
 
-import { Group, MemberRole, UpsertGroup } from "../../models/group.model";
+import { GroupInfo, MemberRole, UpsertGroup } from "../../models/group.model";
 
 export namespace GroupAction {
 	const ACTION_PREFIX = "[Group] -";
 
 	export const query = createAction(`${ACTION_PREFIX} Query`, props<{ userId: string }>());
-	export const added = createAction(`${ACTION_PREFIX} Added`, props<{ group: Group }>());
-	export const modified = createAction(`${ACTION_PREFIX} Modified`, props<{ group: Group }>());
+	export const added = createAction(`${ACTION_PREFIX} Added`, props<{ group: GroupInfo }>());
+	export const modified = createAction(`${ACTION_PREFIX} Modified`, props<{ group: GroupInfo }>());
 	export const removed = createAction(`${ACTION_PREFIX} Removed`, props<{ id: string }>());
 
 	export const create = createAction(`${ACTION_PREFIX} Create`, props<{ upsertGroup: UpsertGroup }>());

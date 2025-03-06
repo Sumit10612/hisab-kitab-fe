@@ -1,21 +1,27 @@
 import { CommonModule } from "@angular/common";
-import { Component, Input } from "@angular/core";
+import { Component, ElementRef, input, output, ViewChild } from "@angular/core";
+import { ToolbarComponent } from "./toolbar.component";
 
 @Component({
 	selector: "app-layout",
 	standalone: true,
-	imports: [CommonModule],
+	imports: [CommonModule, ToolbarComponent],
 	template: `
-		<div class="container" [ngStyle]="getHeaderHeight">
-			@if (pageTitle) {
+		<div class="header" [ngStyle]="getHeaderHeight">
+			@if (pageTitle(); as pageTitle) {
 				<h2>{{pageTitle}}</h2>
 			}
 			<ng-content select="[section='header']"></ng-content>
 		</div>
-		<ng-content select="[section='detail']"></ng-content>
+		<div class="detail" [ngStyle]="getDetailHeight" #scrollContainer (scroll)="onScroll()">
+			<ng-content select="[section='detail']"></ng-content>
+		</div>
+		<div class="bottom-toolbar">
+			<app-toolbar></app-toolbar>
+		</div>
   `,
 	styles: [`
-		.container {
+		.header {
 			background: #964b04;
 			position: relative;
 			padding: 16px 16px 0 16px;
@@ -25,8 +31,8 @@ import { Component, Input } from "@angular/core";
 			}
 		}
 
-		.container::before,
-		.container::after {
+		.header::before,
+		.header::after {
 			content: '';
 			position: absolute;
 			bottom: -48px;
@@ -35,26 +41,59 @@ import { Component, Input } from "@angular/core";
 			background-color: transparent;
 		}
 
-		.container::before {
+		.header::before {
 			left: 0;
 			border-radius: 24px 0;
 			box-shadow: 0 -24px 0 0 #964b04;
 		}
 
-		.container::after {
+		.header::after {
 			right: 0;
 			border-radius: 0 24px;
 			box-shadow: 0 -24px 0 0 #964b04;
 		}
+
+		.detail {
+			overflow-y: auto;
+			padding: 16px;
+		}
+
+		.bottom-toolbar {
+			position: fixed;
+			bottom: 0;
+			width: 100%;
+			height: 56px;
+		}
 	`]
 })
 export class LayoutComponent {
-	@Input() pageTitle: string = "";
-	@Input() headerHeight = "154px";
+	readonly pageTitle = input("");
+	readonly headerHeight = input("154px");
+
+	readonly triggerOnScroll = output<boolean>();
+
+	@ViewChild("scrollContainer", { static: false }) scrollContainer: ElementRef | undefined;
 
 	protected get getHeaderHeight() {
 		return {
-			height: this.headerHeight
+			height: this.headerHeight()
 		};
+	}
+
+	protected get getDetailHeight() {
+		return {
+			height: `calc(100vh - 56px - 32px - ${this.headerHeight()})`
+		};
+	}
+
+	protected onScroll() {
+		if (!this.scrollContainer?.nativeElement.scrollTop) {
+			return;
+		}
+
+		const element = this.scrollContainer.nativeElement;
+		if ((element.scrollHeight - element.clientHeight <= element.scrollTop + 1)) {
+			this.triggerOnScroll.emit(true);
+		}
 	}
 }

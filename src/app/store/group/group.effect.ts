@@ -2,6 +2,7 @@ import { computed, inject, Injectable } from "@angular/core";
 import { Actions, createEffect, ofType } from "@ngrx/effects";
 import { Store } from "@ngrx/store";
 import {
+	pick,
 	random,
 	round,
 	sample,
@@ -16,7 +17,7 @@ import {
 } from "rxjs";
 
 import { DEFAULT_CATEGORY } from "../../models/category.model";
-import { Group, GroupType, MemberRole } from "../../models/group.model";
+import { Group, GroupInfo, GroupType, MemberRole } from "../../models/group.model";
 import { GroupService } from "../../services/group.service";
 import { NavigationService } from "../../services/navigation.service";
 import { NotificationService } from "../../services/notification.service";
@@ -34,26 +35,31 @@ export class GroupEffects {
 	private readonly navigation = inject(NavigationService);
 	private readonly store = inject(Store);
 
-	private readonly $user = this.store.selectSignal(UserSelector.select);
+	private readonly $user = computed(() => {
+		const user = this.store.selectSignal(UserSelector.select)();
+		if(!user) {
+			throw new Error("User not found");
+		}
+
+		return user;
+	});
 
 	query$ = createEffect(() => {
 		return this.action$.pipe(
 			ofType(GroupAction.query),
 			mergeMap(({ userId }) => this.groupService.query$(userId).pipe(
 				map(changeDoc => {
+					const currentMember = changeDoc.group.members[userId];
 					const group = {
 						...changeDoc.group,
 						groupTotal: round(changeDoc.group.groupTotal, 2),
 						monthTotal: Object.fromEntries(
 							Object.entries(changeDoc.group.monthTotal).map(([key, value]) => [key, round(value, 2)])
 						),
-						members: Object.fromEntries(
-							Object.entries(changeDoc.group.members).map(([id, member]) => [
-								id,
-								{ ...member, name: member.id === userId ? "You" : member.name }
-							])
-						)
-					} as Group;
+						currentMember,
+						isCurrentMemberIsAdmin: currentMember.role === MemberRole.admin,
+						activeMembers: values(pick(changeDoc.group.members, changeDoc.group.memberIds))
+					} as GroupInfo;
 
 					if(group.groupType === GroupType.SpiltExpense) {
 						const you = values(group.members).find(member => member.id === userId);

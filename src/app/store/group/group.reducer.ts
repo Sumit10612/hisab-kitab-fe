@@ -2,18 +2,18 @@ import { createEntityAdapter, EntityState } from "@ngrx/entity";
 import { createReducer, on } from "@ngrx/store";
 import { Timestamp } from "firebase/firestore";
 
-import { Group } from "../../models/group.model";
+import { GroupInfo } from "../../models/group.model";
 
 import { GroupAction } from "./group.action";
 
 export interface GroupState {
-	groups: EntityState<Group>;
+	groups: EntityState<GroupInfo>;
 	groupCodes: EntityState<{ id: string; code: number }>;
 }
 
 const getDate = (e?: Timestamp) => e ? e.toDate() : new Date(1900, 1);
 
-export const groupAdapter = createEntityAdapter<Group>({
+export const groupAdapter = createEntityAdapter<GroupInfo>({
 	selectId: group => group.id,
 	sortComparer: (e1, e2) => getDate(e1.modifiedAt) > getDate(e2.modifiedAt) ?
 		-1 :

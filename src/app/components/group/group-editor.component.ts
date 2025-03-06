@@ -1,7 +1,8 @@
-import { CommonModule } from "@angular/common";
 import {
 	Component,
+	computed,
 	inject,
+	input,
 	OnInit,
 	TemplateRef,
 	ViewChild
@@ -12,20 +13,18 @@ import { MatInputModule } from "@angular/material/input";
 import { MatRadioModule } from "@angular/material/radio";
 import { MatSlideToggleModule } from "@angular/material/slide-toggle";
 import { Store } from "@ngrx/store";
-import { filter, switchMap, tap } from "rxjs";
 
 import { DialogButtonType, DialogData } from "../../models/dialog.model";
 import {
-	groupImages,
-	GroupMember,
+	GROUP_IMAGES,
 	GroupType,
+	MemberRole,
 	UpsertGroup
 } from "../../models/group.model";
 import { Otp } from "../../models/otp.model";
 import { ToolbarButtonType } from "../../models/toolbar.model";
 import { DialogService } from "../../services/dialog.service";
 import { ToolbarConfigurationService } from "../../services/toolbar-configuration.service";
-import { RouterSelector } from "../../store/app.selector";
 import { GroupAction } from "../../store/group/group.action";
 import { GroupSelector } from "../../store/group/group.selector";
 import { OtpComponent } from "../otp.component";
@@ -33,13 +32,13 @@ import { LayoutComponent } from "../shared/layout.component";
 
 import { GroupCategoryManagerComponent } from "./group-category-manager.conponent";
 import { GroupUserManagerComponent } from "./group-user-manager.component";
-import { GroupUserManager } from "./group-user-manager.util";
+import { UserSelector } from "../../store/user/user.selector";
+import { DividerComponent } from "../shared/divider.component";
 
 @Component({
 	selector: "app-group-editor",
 	standalone: true,
 	imports: [
-		CommonModule,
 		ReactiveFormsModule,
 		LayoutComponent,
 		MatButtonModule,
@@ -48,7 +47,8 @@ import { GroupUserManager } from "./group-user-manager.util";
 		MatSlideToggleModule,
 		OtpComponent,
 		GroupUserManagerComponent,
-		GroupCategoryManagerComponent
+		GroupCategoryManagerComponent,
+		DividerComponent
 	],
 	template: `
 		<app-layout headerHeight="224px" [pageTitle]="isEdit ? 'Settings' : 'Create a group'">
@@ -57,55 +57,63 @@ import { GroupUserManager } from "./group-user-manager.util";
 					<mat-label>Group Name</mat-label>
 					<input matInput
 						[formControl]="form.controls.name"
-						[readonly]="isEdit && !userManager.isAdmin(currentUser)" />
+						[readonly]="isEdit && !isAdmin" />
 				</mat-form-field>
 				<div class="image-container">
-					@for (item of groupImages; track item) {
+					@for (image of groupImages; track image.id) {
 					<div>
 						<img width="48" height="48"
 							[class.selected]="selectedIndex === $index"
-							[src]="item.src"
-							[alt]="item.alt"
+							[src]="image.src"
+							[alt]="image.alt"
 							(click)="selectImage($index)" />
-						<span>{{item.alt}}</span>
+						<span>{{image.alt}}</span>
 					</div>
 					}
 				</div>
 			</div>
 
 			<div section="detail" class="detail-section">
-				<mat-radio-group labelPosition="after" name="groupType"
-					[formControl]="form.controls.groupType"
-					[hidden]="isEdit">
+				<mat-radio-group labelPosition="after"
+								 name="groupType"
+								 [formControl]="form.controls.groupType"
+								 [hidden]="isEdit">
 					<mat-radio-button [value]="groupType.ExpenseTracker">Track Expenses</mat-radio-button>
 					<mat-radio-button [value]="groupType.SpiltExpense">Split Bills</mat-radio-button>
 				</mat-radio-group>
 
-				@if (form.controls.groupType.value === groupType.ExpenseTracker && (!isEdit || userManager.isAdmin(currentUser))) {
+				@if (form.controls.groupType.value === groupType.ExpenseTracker && (!isEdit || isAdmin)) {
 					<mat-slide-toggle [formControl]="form.controls.excludeTotal">
 						&nbsp;&nbsp;exclude from combined total
 					</mat-slide-toggle>
 				}
 
-				<ng-container *ngIf="group$ | async as group">
+				@if ($group(); as group) {
 					<app-group-user-manager class="group-manager" [group]="group"></app-group-user-manager>
-					<app-group-category-manager *ngIf="userManager.isAdmin(currentUser)" [group]="group" class="group-manager">
-					</app-group-category-manager>
-				</ng-container>
+					@if (isAdmin) {
+						<app-group-category-manager [group]="group" class="group-manager"></app-group-category-manager>
+					}
 
-				<div class="action-buttons">
-					@if (isEdit) {
+					<div class="action-buttons">
 						<button mat-raised-button color="warn" (click)="leaveGroup()">
 							Leave Group
 						</button>
 
-						@if (userManager.isAdmin(this.currentUser)) {
+						@if (isAdmin) {
 							<button mat-raised-button color="warn" (click)="deleteGroup()">
 								Delete Group
 							</button>
 						}
-					}
-				</div>
+					</div>
+				} @else {
+					<app-divider text="OR" [hidden]="form.dirty"></app-divider>
+					<button mat-raised-button
+							color="primary" 
+							(click)="openJoinGroupDialog()"
+							[hidden]="form.dirty">
+						Join Group
+					</button>
+				}
 			</div>
 		</app-layout>
 
@@ -140,12 +148,9 @@ import { GroupUserManager } from "./group-user-manager.util";
 		}
 
 		.detail-section {
-			height: calc(100vh - 324px);
-			overflow-y: auto;
 			display: flex;
 			flex-direction: column;
 			gap: 16px;
-			margin: 16px;
 			align-items: center;
 
 			.group-manager {
@@ -157,6 +162,7 @@ import { GroupUserManager } from "./group-user-manager.util";
 				gap: 16px;
 				flex-direction: column;
 				width: 100%;
+				margin-bottom: 16px;
 			}
 		}
 	`]
@@ -177,23 +183,22 @@ export class GroupEditorComponent implements OnInit {
 		groupType: [GroupType.ExpenseTracker],
 		excludeTotal: [false]
 	});
-	protected groupImages = groupImages;
+	protected groupImages = GROUP_IMAGES;
 	protected selectedIndex: number | undefined;
-	protected currentUser: GroupMember | undefined;
 	protected groupType = GroupType;
-	protected userManager = GroupUserManager;
 
-	protected group$ = this.store.select(RouterSelector.selectParams).pipe(
-		filter(params => !!params["id"]),
-		switchMap(params => this.store.select(GroupSelector.selectGroup(params["id"])).pipe(
-			tap(group => {
-				this.isEdit = true;
-				this.form.patchValue({ ...group });
-				this.selectedIndex = groupImages.findIndex(g => g.alt === group?.imageUrl);
-				this.currentUser = this.userManager.getCurrentUser(group?.members);
-			})
-		))
-	);
+	protected readonly id = input.required<string>();
+	protected readonly $currentUser = this.store.selectSignal(UserSelector.select);
+	protected readonly $group = computed(() => {
+		const group = this.store.selectSignal(GroupSelector.selectGroup(this.id()))();
+		if(group) {
+			this.isEdit = true;
+			this.form.patchValue({ ...group });
+			this.selectedIndex = this.groupImages.findIndex(g => g.alt === group?.imageUrl);
+		}
+
+		return group;
+	});
 
 	ngOnInit(): void {
 		this.toolbar.configure({
@@ -201,15 +206,9 @@ export class GroupEditorComponent implements OnInit {
 			actionBtns: [
 				{
 					type: ToolbarButtonType.Primary,
-					label: "Join",
-					visible: () => !this.isEdit,
-					action: () => this.openJoinGroupDialog()
-				},
-				{
-					type: ToolbarButtonType.Primary,
 					label: "Update",
 					disabled: () => !this.form.dirty || !this.form.valid,
-					visible: () => this.isEdit && this.userManager.isAdmin(this.currentUser),
+					visible: () => this.isEdit && this.isAdmin,
 					action: () => {
 						if (this.upsertGroup) {
 							this.store.dispatch(GroupAction.update({
@@ -235,6 +234,15 @@ export class GroupEditorComponent implements OnInit {
 		});
 	}
 
+	protected get isAdmin(): boolean {
+		const user = this.$currentUser();
+		if(!user) {
+			return false;
+		}
+
+		return this.$group()?.members?.[user.uid].role === MemberRole.admin;
+	}
+
 	get upsertGroup(): UpsertGroup | undefined {
 		const { name, imageUrl, groupType, excludeTotal } = this.form.value;
 		if (!name || !imageUrl) {
@@ -246,7 +254,7 @@ export class GroupEditorComponent implements OnInit {
 
 	protected selectImage(index: number) {
 		this.selectedIndex = index;
-		this.form.controls.imageUrl.setValue(groupImages[index].alt);
+		this.form.controls.imageUrl.setValue(this.groupImages[index].alt);
 		this.form.markAsDirty();
 	}
 
