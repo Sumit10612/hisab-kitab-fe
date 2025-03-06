@@ -33,6 +33,7 @@ import { LayoutComponent } from "../shared/layout.component";
 import { GroupCategoryManagerComponent } from "./group-category-manager.conponent";
 import { GroupUserManagerComponent } from "./group-user-manager.component";
 import { UserSelector } from "../../store/user/user.selector";
+import { DividerComponent } from "../shared/divider.component";
 
 @Component({
 	selector: "app-group-editor",
@@ -46,7 +47,8 @@ import { UserSelector } from "../../store/user/user.selector";
 		MatSlideToggleModule,
 		OtpComponent,
 		GroupUserManagerComponent,
-		GroupCategoryManagerComponent
+		GroupCategoryManagerComponent,
+		DividerComponent
 	],
 	template: `
 		<app-layout headerHeight="224px" [pageTitle]="isEdit ? 'Settings' : 'Create a group'">
@@ -72,9 +74,10 @@ import { UserSelector } from "../../store/user/user.selector";
 			</div>
 
 			<div section="detail" class="detail-section">
-				<mat-radio-group labelPosition="after" name="groupType"
-					[formControl]="form.controls.groupType"
-					[hidden]="isEdit">
+				<mat-radio-group labelPosition="after"
+								 name="groupType"
+								 [formControl]="form.controls.groupType"
+								 [hidden]="isEdit">
 					<mat-radio-button [value]="groupType.ExpenseTracker">Track Expenses</mat-radio-button>
 					<mat-radio-button [value]="groupType.SpiltExpense">Split Bills</mat-radio-button>
 				</mat-radio-group>
@@ -90,10 +93,8 @@ import { UserSelector } from "../../store/user/user.selector";
 					@if (isAdmin) {
 						<app-group-category-manager [group]="group" class="group-manager"></app-group-category-manager>
 					}
-				}
 
-				<div class="action-buttons">
-					@if (isEdit) {
+					<div class="action-buttons">
 						<button mat-raised-button color="warn" (click)="leaveGroup()">
 							Leave Group
 						</button>
@@ -103,8 +104,16 @@ import { UserSelector } from "../../store/user/user.selector";
 								Delete Group
 							</button>
 						}
-					}
-				</div>
+					</div>
+				} @else {
+					<app-divider text="OR" [hidden]="form.dirty"></app-divider>
+					<button mat-raised-button
+							color="primary" 
+							(click)="openJoinGroupDialog()"
+							[hidden]="form.dirty">
+						Join Group
+					</button>
+				}
 			</div>
 		</app-layout>
 
@@ -139,12 +148,9 @@ import { UserSelector } from "../../store/user/user.selector";
 		}
 
 		.detail-section {
-			height: calc(100vh - 324px);
-			overflow-y: auto;
 			display: flex;
 			flex-direction: column;
 			gap: 16px;
-			margin: 16px;
 			align-items: center;
 
 			.group-manager {
@@ -156,6 +162,7 @@ import { UserSelector } from "../../store/user/user.selector";
 				gap: 16px;
 				flex-direction: column;
 				width: 100%;
+				margin-bottom: 16px;
 			}
 		}
 	`]
@@ -197,12 +204,6 @@ export class GroupEditorComponent implements OnInit {
 		this.toolbar.configure({
 			back: { visible: () => true },
 			actionBtns: [
-				{
-					type: ToolbarButtonType.Primary,
-					label: "Join",
-					visible: () => !this.isEdit,
-					action: () => this.openJoinGroupDialog()
-				},
 				{
 					type: ToolbarButtonType.Primary,
 					label: "Update",

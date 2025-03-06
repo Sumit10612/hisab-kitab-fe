@@ -146,13 +146,6 @@ export class GroupExpenseListComponent implements OnInit {
 
 	readonly group = input.required<Group>();
 
-	@Input()
-	set triggerOnScroll(value: boolean) {
-		if(value) {
-			this.store.dispatch(ExpenseAction.getNext({ groupId: this.group().id, initialGet: false }));
-		}
-	}
-
 	ngOnInit(): void {
 		if(!this.$expenses().length) {
 			this.store.dispatch(ExpenseAction.getNext({ groupId: this.group().id, initialGet: true }));

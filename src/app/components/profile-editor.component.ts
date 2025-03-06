@@ -87,8 +87,6 @@ import { LayoutComponent } from "./shared/layout.component";
 			display: flex;
 			flex-direction: column;
 			align-items: center;
-			gap: 16px;
-			padding: 16px;
 		}
 	`]
 })

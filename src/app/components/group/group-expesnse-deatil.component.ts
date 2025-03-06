@@ -1,11 +1,9 @@
 import {
 	Component,
 	computed,
-	ElementRef,
 	inject,
 	input,
-	OnInit,
-	ViewChild
+	OnInit
 } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
@@ -25,6 +23,7 @@ import { LayoutComponent } from "../shared/layout.component";
 import { GroupBalancesComponent } from "./group-balances.component";
 import { GroupExpenseListComponent } from "./group-expense-list.component";
 import { GroupExpensesSummaryComponent } from "./group-expenses-summary.component";
+import { ExpenseAction } from "../../store/expense/expense.action";
 
 @Component({
 	selector: "app-group-expesnse-detail",
@@ -42,7 +41,7 @@ import { GroupExpensesSummaryComponent } from "./group-expenses-summary.componen
 	],
 	template: `
 		@if ($group(); as group) {
-			<app-layout [headerHeight]="'160px'">
+			<app-layout [headerHeight]="'160px'" (triggerOnScroll)="onScroll($event)">
 				<div section="header" class="header-section">
 					<div class="header-section-page-info">
 						<img width="50" height="50" [src]="getGroupImage(group.imageUrl).src"
@@ -99,9 +98,9 @@ import { GroupExpensesSummaryComponent } from "./group-expenses-summary.componen
 					</div>
 				</div>
 
-				<div section="detail" class="detail-section" #scrollContainer (scroll)="onScroll()">
+				<div section="detail" class="detail-section">
 					@if (selectedTab === "expense") {
-						<app-group-expense-list [group]="group" [triggerOnScroll]="triggerOnScroll"></app-group-expense-list>
+						<app-group-expense-list [group]="group"></app-group-expense-list>
 					} @else if (selectedTab === "balance") {
 						<app-group-balances [group]="group"></app-group-balances>
 					} @else {
@@ -168,12 +167,6 @@ import { GroupExpensesSummaryComponent } from "./group-expenses-summary.componen
 			}
 		}
 
-		.detail-section {
-			height: calc(100vh - 248px);
-			overflow-y: auto;
-			padding: 0 16px;
-		}
-
 		.mat-button-toggle-group {
 			height: 32px;
 			border-radius: 16px;
@@ -198,7 +191,6 @@ export class GroupExpenseDetailComponent implements OnInit {
 
 	protected getGroupImage = getGroupImage;
 	protected selectedTab: "expense" | "summary" | "balance" = "expense";
-	protected triggerOnScroll = false;
 	protected readonly dateUtil = DateUtilities;
 	
 	protected readonly id = input.required<string>();
@@ -206,8 +198,6 @@ export class GroupExpenseDetailComponent implements OnInit {
 	protected readonly $group = computed(() =>
 		this.store.selectSignal(GroupSelector.selectGroup(this.id()))()
 	);
-
-	@ViewChild("scrollContainer", { static: false }) scrollContainer: ElementRef | undefined;
 
 	ngOnInit() {
 		this.toolbar.configure({
@@ -234,15 +224,9 @@ export class GroupExpenseDetailComponent implements OnInit {
 		return this.$group()?.groupType === GroupType.ExpenseTracker;
 	}
 
-	protected onScroll() {
-		if (this.$loading() || !this.scrollContainer?.nativeElement.scrollTop) {
-			return;
-		}
-
-		const element = this.scrollContainer.nativeElement;
-		if ((element.scrollHeight - element.clientHeight <= element.scrollTop + 1) && this.id()) {
-			this.triggerOnScroll = true;
-			setTimeout(() => this.triggerOnScroll = false);
-		}
+	protected onScroll(event: boolean) {
+		if (!this.$loading() && event) {
+			this.store.dispatch(ExpenseAction.getNext({ groupId: this.id(), initialGet: false }));
+		}		
 	}
 }

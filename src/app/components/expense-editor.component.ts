@@ -1,6 +1,7 @@
 import { CommonModule } from "@angular/common";
 import {
 	AfterViewInit,
+	ChangeDetectorRef,
 	Component,
 	computed,
 	effect,
@@ -134,12 +135,6 @@ import { PaidByShareComponent } from "./widgets/paid-by-share.component";
 	`,
 	styles: [`
 		.detail-section {
-			margin: 32px 16px;
-			display: flex;
-			flex-direction: column;
-			justify-content: center;
-			align-items: center;
-
 			.row {
 				display: grid;
 				grid-template-columns: 1fr 1fr;
@@ -181,6 +176,7 @@ export class ExpenseEditorComponent implements OnInit, AfterViewInit {
 	private readonly formBuilder = inject(FormBuilder);
 	private readonly toolbar = inject(ToolbarConfigurationService);
 	private readonly store = inject(Store);
+    private readonly cdr = inject(ChangeDetectorRef);
 
 	private selectedSubCategory = DEFAULT_CATEGORY.subCategories[0];
 
@@ -212,22 +208,18 @@ export class ExpenseEditorComponent implements OnInit, AfterViewInit {
 		effect(() => {
 			const group = this.$group();
 			const expense = this.store.selectSignal(ExpenseSelector.selectExpense(this.id()))();
-			if(!(group && expense)) {
-				return;
-			}
-
-			const subCategory = group.categories
+			const subCategory = group?.categories
 				.flatMap(category => category.subCategories)
 				.find(subCat => subCat.id === expense?.category);
 			if(subCategory) {
 				this.selectedSubCategory = subCategory;
 			}
 
-			this.userShare = expense.usersShare ?? {};
+			this.userShare = expense?.usersShare ?? {};
 			this.form.patchValue({
 				...expense,
 				category: this.selectedSubCategory.name,
-				paidBy: expense ? expense.paidBy : group.currentMember.id,
+				paidBy: expense ? expense.paidBy : group?.currentMember.id,
 				groupId: group?.id,
 				groupType: group?.groupType
 			});
@@ -235,6 +227,9 @@ export class ExpenseEditorComponent implements OnInit, AfterViewInit {
 			if (uniq(values(expense?.usersShare)).length > 1) {
 				this.selectedSplitType = this.splitType.ByShare;
 			}
+		},
+		{
+			allowSignalWrites: true,	
 		});
 	}
 
@@ -265,6 +260,7 @@ export class ExpenseEditorComponent implements OnInit, AfterViewInit {
 
 	ngAfterViewInit(): void {
 		this.focusInput?.nativeElement.focus();
+		this.cdr.detectChanges();
 	}
 
 	onSplitTypeChanged(event?: MatButtonToggleChange) {

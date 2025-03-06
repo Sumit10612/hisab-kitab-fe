@@ -8,6 +8,7 @@ import { MatDividerModule } from "@angular/material/divider";
 		MatDividerModule
 	],
 	template: `
+	@if (!hidden()) {
 		<div class="container">
 			<div class="divider"><mat-divider></mat-divider></div>
 			@if (text(); as text) {
@@ -15,6 +16,7 @@ import { MatDividerModule } from "@angular/material/divider";
 				<div class="divider"><mat-divider></mat-divider></div>
 			}
 		</div>
+	}
 	`,
 	styles: [`
 		.container {
@@ -33,4 +35,5 @@ import { MatDividerModule } from "@angular/material/divider";
 })
 export class DividerComponent {
 	readonly text = input<string>();
+	readonly hidden = input(false);
 }

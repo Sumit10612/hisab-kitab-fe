@@ -25,7 +25,7 @@ import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
 				<app-overview-widget [groups]="groups"></app-overview-widget>
 			</div>
 			
-			<div section="detail" class="detail-section">
+			<div section="detail">
 				My Groups
 				<app-group-list-selector [groups]="groups"></app-group-list-selector>
 			</div>
@@ -33,12 +33,6 @@ import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
 	}
 	`,
 	styles: [`
-		.detail-section {
-			padding: 16px;
-			height: calc(100vh - 256px);
-			overflow-y: auto;
-		}
-
 		.create-group-button {
 			position: absolute;
 			right: 4px;
