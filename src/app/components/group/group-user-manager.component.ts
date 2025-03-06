@@ -13,7 +13,6 @@ import { MatDialogRef } from "@angular/material/dialog";
 import { MatIconModule } from "@angular/material/icon";
 import { MatInputModule } from "@angular/material/input";
 import { Store } from "@ngrx/store";
-import { at, orderBy } from "lodash-es";
 
 import { DialogButtonType } from "../../models/dialog.model";
 import { GroupInfo, GroupMember, MemberRole } from "../../models/group.model";
@@ -46,7 +45,7 @@ import { DividerComponent } from "../shared/divider.component";
 					</button>
 				</mat-card-header>
 				<mat-card-content>
-					@for (member of members; track member.id) {
+					@for (member of group.activeMembers; track member.id) {
 						<div class="user-info">
 							<div class="user-details">
 								<span>{{ member.name }}</span>
@@ -68,7 +67,7 @@ import { DividerComponent } from "../shared/divider.component";
 							}
 						</div>
 
-						@if($index !== members.length - 1) {
+						@if($index !== group.activeMembers.length - 1) {
 							<app-divider></app-divider>
 						}
 					}
@@ -185,10 +184,6 @@ export class GroupUserManagerComponent {
 		this.store.selectSignal(GroupSelector.selectCode(this.group().id))()
 	);
 	readonly group = input.required<GroupInfo>();
-
-	protected get members(): GroupMember[] {
-		return orderBy(at(this.group()?.members ?? {}, this.group()?.memberIds ?? []), "name");
-	}
 
 	protected openAddMemberDialog() {
 		this.addMemberDialogRef = this.dialog.open({
