@@ -49,16 +49,22 @@ export class GroupEffects {
 			ofType(GroupAction.query),
 			mergeMap(({ userId }) => this.groupService.query$(userId).pipe(
 				map(changeDoc => {
-					const currentMember = changeDoc.group.members[userId];
+					const members = Object.fromEntries(
+						Object.entries(changeDoc.group.members).map(([id, member]) => [
+							id,
+							{ ...member, name: member.id === userId ? "You" : member.name }
+						])
+					);
 					const group = {
 						...changeDoc.group,
 						groupTotal: round(changeDoc.group.groupTotal, 2),
 						monthTotal: Object.fromEntries(
 							Object.entries(changeDoc.group.monthTotal).map(([key, value]) => [key, round(value, 2)])
 						),
-						currentMember,
-						isCurrentMemberIsAdmin: currentMember.role === MemberRole.admin,
-						activeMembers: values(pick(changeDoc.group.members, changeDoc.group.memberIds))
+						members,
+						currentMember:  members[userId],
+						isCurrentMemberIsAdmin:  members[userId].role === MemberRole.admin,
+						activeMembers: values(pick(members, changeDoc.group.memberIds))
 					} as GroupInfo;
 
 					if(group.groupType === GroupType.SpiltExpense) {

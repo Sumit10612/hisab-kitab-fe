@@ -18,11 +18,13 @@ export namespace DateUtilities {
 		return date;
 	};
 
-	export const startOfMonth = (date: Date): Date => {
+	export const startOfMonth = (date?: Date): Date => {
+		date ??= new Date();
 		return new Date(date.getFullYear(), date.getMonth(), 1);
 	};
 
-	export const endOfMonth = (date: Date): Date => {
+	export const endOfMonth = (date?: Date): Date => {
+		date ??= new Date();
 		return new Date(date.getFullYear(), date.getMonth() + 1, 0);
 	};
 }

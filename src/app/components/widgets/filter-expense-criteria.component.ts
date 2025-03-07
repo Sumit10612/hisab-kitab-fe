@@ -9,6 +9,7 @@ import { MatInputModule } from "@angular/material/input";
 import { MatRadioModule } from "@angular/material/radio";
 
 import { DateOption, FilterCriteria } from "../../models/filter-criteria.model";
+import { DateUtilities } from "../../utilities/date";
 
 @Component({
 	selector: "app-filter-expense-criteria",
@@ -78,7 +79,9 @@ import { DateOption, FilterCriteria } from "../../models/filter-criteria.model";
 	`]
 })
 export class FilterExpenseCriteriaComponent {
-	private bottomSheet = inject(MatBottomSheetRef<FilterExpenseCriteriaComponent>);
+	private readonly bottomSheet = inject(MatBottomSheetRef<FilterExpenseCriteriaComponent>);
+
+	private readonly dateUtil = DateUtilities;
 
 	dateOption = DateOption;
 
@@ -88,6 +91,15 @@ export class FilterExpenseCriteriaComponent {
 		}) {}
 
 	close() {
+		if(this.data.criteria.dateOption === DateOption.Current) {
+			this.data.criteria.fromDate = this.dateUtil.startOfMonth();
+			this.data.criteria.toDate = this.dateUtil.endOfMonth();
+		} else if(this.data.criteria.dateOption === DateOption.Last) {
+			const date = this.dateUtil.previousMonth();
+			this.data.criteria.fromDate = this.dateUtil.startOfMonth(date);
+			this.data.criteria.toDate = this.dateUtil.endOfMonth(date);
+		}
+
 		this.bottomSheet.dismiss(this.data.criteria);
 	}
 }

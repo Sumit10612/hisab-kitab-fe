@@ -3,11 +3,13 @@ import { Routes } from "@angular/router";
 
 import { ExpenseEditorComponent } from "./components/expense-editor.component";
 import { GroupEditorComponent } from "./components/group/group-editor.component";
-import { GroupExpenseDetailComponent } from "./components/group/group-expesnse-deatil.component";
-import { HomeComponent } from "./components/home.component";
+import { GroupExpensesComponent } from "./components/group-expenses/group-expesnses.component";
+import { HomeComponent } from "./components/home/home.component";
 import { LoginComponent } from "./components/login.component";
 import { ProfileEditorComponent } from "./components/profile-editor.component";
 import { SignupComponent } from "./components/signup.component";
+import { GroupExpensesSummaryComponent } from "./components/group-expenses/group-expenses-summary.component";
+import { GroupExpensesBalancesComponent } from "./components/group-expenses/group-expenses-balances.component";
 
 const redirectUnauthorizedToLogin = () => redirectUnauthorizedTo(["/login"]);
 const redirectLoggedInToHome = () => redirectLoggedInTo(["/home"]);
@@ -40,18 +42,28 @@ export const routes: Routes = [
 		...canActivate(redirectUnauthorizedToLogin)
 	},
 	{
-		path: "group-detail/:id",
-		component: GroupExpenseDetailComponent,
-		...canActivate(redirectUnauthorizedToLogin)
-	},
-	{
 		path: "group",
 		component: GroupEditorComponent,
 		...canActivate(redirectUnauthorizedToLogin)
 	},
 	{
-		path: "group/:id",
+		path: "group/:groupId",
 		component: GroupEditorComponent,
+		...canActivate(redirectUnauthorizedToLogin)
+	},
+	{
+		path: "group/:groupId/expenses",
+		component: GroupExpensesComponent,
+		...canActivate(redirectUnauthorizedToLogin)
+	},
+	{
+		path: "group/:groupId/expenses/summary",
+		component: GroupExpensesSummaryComponent,
+		...canActivate(redirectUnauthorizedToLogin)
+	},
+	{
+		path: "group/:groupId/expenses/balance",
+		component: GroupExpensesBalancesComponent,
 		...canActivate(redirectUnauthorizedToLogin)
 	},
 	{
@@ -60,7 +72,7 @@ export const routes: Routes = [
 		...canActivate(redirectUnauthorizedToLogin)
 	},
 	{
-		path: "group/:groupId/expense/:id",
+		path: "group/:groupId/expense/:expenseId",
 		component: ExpenseEditorComponent,
 		...canActivate(redirectUnauthorizedToLogin)
 	}

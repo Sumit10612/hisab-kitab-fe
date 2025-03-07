@@ -1,7 +1,7 @@
 export interface FilterCriteria {
 	dateOption: DateOption;
-	fromDate?: Date;
-	toDate?: Date;
+	fromDate: Date;
+	toDate: Date;
 }
 
 export enum DateOption {

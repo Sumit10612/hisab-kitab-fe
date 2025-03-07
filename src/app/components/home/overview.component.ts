@@ -8,7 +8,7 @@ import { GroupInfo, GroupType } from "../../models/group.model";
 import { DateUtilities } from "../../utilities/date";
 
 @Component({
-	selector: "app-overview-widget",
+	selector: "app-overview",
 	standalone: true,
 	imports: [MatCardModule, MatIconModule, MatDividerModule],
 	template: `
@@ -115,7 +115,7 @@ import { DateUtilities } from "../../utilities/date";
 	}
 	`]
 })
-export class OverviewWidgetComponent {
+export class OverviewComponent {
 	readonly groups = input.required<GroupInfo[]>();
 
 	protected readonly expenseTrackerTotal = computed(() => {

@@ -123,10 +123,12 @@ import { PaidByShareComponent } from "./widgets/paid-by-share.component";
 				@if (form.controls.groupType.value === groupType.SpiltExpense) {
 					<div class="shares">
 						@for (member of $group()?.activeMembers; track member.id) {
-							<div class="shares-share" (click)="onSplitTypeChanged()">
-								<span>{{member.name.split(' ')[0]}}</span>
-								<span>&#8377;{{userShare[member.id] || 0 | number: '1.2-2'}}</span>
-							</div>
+							@if (userShare[member.id] > 0) {
+								<div class="shares-share" (click)="onSplitTypeChanged()">
+									<span>{{member.name}}</span>
+									<span>&#8377;{{userShare[member.id] || 0 | number: '1.2-2'}}</span>
+								</div>
+							}
 						}
 					</div>
 				}
@@ -195,7 +197,7 @@ export class ExpenseEditorComponent implements OnInit, AfterViewInit {
 		expenseDate: [new Date(), Validators.required],
 	});
 	protected readonly splitType = SplitType;
-	protected readonly id = input<string>("");
+	protected readonly expenseId = input<string>("");
 	protected readonly groupId = input.required<string>();
 	protected readonly $group = computed(() => this.store.selectSignal(GroupSelector.selectGroup(this.groupId()))());
 
@@ -207,7 +209,7 @@ export class ExpenseEditorComponent implements OnInit, AfterViewInit {
 	constructor() {
 		effect(() => {
 			const group = this.$group();
-			const expense = this.store.selectSignal(ExpenseSelector.selectExpense(this.id()))();
+			const expense = this.store.selectSignal(ExpenseSelector.selectExpense(this.expenseId()))();
 			const subCategory = group?.categories
 				.flatMap(category => category.subCategories)
 				.find(subCat => subCat.id === expense?.category);

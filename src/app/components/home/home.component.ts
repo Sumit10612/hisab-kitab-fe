@@ -1,33 +1,33 @@
 import { Component, inject, OnInit } from "@angular/core";
 import { Store } from "@ngrx/store";
 
-import { ToolbarButtonType } from "../models/toolbar.model";
-import { ToolbarConfigurationService } from "../services/toolbar-configuration.service";
-import { ExpenseAction } from "../store/expense/expense.action";
-import { GroupSelector } from "../store/group/group.selector";
+import { ToolbarButtonType } from "../../models/toolbar.model";
+import { ToolbarConfigurationService } from "../../services/toolbar-configuration.service";
+import { ExpenseAction } from "../../store/expense/expense.action";
+import { GroupSelector } from "../../store/group/group.selector";
 
-import { LayoutComponent } from "./shared/layout.component";
-import { GroupListWidgetComponent } from "./widgets/group-list-widget.component";
-import { OverviewWidgetComponent } from "./widgets/overview-widget.component";
+import { LayoutComponent } from "../shared/layout.component";
+import { GroupListComponent } from "./group-list.component";
+import { OverviewComponent } from "./overview.component";
 
 @Component({
 	selector: "app-home",
 	standalone: true,
 	imports: [
-		GroupListWidgetComponent,
-		OverviewWidgetComponent,
+		GroupListComponent,
 		LayoutComponent,
+		OverviewComponent,
 	],
 	template: `
 	@if ($groups(); as groups) {
 		<app-layout headerHeight="152px">
 			<div section="header">
-				<app-overview-widget [groups]="groups"></app-overview-widget>
+				<app-overview [groups]="groups"></app-overview>
 			</div>
 			
 			<div section="detail">
 				My Groups
-				<app-group-list-selector [groups]="groups"></app-group-list-selector>
+				<app-group-list [groups]="groups"></app-group-list>
 			</div>
 		</app-layout>
 	}

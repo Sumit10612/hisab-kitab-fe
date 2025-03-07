@@ -7,13 +7,13 @@ import { getGroupImage, Group, GroupType } from "../../models/group.model";
 import { DateUtilities } from "../../utilities/date";
 
 @Component({
-	selector: "app-group-list-selector",
+	selector: "app-group-list",
 	standalone: true,
 	imports: [MatDividerModule, RouterLink],
 	template: `
-		@for (group of groups(); track group) {
+		@for (group of groups(); track group.id) {
 			<div class="container" 
-				[routerLink]="['/group-detail', group.id]">
+				[routerLink]="['/group', group.id, 'expenses']">
 				<img
 					width="50"
 					height="50"
@@ -58,7 +58,7 @@ import { DateUtilities } from "../../utilities/date";
 		}
 	`]
 })
-export class GroupListWidgetComponent {
+export class GroupListComponent {
 	protected readonly getGroupImage = getGroupImage;
 	protected readonly groupType = GroupType;
 

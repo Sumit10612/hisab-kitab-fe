@@ -7,16 +7,16 @@ export interface ToolbarConfiguration {
 
 export interface ToolbarButton {
 	visible?: () => boolean;
+	action?: () => void;
+	redirectTo?: () => string | string[];
 }
 
-export interface ToolbarActionButton {
+export interface ToolbarActionButton extends ToolbarButton{
 	type: ToolbarButtonType;
 	label?: string;
 	icon?: string;
 	disabled?: () => boolean;
 	visible?: () => boolean;
-	action?: () => void;
-	redirectTo?: () => string | string[];
 }
 
 export enum ToolbarButtonType {

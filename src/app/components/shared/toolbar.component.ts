@@ -17,7 +17,9 @@ import { RouterLink } from "@angular/router";
     template: `
         <mat-toolbar class="toolbar">
             @if (toolbar.config?.back?.visible()) {
-                <button mat-icon-button  (click)="navigation.navigateBack()">
+                <button mat-icon-button 
+                    (click)="handleBackEvent()"
+                    [routerLink]="toolbar.config?.back?.redirectTo?.()">
                     <mat-icon>arrow_back</mat-icon>
                 </button>
             }
@@ -65,14 +67,14 @@ import { RouterLink } from "@angular/router";
 })
 export class ToolbarComponent {
     private readonly store = inject(Store);
+    private readonly navigation = inject(NavigationService);
     
     protected readonly toolbar = inject(ToolbarConfigurationService);
-    protected readonly navigation = inject(NavigationService);
 
     protected getUserImage = getUserImage;
     protected $user = this.store.selectSignal(UserSelector.select);
     
-    getColor(type: ToolbarButtonType) {
+    protected getColor(type: ToolbarButtonType) {
         switch (type) {
             case ToolbarButtonType.Primary:
                 return "primary";
@@ -80,6 +82,15 @@ export class ToolbarComponent {
                 return "warn";
             default:
                 return "";
+        }
+    }
+
+    protected handleBackEvent(): void {
+        const action = this.toolbar.config?.back?.action;
+        if(action) {
+            action();
+        } else {
+            this.navigation.navigateBack()
         }
     }
 }

@@ -187,10 +187,10 @@ export class GroupEditorComponent implements OnInit {
 	protected selectedIndex: number | undefined;
 	protected groupType = GroupType;
 
-	protected readonly id = input.required<string>();
+	protected readonly groupId = input.required<string>();
 	protected readonly $currentUser = this.store.selectSignal(UserSelector.select);
 	protected readonly $group = computed(() => {
-		const group = this.store.selectSignal(GroupSelector.selectGroup(this.id()))();
+		const group = this.store.selectSignal(GroupSelector.selectGroup(this.groupId()))();
 		if(group) {
 			this.isEdit = true;
 			this.form.patchValue({ ...group });
