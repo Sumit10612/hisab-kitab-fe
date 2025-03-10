@@ -1,8 +1,8 @@
 import { AsyncPipe } from "@angular/common";
 import {
 	Component,
+	Inject,
 	inject,
-	input,
 	OnInit,
 	TemplateRef,
 	ViewChild
@@ -20,12 +20,14 @@ import { Store } from "@ngrx/store";
 import { filter, map, Observable, startWith } from "rxjs";
 
 import { Category, SubCategory } from "../../models/category.model";
-import { Group } from "../../models/group.model";
 import { DialogService } from "../../services/dialog.service";
 import { GroupAction } from "../../store/group/group.action";
 import { DialogComponent } from "../shared/dialog.component";
 import { DisableControlDirective } from "../shared/disable-control.directive";
 import { DividerComponent } from "../shared/divider.component";
+import { MAT_BOTTOM_SHEET_DATA } from "@angular/material/bottom-sheet";
+import { GroupSelector } from "../../store/group/group.selector";
+import { MatMenuModule } from "@angular/material/menu";
 
 @Component({
 	selector: "app-group-category-manager",
@@ -38,34 +40,56 @@ import { DividerComponent } from "../shared/divider.component";
 		MatFormFieldModule,
 		ReactiveFormsModule,
 		MatInputModule,
+		MatMenuModule,
 		MatSelectModule,
 		MatAutocompleteModule,
 		DisableControlDirective,
 		DividerComponent
 	],
 	template: `
-		@if (group(); as group) {
-			<mat-card>
-				<mat-card-header>
-					<mat-card-subtitle>Categories:</mat-card-subtitle>
-					<button mat-mini-fab color="primary" (click)="openAddCategoryDialog()">
-						<mat-icon>playlist_add</mat-icon>
-					</button>
-				</mat-card-header>
-				<mat-card-content>
-					@for (category of group.categories; track category.id) {
-						<app-divider [text]="category.name"></app-divider>
-						<div class="category-group">
-							@for (subCategory of category.subCategories; track subCategory.id) {
-								<div class="category">
-									<span class="category-name">{{subCategory.icon}}</span>
-									<span class="category-icon">{{subCategory.name}}</span>
-								</div>
+		@if ($group(); as group) {
+			<div class="container">
+				<mat-card>
+					<mat-card-content>
+						@for (category of group.categories; track category.id) {
+							<div class="category-info">
+								<span>{{category.name}}</span>
+								<button mat-icon-button
+										[matMenuTriggerFor]="categoryContextMenu">
+									<mat-icon>more_horiz</mat-icon>
+								</button>
+								<mat-menu #categoryContextMenu="matMenu">
+									<button mat-menu-item>Edit</button>
+								</mat-menu>
+							</div>
+
+							@if($index !== group.categories.length - 1) {
+								<app-divider></app-divider>
 							}
-						</div>
-					}
-				</mat-card-content>
-			</mat-card>
+
+							<div class="sub-category">
+								@for (subCategory of category.subCategories; track subCategory.id) {
+									<div class="category-info">
+										<span class="category-name">{{subCategory.icon}} {{subCategory.name}}</span>
+										<button mat-icon-button
+												[matMenuTriggerFor]="subCategoryContextMenu">
+											<mat-icon>more_horiz</mat-icon>
+										</button>
+										<mat-menu #subCategoryContextMenu="matMenu">
+											<button mat-menu-item>Edit</button>
+										</mat-menu>
+									</div>
+									<app-divider></app-divider>
+								}
+							</div>
+						}
+					</mat-card-content>
+				</mat-card>
+
+				<button mat-raised-button
+						color="primary"
+						(click)="openAddCategoryDialog()">Add new Category</button>
+			</div>
 		}
 
 		<ng-template #addCategoryDialog>
@@ -140,34 +164,33 @@ import { DividerComponent } from "../shared/divider.component";
 		</ng-template>
 	`,
 	styles: [`
+		.container {
+			display: flex;
+			flex-direction: column;
+			gap: 16px;
+		}
+
 		.mat-mdc-card {
 			width: 100%;
-			max-height: 300px;
 			border-radius: 24px;
-
-			.mat-mdc-card-header {
-				display: flex;
-				align-items: center;
-				justify-content: space-between;
-			}
 
 			.mat-mdc-card-content {
 				display: flex;
 				flex-direction: column;
+				max-height: calc(100vh - 296px);
 				overflow-y: auto;
-
-				.category-group {
-					display: flex;
-					gap: 16px;
-					flex-wrap: wrap;
-
-					.category {
-						display: flex;
-						flex-direction: column;
-						align-items: center;
-					}
-				}
 			}
+		}
+
+		.category-info {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			font-weight: 600;
+		}
+
+		.sub-category {
+			margin: 0 16px;
 		}
 
 		.action-buttons {
@@ -178,6 +201,10 @@ import { DividerComponent } from "../shared/divider.component";
 
 		.title {
 			text-align: center
+		}
+
+		.mat-mdc-menu-content:not(:empty) {
+			padding: 0;
 		}
 	`]
 })
@@ -201,9 +228,11 @@ export class GroupCategoryManagerComponent implements OnInit {
 	protected filteredSubCategories: Observable<SubCategory[]> | undefined;
 	protected showAddSubCategoryOption = false;
 
-	readonly group = input.required<Group>();
+	protected readonly $group = this.store.selectSignal(GroupSelector.selectGroup(this.data));
 
 	@ViewChild("addCategoryDialog") addCategoryDialog: TemplateRef<unknown> | undefined;
+
+	constructor(@Inject(MAT_BOTTOM_SHEET_DATA) protected data: string) {}
 
 	ngOnInit(): void {
 		this.filteredCategories = this.form.controls.categoryName.valueChanges.pipe(
@@ -211,7 +240,7 @@ export class GroupCategoryManagerComponent implements OnInit {
 			filter(value => typeof value === "string"),
 			map(value => {
 				const filterValue = (value || "").toLowerCase();
-				const filtered = this.group().categories
+				const filtered = this.$group()?.categories
 					.filter(category => category.name.toLowerCase().includes(filterValue)) ?? [];
 
 				this.showAddCategoryOption = filtered.length === 0 && filterValue.trim().length > 0;
@@ -227,7 +256,7 @@ export class GroupCategoryManagerComponent implements OnInit {
 				const filterValue = (value || "").toLowerCase();
 				let filtered = [] as SubCategory[];
 				if(this.form.controls.categoryId.value) {
-					filtered = this.group().categories
+					filtered = this.$group()?.categories
 						.find(c => c.id === this.form.controls.categoryId.value)?.subCategories
 						.filter(sc => sc.name.toLowerCase().includes(filterValue)) ?? [];
 				}
@@ -280,7 +309,7 @@ export class GroupCategoryManagerComponent implements OnInit {
 		}
 
 		this.store.dispatch(GroupAction.addCategory({
-			groupId: this.group().id, 
+			groupId: this.data, 
 			subCategoryName, 
 			icon, 
 			categoryId, 

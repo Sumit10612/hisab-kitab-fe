@@ -1,8 +1,7 @@
 import {
 	Component,
-	computed,
+	Inject,
 	inject,
-	input,
 	TemplateRef,
 	ViewChild
 } from "@angular/core";
@@ -12,15 +11,17 @@ import { MatCardModule } from "@angular/material/card";
 import { MatDialogRef } from "@angular/material/dialog";
 import { MatIconModule } from "@angular/material/icon";
 import { MatInputModule } from "@angular/material/input";
+import { MatMenuModule } from '@angular/material/menu';
 import { Store } from "@ngrx/store";
 
 import { DialogButtonType } from "../../models/dialog.model";
-import { GroupInfo, GroupMember, MemberRole } from "../../models/group.model";
+import { GroupMember, MemberRole } from "../../models/group.model";
 import { DialogService } from "../../services/dialog.service";
 import { GroupAction } from "../../store/group/group.action";
 import { GroupSelector } from "../../store/group/group.selector";
 import { DialogComponent } from "../shared/dialog.component";
 import { DividerComponent } from "../shared/divider.component";
+import { MAT_BOTTOM_SHEET_DATA } from "@angular/material/bottom-sheet";
 
 @Component({
 	selector: "app-group-user-manager",
@@ -31,39 +32,39 @@ import { DividerComponent } from "../shared/divider.component";
 		MatInputModule,
 		MatCardModule,
 		MatIconModule,
+		MatMenuModule,
 		DividerComponent
 	],
 	template: `
-		@if (group(); as group) {
+	@if ($group(); as group) {
+		<div class="container">
 			<mat-card>
-				<mat-card-header>
-					<mat-card-subtitle>Members:</mat-card-subtitle>
-					<button mat-mini-fab color="primary"
-						[hidden]="!group.isCurrentMemberIsAdmin"
-						(click)="openAddMemberDialog()">
-						<mat-icon>person_add</mat-icon>
-					</button>
-				</mat-card-header>
 				<mat-card-content>
 					@for (member of group.activeMembers; track member.id) {
 						<div class="user-info">
-							<div class="user-details">
-								<span>{{ member.name }}</span>
-								@if (member.role === role.admin) { <span class="role">(admin)</span> }
-							</div>
+							<span>
+								{{ member.name }}{{" "}}
+								@if (member.role === role.admin) { <span class="user-info-role">(admin)</span> }
+								@if (member.isVirtual) { <span class="user-info-role">(virtual)</span> }
+							</span>
 							@if (group.isCurrentMemberIsAdmin) {
-								<div class="user-actions">
-									<button mat-button
-											[hidden]="member.id === group.currentMember.id || member.isVirtual"
-											(click)="toggelAdmin(member)">
-												{{member.role === role.admin ? "Remove" : "Make"}} admin
+								<button mat-icon-button
+										[matMenuTriggerFor]="contextMenu"
+										xPosition="before">
+									<mat-icon>more_horiz</mat-icon>
+								</button>
+								<mat-menu #contextMenu="matMenu">
+									<button mat-menu-item
+											(click)="toggelAdmin(member)"
+											[disabled]="member.id === group.currentMember.id || member.isVirtual">
+										{{member.role === role.admin ? "Remove" : "Make"}} admin
 									</button>
-									<button mat-button color="warn" 
-											[disabled]="member.id === group.currentMember.id"
-											(click)="removeMemberFromGroup(member.id, member.name)">
-												<mat-icon>person_remove</mat-icon>
+									<button mat-menu-item
+											(click)="removeMemberFromGroup(member.id, member.name)"
+											[disabled]="member.id === group.currentMember.id">
+										Remove
 									</button>
-								</div>
+								</mat-menu>
 							}
 						</div>
 
@@ -73,18 +74,19 @@ import { DividerComponent } from "../shared/divider.component";
 					}
 				</mat-card-content>
 			</mat-card>
-		}
 
-		<ng-template #addMemberDialogTemplate>
-			<div class="btn-group">
-				<button mat-raised-button color="primary" (click)="openInviteMemberDialog()">
-					Invite Member
-				</button>
-				<button mat-raised-button color="primary" (click)="openAddVirtualMemberDialog()">
-					Add Virtual Member
-				</button>
-			</div>
-		</ng-template>
+			@if (group.isCurrentMemberIsAdmin) {
+				<div class="action-buttons">
+					<button mat-raised-button color="primary" (click)="openInviteMemberDialog()">
+						Invite Member
+					</button>
+					<button mat-raised-button color="primary" (click)="openAddVirtualMemberDialog()">
+						Add Virtual Member
+					</button>
+				</div>
+			}
+		</div>
+	}
 
 		<ng-template #addUserToGroupDialogTemplate>
 			<div class="add-user-to-group-template">
@@ -107,38 +109,38 @@ import { DividerComponent } from "../shared/divider.component";
 		</ng-template>
 	`,
 	styles: [`
+		.container {
+			display: flex;
+			flex-direction: column;
+			gap: 16px;
+		}
+
 		.mat-mdc-card {
 			width: 100%;
-			max-height: 300px;
 			border-radius: 24px;
-
-			> mat-card-header {
-				display: flex;
-				align-items: center;
-				justify-content: space-between;
-			}
 
 			> mat-card-content {
 				display: flex;
-				flex-direction: column;
+				flex-direction: column;			
+				max-height: calc(100vh - 296px);
 				overflow-y: auto;
 
 				.user-info {
 					display: flex;
 					align-items: center;
 					justify-content: space-between;
-				}
 
-				.user-details {
-					display: flex;
-					align-items: center;
-
-					> span:first-child {
-						margin-right: 8px;
+					&-role {
+						font-size: 0.7em;
 					}
 				}
 			}
-		}		
+		}
+		
+		.action-buttons {
+			display: flex;
+			gap: 8px;
+		}
 		
 		.add-user-to-group-template {
 			text-align: center;
@@ -153,13 +155,6 @@ import { DividerComponent } from "../shared/divider.component";
 				font-weight: 500;
 				letter-spacing: 12px;
 			}
-		}
-
-		.btn-group {
-			display: flex;
-			flex-direction: column;
-			gap: 8px;
-			padding: 0 16px 16px 16px;
 		}
 	`],
 })
@@ -180,10 +175,10 @@ export class GroupUserManagerComponent {
 
 	protected virtualMemberName?: string;
 	protected readonly role = MemberRole;
-	protected readonly $groupCode = computed(() =>
-		this.store.selectSignal(GroupSelector.selectCode(this.group().id))()
-	);
-	readonly group = input.required<GroupInfo>();
+	protected readonly $group = this.store.selectSignal(GroupSelector.selectGroup(this.data));
+	protected readonly $groupCode = this.store.selectSignal(GroupSelector.selectCode(this.data));
+
+	constructor(@Inject(MAT_BOTTOM_SHEET_DATA) protected data: string) {}
 
 	protected openAddMemberDialog() {
 		this.addMemberDialogRef = this.dialog.open({
@@ -207,7 +202,7 @@ export class GroupUserManagerComponent {
 		});
 
 		addMemberDialogRef.afterOpened().subscribe(async _ => {
-			this.store.dispatch(GroupAction.getCode({ id: this.group().id }));
+			this.store.dispatch(GroupAction.getCode({ id: this.data }));
 			setTimeout(() => {
 				addMemberDialogRef.close();
 			}, 300000);
@@ -232,7 +227,7 @@ export class GroupUserManagerComponent {
 						action: () => {
 							if(this.virtualMemberName) {
 								this.store.dispatch(GroupAction.addVirtualMember({ 
-									groupId: this.group().id, 
+									groupId: this.data, 
 									name: this.virtualMemberName 
 								}));
 							}
@@ -250,7 +245,7 @@ export class GroupUserManagerComponent {
 
 	protected toggelAdmin(member: GroupMember) {
 		this.store.dispatch(GroupAction.updateRole({
-			id: this.group().id,
+			id: this.data,
 			memberId: member.id,
 			role: member.role === MemberRole.admin ? MemberRole.user : MemberRole.admin
 		}));
@@ -268,7 +263,7 @@ export class GroupUserManagerComponent {
 					{
 						type: DialogButtonType.Primary,
 						label: "Yes",
-						action: () => this.store.dispatch(GroupAction.removeMember({ id: this.group().id, memberId }))
+						action: () => this.store.dispatch(GroupAction.removeMember({ id: this.data, memberId }))
 					}
 				]
 			}

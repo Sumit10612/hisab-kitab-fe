@@ -34,6 +34,9 @@ import { GroupCategoryManagerComponent } from "./group-category-manager.conponen
 import { GroupUserManagerComponent } from "./group-user-manager.component";
 import { UserSelector } from "../../store/user/user.selector";
 import { DividerComponent } from "../shared/divider.component";
+import { MatBottomSheet } from "@angular/material/bottom-sheet";
+import { MatCardModule } from "@angular/material/card";
+import { MatIconModule } from "@angular/material/icon";
 
 @Component({
 	selector: "app-group-editor",
@@ -41,13 +44,13 @@ import { DividerComponent } from "../shared/divider.component";
 	imports: [
 		ReactiveFormsModule,
 		LayoutComponent,
+		MatCardModule,
 		MatButtonModule,
 		MatInputModule,
+		MatIconModule,
 		MatRadioModule,
 		MatSlideToggleModule,
 		OtpComponent,
-		GroupUserManagerComponent,
-		GroupCategoryManagerComponent,
 		DividerComponent
 	],
 	template: `
@@ -89,10 +92,20 @@ import { DividerComponent } from "../shared/divider.component";
 				}
 
 				@if ($group(); as group) {
-					<app-group-user-manager class="group-manager" [group]="group"></app-group-user-manager>
-					@if (isAdmin) {
-						<app-group-category-manager [group]="group" class="group-manager"></app-group-category-manager>
-					}
+					<div class="row">
+						<mat-card (click)="manageMembers(group.id)">
+							<mat-card-content>
+								<span>Members</span>
+								<mat-icon>keyboard_arrow_right</mat-icon>
+							</mat-card-content>
+						</mat-card>
+						<mat-card (click)="manageCategories(group.id)">
+							<mat-card-content>
+								<span>Categories</span>
+								<mat-icon>keyboard_arrow_right</mat-icon>
+							</mat-card-content>
+						</mat-card>
+					</div>
 
 					<div class="action-buttons">
 						<button mat-raised-button color="warn" (click)="leaveGroup()">
@@ -153,10 +166,6 @@ import { DividerComponent } from "../shared/divider.component";
 			gap: 16px;
 			align-items: center;
 
-			.group-manager {
-				width: 100%;
-			}
-
 			.action-buttons {
 				display: flex;
 				gap: 16px;
@@ -164,6 +173,20 @@ import { DividerComponent } from "../shared/divider.component";
 				width: 100%;
 				margin-bottom: 16px;
 			}
+		}
+
+		.row {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			grid-gap: 16px;
+		}
+
+		.mat-mdc-card-content {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			font-weight: 500;
+			font-size: 1.1em;
 		}
 	`]
 })
@@ -174,6 +197,7 @@ export class GroupEditorComponent implements OnInit {
 	private readonly toolbar = inject(ToolbarConfigurationService);
 	private readonly fb = inject(NonNullableFormBuilder);
 	private readonly store = inject(Store);
+	private readonly bottomSheet = inject(MatBottomSheet);
 
 	protected isEdit = false;
 	protected form = this.fb.group({
@@ -243,7 +267,7 @@ export class GroupEditorComponent implements OnInit {
 		return this.$group()?.members?.[user.uid].role === MemberRole.admin;
 	}
 
-	get upsertGroup(): UpsertGroup | undefined {
+	protected get upsertGroup(): UpsertGroup | undefined {
 		const { name, imageUrl, groupType, excludeTotal } = this.form.value;
 		if (!name || !imageUrl) {
 			return;
@@ -288,6 +312,18 @@ export class GroupEditorComponent implements OnInit {
 		}
 
 		this.store.dispatch(GroupAction.create({ upsertGroup: { name, imageUrl, groupType, excludeTotal } }));
+	}
+
+	protected manageMembers(id: string): void {
+		this.bottomSheet.open(GroupUserManagerComponent, {
+			data: id
+		});
+	}
+
+	protected manageCategories(id: string): void {
+		this.bottomSheet.open(GroupCategoryManagerComponent, {
+			data: id
+		});
 	}
 
 	protected leaveGroup() {
