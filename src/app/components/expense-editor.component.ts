@@ -54,7 +54,21 @@ import { PaidByShareComponent } from "./widgets/paid-by-share.component";
 	],
 	providers: [provideNativeDateAdapter()],
 	template: `
-		<app-layout [pageTitle]="(form.controls.id.value ? 'Update' : 'Add') + ' an expense'"  headerHeight="48px">
+		<app-layout [pageTitle]="(form.controls.id.value ? 'Update' : 'Add') + ' an expense'" 
+					[headerHeight]="form.controls.groupType.value === groupType.SpiltExpense ? '88px' : '48px'">
+			<div section="header">
+				@if (form.controls.groupType.value === groupType.SpiltExpense) {
+					<div class="shares-tab">
+						<mat-button-toggle-group
+							[(value)]="selectedSplitType"
+							hideSingleSelectionIndicator="true"
+							(change)="onSplitTypeChanged($event)">
+							<mat-button-toggle [value]="splitType.Equally">Split equally</mat-button-toggle>
+							<mat-button-toggle [value]="splitType.ByShare">By share</mat-button-toggle>
+						</mat-button-toggle-group>
+					</div>
+				}
+			</div>
 			<div section="detail" class="detail-section">
 				<form [formGroup]="form">
 					<div class="row">
@@ -81,18 +95,6 @@ import { PaidByShareComponent } from "./widgets/paid-by-share.component";
 					<mat-form-field>
 						<input matInput placeholder="Where did you pay this?" [formControl]="form.controls.where" />
 					</mat-form-field>
-
-					@if (form.controls.groupType.value === groupType.SpiltExpense) {
-						<div class="shares-tab">
-							<mat-button-toggle-group
-								[(value)]="selectedSplitType"
-								hideSingleSelectionIndicator="true"
-								(change)="onSplitTypeChanged($event)">
-								<mat-button-toggle [value]="splitType.Equally">Split equally</mat-button-toggle>
-								<mat-button-toggle [value]="splitType.ByShare">By share</mat-button-toggle>
-							</mat-button-toggle-group>
-						</div>
-					}
 
 					<div class="row">
 						<mat-form-field appearance="fill" floatLabel="always">
@@ -136,6 +138,18 @@ import { PaidByShareComponent } from "./widgets/paid-by-share.component";
 		</app-layout>
 	`,
 	styles: [`
+		.shares-tab {
+			display: flex;
+			padding-bottom: 24px;
+			justify-content: center;
+		}		
+
+		.mat-button-toggle-group {
+			height: 32px;
+			border-radius: 16px;
+			align-items: center;
+		}
+
 		.detail-section {
 			.row {
 				display: grid;
@@ -143,20 +157,8 @@ import { PaidByShareComponent } from "./widgets/paid-by-share.component";
 				grid-gap: 16px;
 			}
 
-			.mat-button-toggle-group {
-				height: 32px;
-				border-radius: 16px;
-				align-items: center;
-			}
-
 			.amount-input {
 				text-align: right;
-			}
-
-			.shares-tab {
-				display: flex;
-				padding-bottom: 24px;
-				justify-content: center;
 			}
 
 			.shares {
@@ -286,9 +288,9 @@ export class ExpenseEditorComponent implements OnInit, AfterViewInit {
 	}
 
 	onAmountChange() {
-		const amount = this.form.controls.amount.value;
+		const amount = this.form.controls.amount.value ?? 0;
 		const members = this.$group()?.activeMembers;
-		if (amount && members?.length) {
+		if (members?.length) {
 			const share = amount / members.length;
 			const userShare: Record<string, number> = {};
 			members.forEach(member => {
