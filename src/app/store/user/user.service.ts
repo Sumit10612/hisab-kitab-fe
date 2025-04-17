@@ -1,7 +1,7 @@
 import { inject, Injectable } from "@angular/core";
 import { doc, Firestore, getDoc, setDoc, updateDoc } from "@angular/fire/firestore";
 
-import { User } from "../models/user.model";
+import { User } from "../../models/user.model";
 
 export const USER_COLLECTION_NAME = "users";
 

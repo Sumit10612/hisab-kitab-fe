@@ -13,8 +13,8 @@ import {
 } from "@angular/fire/auth";
 import { map } from "rxjs";
 
-import { User } from "../models/user.model";
-import { ErrorCode } from "../utilities/error-codes";
+import { User } from "../../models/user.model";
+import { ErrorCode } from "../../utilities/error-codes";
 
 @Injectable({
 	providedIn: "root"

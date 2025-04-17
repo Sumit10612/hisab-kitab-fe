@@ -2,13 +2,13 @@ import { inject, Injectable } from "@angular/core";
 import { Actions, createEffect, ofType } from "@ngrx/effects";
 import { map, mergeMap, switchMap, tap } from "rxjs";
 
-import { AuthService } from "../../services/auth.service";
 import { NavigationService } from "../../services/navigation.service";
 import { NotificationService } from "../../services/notification.service";
 import { AppActions } from "../app.action";
 import { UserActions } from "../user/user.action";
 
 import { AuthActions } from "./auth.action";
+import { AuthService } from "./auth.service";
 
 @Injectable()
 export class AuthEffects {

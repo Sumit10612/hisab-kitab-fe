@@ -2,13 +2,13 @@ import { inject, Injectable } from "@angular/core";
 import { Actions, createEffect, ofType, ROOT_EFFECTS_INIT } from "@ngrx/effects";
 import { map, switchMap, tap } from "rxjs";
 
-import { AuthService } from "../services/auth.service";
 import { NotificationService } from "../services/notification.service";
 
 import { AppActions } from "./app.action";
 import { AuthActions } from "./auth/auth.action";
 import { GroupAction } from "./group/group.action";
 import { UserActions } from "./user/user.action";
+import { AuthService } from "./auth/auth.service";
 
 @Injectable()
 export class AppEffects {

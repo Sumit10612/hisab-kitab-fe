@@ -23,10 +23,10 @@ import {
 	MemberRole,
 	toFirestore,
 	UpsertGroup
-} from "../models/group.model";
-import { generateRandomNumber } from "../utilities/common";
-import { ErrorCode } from "../utilities/error-codes";
-import { throwIfNotFound } from "../utilities/firebase-errors";
+} from "../../models/group.model";
+import { generateRandomNumber } from "../../utilities/common";
+import { ErrorCode } from "../../utilities/error-codes";
+import { throwIfNotFound } from "../../utilities/firebase-errors";
 import { maxBy } from "lodash-es";
 
 export const GROUP_COLLECTION_NAME = "groups";

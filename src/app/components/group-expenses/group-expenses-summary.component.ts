@@ -6,7 +6,7 @@ import { MatIconModule } from "@angular/material/icon";
 
 import { Category, DEFAULT_CATEGORY } from "../../models/category.model";
 import { DateOption, FilterCriteria } from "../../models/filter-criteria.model";
-import { ExpenseService } from "../../services/expense.service";
+import { ExpenseService } from "../../store/expense/expense.service";
 import { DateUtilities } from "../../utilities/date";
 import { DividerComponent } from "../shared/divider.component";
 import { FilterExpenseCriteriaComponent } from "../widgets/filter-expense-criteria.component";

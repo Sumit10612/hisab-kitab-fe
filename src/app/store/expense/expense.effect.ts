@@ -2,7 +2,7 @@ import { inject, Injectable } from "@angular/core";
 import { Actions, createEffect, ofType } from "@ngrx/effects";
 import { switchMap, tap } from "rxjs";
 
-import { ExpenseService } from "../../services/expense.service";
+import { ExpenseService } from "./expense.service";
 import { NavigationService } from "../../services/navigation.service";
 import { NotificationService } from "../../services/notification.service";
 import { AppActions } from "../app.action";

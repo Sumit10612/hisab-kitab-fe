@@ -18,7 +18,6 @@ import {
 
 import { DEFAULT_CATEGORY } from "../../models/category.model";
 import { Group, GroupInfo, GroupType, MemberRole } from "../../models/group.model";
-import { GroupService } from "../../services/group.service";
 import { NavigationService } from "../../services/navigation.service";
 import { NotificationService } from "../../services/notification.service";
 import { ErrorCode } from "../../utilities/error-codes";
@@ -26,6 +25,7 @@ import { AppActions } from "../app.action";
 import { UserSelector } from "../user/user.selector";
 
 import { GroupAction } from "./group.action";
+import { GroupService } from "./group.service";
 
 @Injectable()
 export class GroupEffects {

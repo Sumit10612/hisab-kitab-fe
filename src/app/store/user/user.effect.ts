@@ -4,7 +4,7 @@ import { switchMap, tap } from "rxjs";
 
 import { NavigationService } from "../../services/navigation.service";
 import { NotificationService } from "../../services/notification.service";
-import { UserService } from "../../services/user.service";
+import { UserService } from "./user.service";
 
 import { UserActions } from "./user.action";
 

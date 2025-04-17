@@ -18,12 +18,12 @@ import {
 } from "firebase/firestore";
 import { keys } from "lodash-es";
 
-import { Expense, FirestoreExpense, fromFirestoreModel, toFirestoreModel } from "../models/expense.model";
-import { Group } from "../models/group.model";
-import { DateUtilities } from "../utilities/date";
-import { throwIfNotFound } from "../utilities/firebase-errors";
+import { Expense, FirestoreExpense, fromFirestoreModel, toFirestoreModel } from "../../models/expense.model";
+import { Group } from "../../models/group.model";
+import { DateUtilities } from "../../utilities/date";
+import { throwIfNotFound } from "../../utilities/firebase-errors";
 
-import { GROUP_COLLECTION_NAME } from "./group.service";
+import { GROUP_COLLECTION_NAME } from "../group/group.service";
 
 const COLLECTION_NAME = "expenses";
 
