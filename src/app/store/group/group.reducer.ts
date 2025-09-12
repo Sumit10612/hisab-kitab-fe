@@ -5,10 +5,13 @@ import { Timestamp } from "firebase/firestore";
 import { GroupInfo } from "../../models/group.model";
 
 import { GroupAction } from "./group.action";
+import { expand } from "rxjs";
 
 export interface GroupState {
     groups: EntityState<GroupInfo>;
     groupCodes: EntityState<{ id: string; code: number }>;
+    expandedCateoryId: number | null;
+    expandedSubCateoryId: number | null;
 }
 
 const getDate = (e?: Timestamp) => (e ? e.toDate() : new Date(1900, 1));
@@ -34,6 +37,8 @@ export const groupCodeAdapter = createEntityAdapter<{
 const INITIAL_STATE: GroupState = {
     groups: groupAdapter.getInitialState(),
     groupCodes: groupCodeAdapter.getInitialState(),
+    expandedCateoryId: null,
+    expandedSubCateoryId: null,
 };
 
 export const groupReducer = createReducer<GroupState>(
@@ -56,5 +61,15 @@ export const groupReducer = createReducer<GroupState>(
     on(GroupAction.getCodeSuccess, (state, { id, code }) => ({
         ...state,
         groupCodes: groupCodeAdapter.upsertOne({ id, code }, state.groupCodes),
+    })),
+    on(GroupAction.setExpandedCategoryId, (state, { categoryId }) => ({
+        ...state,
+        expandedCateoryId:
+            state.expandedCateoryId === categoryId ? null : categoryId,
+    })),
+    on(GroupAction.setExpandedSubCategoryId, (state, { subCategoryId }) => ({
+        ...state,
+        expandedSubCateoryId:
+            state.expandedSubCateoryId === subCategoryId ? null : subCategoryId,
     })),
 );

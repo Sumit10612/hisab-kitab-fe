@@ -33,4 +33,14 @@ export namespace GroupSelector {
             groupCodeAdapterSelectors.selectEntities,
             (entities) => entities[id]?.code,
         );
+
+    export const selectExpandedCategoryId = createSelector(
+        (state: State) => state.group.expandedCateoryId,
+        (categoryId) => categoryId,
+    );
+
+    export const selectExpandedSubCategoryId = createSelector(
+        (state: State) => state.group.expandedSubCateoryId,
+        (subCategoryId) => subCategoryId,
+    );
 }

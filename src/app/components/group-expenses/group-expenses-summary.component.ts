@@ -1,12 +1,20 @@
 import { CommonModule } from "@angular/common";
-import { Component, computed, inject, input, OnInit } from "@angular/core";
+import {
+    Component,
+    computed,
+    effect,
+    inject,
+    input,
+    OnInit,
+    signal,
+    Signal,
+} from "@angular/core";
 import { MatBottomSheet } from "@angular/material/bottom-sheet";
 import { MatButtonModule } from "@angular/material/button";
 import { MatIconModule } from "@angular/material/icon";
 
 import { Category, DEFAULT_CATEGORY } from "../../models/category.model";
 import { DateOption, FilterCriteria } from "../../models/filter-criteria.model";
-import { ExpenseService } from "../../store/expense/expense.service";
 import { DateUtilities } from "../../utilities/date";
 import { DividerComponent } from "../shared/divider.component";
 import { FilterExpenseCriteriaComponent } from "../widgets/filter-expense-criteria.component";
@@ -16,6 +24,14 @@ import { LayoutComponent } from "../shared/layout.component";
 import { ToolbarConfigurationService } from "../../services/toolbar-configuration.service";
 import { ToolbarButtonType } from "../../models/toolbar.model";
 import { GroupExpensesHeaderComponent } from "./group-expenses-header.component";
+import { Expense } from "../../models/expense.model";
+import { ExpenseAction } from "../../store/expense/expense.action";
+import { ExpenseSelector } from "../../store/expense/expense.selector";
+import { GroupInfo } from "../../models/group.model";
+import { flatMap, fromPairs } from "lodash-es";
+import { RouterLink } from "@angular/router";
+import { GroupAction } from "../../store/group/group.action";
+import { NotificationService } from "../../services/notification.service";
 
 @Component({
     selector: "app-group-expenses-summary",
@@ -27,6 +43,7 @@ import { GroupExpensesHeaderComponent } from "./group-expenses-header.component"
         MatIconModule,
         DividerComponent,
         LayoutComponent,
+        RouterLink,
     ],
     template: `
         <app-layout [headerHeight]="'160px'">
@@ -41,8 +58,8 @@ import { GroupExpensesHeaderComponent } from "./group-expenses-header.component"
             <div section="detail">
                 <div class="date-selection-section">
                     <span
-                        >{{ filterCriteria?.fromDate | date: "dd/MMM/yy" }} -
-                        {{ filterCriteria?.toDate | date: "dd/MMM/yy" }}</span
+                        >{{ filterCriteria.fromDate | date: "dd/MMM/yy" }} -
+                        {{ filterCriteria.toDate | date: "dd/MMM/yy" }}</span
                     >
                 </div>
 
@@ -70,7 +87,14 @@ import { GroupExpensesHeaderComponent } from "./group-expenses-header.component"
                             kvp of expenseTotalByCategory | keyvalue;
                             track kvp.key
                         ) {
-                            <div class="summary-record category">
+                            <div
+                                class="summary-record"
+                                (click)="toggleExpandCategory(+kvp.key)"
+                                [ngClass]="{
+                                    highlight:
+                                        $expandedCategoryId() === +kvp.key,
+                                }"
+                            >
                                 <div class="summary-record-name">
                                     <span>{{
                                         getCategoryById(+kvp.key).name
@@ -83,31 +107,95 @@ import { GroupExpensesHeaderComponent } from "./group-expenses-header.component"
                             </div>
                             <app-divider></app-divider>
 
-                            @for (
-                                subCategory of getCategoryById(+kvp.key)
-                                    .subCategories;
-                                track subCategory.id
-                            ) {
-                                @if (
-                                    expenseTotalBySubCategory[subCategory.id]
+                            @if ($expandedCategoryId() === +kvp.key) {
+                                @for (
+                                    subCategory of getCategoryById(+kvp.key)
+                                        .subCategories;
+                                    track subCategory.id
                                 ) {
-                                    <div class="summary-record sub-category">
-                                        <div class="summary-record-name">
-                                            <span class="emojis">{{
-                                                subCategory.icon
-                                            }}</span>
-                                            <span>{{ subCategory.name }}</span>
-                                        </div>
-                                        <span
-                                            >&#8377;
-                                            {{
-                                                expenseTotalBySubCategory[
+                                    @if (
+                                        expenseTotalBySubCategory[
+                                            subCategory.id
+                                        ]
+                                    ) {
+                                        <div
+                                            class="summary-record sub-category"
+                                            (click)="
+                                                toggleExpandSubCategory(
                                                     subCategory.id
-                                                ] | number: "1.2-2"
-                                            }}</span
+                                                )
+                                            "
+                                            [ngClass]="{
+                                                highlight:
+                                                    $expandedSubCategoryId() ===
+                                                    subCategory.id,
+                                            }"
                                         >
-                                    </div>
-                                    <app-divider></app-divider>
+                                            <div class="summary-record-name">
+                                                <span class="emojis">{{
+                                                    subCategory.icon
+                                                }}</span>
+                                                <span>{{
+                                                    subCategory.name
+                                                }}</span>
+                                            </div>
+                                            <span
+                                                >&#8377;
+                                                {{
+                                                    expenseTotalBySubCategory[
+                                                        subCategory.id
+                                                    ] | number: "1.2-2"
+                                                }}</span
+                                            >
+                                        </div>
+                                        <app-divider></app-divider>
+
+                                        @if (
+                                            $expandedSubCategoryId() ===
+                                            subCategory.id
+                                        ) {
+                                            @for (
+                                                expense of expensesBySubCategory[
+                                                    subCategory.id
+                                                ];
+                                                track expense.id
+                                            ) {
+                                                <a
+                                                    class="summary-record expense"
+                                                    [routerLink]="[
+                                                        '/group',
+                                                        groupId(),
+                                                        'expense',
+                                                        expense.id,
+                                                    ]"
+                                                >
+                                                    <div
+                                                        class="summary-record-name"
+                                                    >
+                                                        <span>{{
+                                                            expense.expenseDate
+                                                                | date
+                                                                    : "dd/MM/yy"
+                                                        }}</span>
+                                                        <span>{{
+                                                            expense.description
+                                                        }}</span>
+                                                    </div>
+
+                                                    <span
+                                                        >&#8377;
+                                                        {{
+                                                            expense.amount
+                                                                | number
+                                                                    : "1.2-2"
+                                                        }}</span
+                                                    >
+                                                </a>
+
+                                                <app-divider></app-divider>
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -141,12 +229,18 @@ import { GroupExpensesHeaderComponent } from "./group-expenses-header.component"
                     }
                 }
 
-                .category {
-                    font-weight: 600;
-                }
-
                 .sub-category {
                     margin-left: 16px;
+                }
+
+                .expense {
+                    margin-left: 32px;
+                    text-decoration: none;
+                    color: inherit;
+                }
+
+                .highlight {
+                    font-weight: 600;
                 }
             }
         `,
@@ -154,20 +248,103 @@ import { GroupExpensesHeaderComponent } from "./group-expenses-header.component"
 })
 export class GroupExpensesSummaryComponent implements OnInit {
     private readonly bottomSheet = inject(MatBottomSheet);
-    private readonly expenseService = inject(ExpenseService);
     private readonly store = inject(Store);
     private readonly toolbar = inject(ToolbarConfigurationService);
+    private readonly notofication = inject(NotificationService);
 
-    protected filterCriteria?: FilterCriteria;
+    protected group?: GroupInfo;
     protected paidBySummary: Record<string, number> = {};
     protected totalAmount: number = 0;
     protected expenseTotalByCategory: Record<number, number> = {};
     protected expenseTotalBySubCategory: Record<number, number> = {};
+    protected expensesBySubCategory: Record<number, Expense[]> = {};
+    protected filterCriteria: FilterCriteria;
 
     protected readonly groupId = input.required<string>();
-    protected readonly $group = computed(() =>
-        this.store.selectSignal(GroupSelector.selectGroup(this.groupId()))(),
+    protected readonly $group = computed(() => {
+        const group = this.store.selectSignal(
+            GroupSelector.selectGroup(this.groupId()),
+        )();
+        this.subCategoryCategoryMap = fromPairs(
+            flatMap(group?.categories, (c) =>
+                c.subCategories.map((s) => [s.id, c.id]),
+            ),
+        );
+        return group;
+    });
+    protected readonly $expandedCategoryId = this.store.selectSignal(
+        GroupSelector.selectExpandedCategoryId,
     );
+    protected readonly $expandedSubCategoryId = this.store.selectSignal(
+        GroupSelector.selectExpandedSubCategoryId,
+    );
+
+    private subCategoryCategoryMap: Record<number, number> = {};
+
+    constructor() {
+        const today = new Date();
+        this.filterCriteria = {
+            dateOption: DateOption.Current,
+            fromDate: DateUtilities.startOfMonth(today),
+            toDate: DateUtilities.endOfMonth(today),
+        };
+
+        const $expenses = this.store.selectSignal(
+            ExpenseSelector.selectAllExpenses,
+        );
+
+        effect(
+            () => {
+                this.expenseTotalByCategory = {};
+                this.expenseTotalBySubCategory = {};
+                this.expensesBySubCategory = {};
+                this.paidBySummary = {};
+                this.totalAmount = 0;
+
+                const expenses = $expenses().filter(
+                    (expense) =>
+                        expense.expenseDate >= this.filterCriteria.fromDate &&
+                        expense.expenseDate <= this.filterCriteria.toDate,
+                );
+
+                const $loading = this.store.selectSignal(
+                    ExpenseSelector.isLoading,
+                );
+
+                expenses.forEach((expense) => {
+                    if (expense.category) {
+                        this.expensesBySubCategory[expense.category] ??= [];
+                        this.expensesBySubCategory[expense.category].push(
+                            expense,
+                        );
+
+                        const categoryId =
+                            this.subCategoryCategoryMap[expense.category];
+                        this.expenseTotalByCategory[categoryId] ??= 0;
+                        this.expenseTotalByCategory[categoryId] +=
+                            expense.amount;
+
+                        this.expenseTotalBySubCategory[expense.category] ??= 0;
+                        this.expenseTotalBySubCategory[expense.category] +=
+                            expense.amount;
+                    }
+
+                    const memberName =
+                        this.$group()?.members[expense.paidBy].name ?? "";
+                    this.paidBySummary[memberName] ??= 0;
+                    this.paidBySummary[memberName] += expense.amount;
+                    this.totalAmount += expense.amount;
+                });
+
+                if ($loading()) {
+                    this.notofication.showLoading();
+                } else {
+                    this.notofication.hideLoading();
+                }
+            },
+            { allowSignalWrites: true },
+        );
+    }
 
     ngOnInit() {
         this.toolbar.configure({
@@ -182,9 +359,9 @@ export class GroupExpensesSummaryComponent implements OnInit {
                                 data: {
                                     criteria: {
                                         dateOption:
-                                            this.filterCriteria?.dateOption,
-                                        fromDate: this.filterCriteria?.fromDate,
-                                        toDate: this.filterCriteria?.toDate,
+                                            this.filterCriteria.dateOption,
+                                        fromDate: this.filterCriteria.fromDate,
+                                        toDate: this.filterCriteria.toDate,
                                     } as FilterCriteria,
                                 },
                             })
@@ -193,13 +370,10 @@ export class GroupExpensesSummaryComponent implements OnInit {
                                 if (
                                     criteria &&
                                     criteria.dateOption !==
-                                        this.filterCriteria?.dateOption
+                                        this.filterCriteria.dateOption
                                 ) {
                                     this.filterCriteria = criteria;
-                                    this.getExpenses(
-                                        criteria.fromDate,
-                                        criteria.toDate,
-                                    );
+                                    this.getExpenses();
                                 }
                             });
                     },
@@ -207,17 +381,7 @@ export class GroupExpensesSummaryComponent implements OnInit {
             ],
         });
 
-        const today = new Date();
-        this.filterCriteria = {
-            dateOption: DateOption.Current,
-            fromDate: DateUtilities.startOfMonth(today),
-            toDate: DateUtilities.endOfMonth(today),
-        };
-
-        this.getExpenses(
-            DateUtilities.startOfMonth(today),
-            DateUtilities.endOfMonth(today),
-        );
+        this.getExpenses();
     }
 
     protected getCategoryById(id: number): Category {
@@ -227,39 +391,35 @@ export class GroupExpensesSummaryComponent implements OnInit {
         );
     }
 
-    private async getExpenses(fromDate: Date, toDate: Date) {
-        const expenses = await this.expenseService.getByDateRange(
-            this.groupId(),
-            fromDate,
-            toDate,
+    protected toggleExpandCategory(categoryId: number) {
+        this.store.dispatch(GroupAction.setExpandedCategoryId({ categoryId }));
+    }
+
+    protected toggleExpandSubCategory(subCategoryId: number) {
+        this.store.dispatch(
+            GroupAction.setExpandedSubCategoryId({ subCategoryId }),
         );
-
-        this.expenseTotalByCategory = {};
-        this.expenseTotalBySubCategory = {};
-        this.paidBySummary = {};
-        this.totalAmount = 0;
-        expenses.forEach((expense) => {
-            const categoryId = this.$group()?.categories.find((category) =>
-                category.subCategories.some((sc) => sc.id === expense.category),
-            )?.id;
-            if (categoryId && expense.category) {
-                this.expenseTotalByCategory[categoryId] ??= 0;
-                this.expenseTotalByCategory[categoryId] += expense.amount;
-
-                this.expenseTotalBySubCategory[expense.category] ??= 0;
-                this.expenseTotalBySubCategory[expense.category] +=
-                    expense.amount;
-            }
-
-            const memberName =
-                this.$group()?.members[expense.paidBy].name ?? "";
-            this.paidBySummary[memberName] ??= 0;
-            this.paidBySummary[memberName] += expense.amount;
-            this.totalAmount += expense.amount;
-        });
     }
 
     get hasData() {
         return Object.keys(this.expenseTotalByCategory).length > 0;
+    }
+
+    private getExpenses() {
+        this.store.dispatch(
+            ExpenseAction.getByDateRange({
+                groupId: this.groupId(),
+                startDate: this.filterCriteria.fromDate,
+                endDate: this.filterCriteria.toDate,
+            }),
+        );
+
+        this.store.dispatch(
+            GroupAction.setExpandedCategoryId({ categoryId: null }),
+        );
+
+        this.store.dispatch(
+            GroupAction.setExpandedSubCategoryId({ subCategoryId: null }),
+        );
     }
 }

@@ -33,6 +33,24 @@ export class ExpenseEffects {
         );
     });
 
+    getByDateRange$ = createEffect(() => {
+        return this.actions$.pipe(
+            ofType(ExpenseAction.getByDateRange),
+            switchMap(async ({ groupId, startDate, endDate }) => {
+                try {
+                    const expenses = await this.expenseService.getByDateRange(
+                        groupId,
+                        startDate,
+                        endDate,
+                    );
+                    return ExpenseAction.getByDateRangeSuccess({ expenses });
+                } catch (error) {
+                    return AppActions.handleError({ error });
+                }
+            }),
+        );
+    });
+
     add$ = createEffect(() => {
         return this.actions$.pipe(
             ofType(ExpenseAction.add),

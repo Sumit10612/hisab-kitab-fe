@@ -29,6 +29,7 @@ export const expenseReducer = createReducer<ExpenseState>(
     INITIAL_STATE,
     on(
         ExpenseAction.getNext,
+        ExpenseAction.getByDateRange,
         (state): ExpenseState => ({
             ...state,
             loading: true,
@@ -36,6 +37,7 @@ export const expenseReducer = createReducer<ExpenseState>(
     ),
     on(
         ExpenseAction.getNextSuccess,
+        ExpenseAction.getByDateRangeSuccess,
         (state, { expenses }): ExpenseState => ({
             ...state,
             expenses: expenseAdapter.upsertMany(expenses, state.expenses),

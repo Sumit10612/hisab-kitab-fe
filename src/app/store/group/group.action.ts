@@ -95,4 +95,14 @@ export namespace GroupAction {
     export const addCategorySuccess = createAction(
         `${ACTION_PREFIX} Add Category Success`,
     );
+
+    export const setExpandedCategoryId = createAction(
+        `${ACTION_PREFIX} Set Expanded Category Id`,
+        props<{ categoryId: number | null }>(),
+    );
+
+    export const setExpandedSubCategoryId = createAction(
+        `${ACTION_PREFIX} Set Expanded Sub Category Id`,
+        props<{ subCategoryId: number | null }>(),
+    );
 }
