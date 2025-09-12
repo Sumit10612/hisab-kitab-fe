@@ -1,5 +1,10 @@
 import { Component, input } from "@angular/core";
-import { getGroupImage, Group, GroupInfo, GroupType } from "../../models/group.model";
+import {
+    getGroupImage,
+    Group,
+    GroupInfo,
+    GroupType,
+} from "../../models/group.model";
 import { MatIconModule } from "@angular/material/icon";
 import { RouterLink } from "@angular/router";
 import { DateUtilities } from "../../utilities/date";
@@ -13,16 +18,22 @@ import { MatButtonModule } from "@angular/material/button";
         MatButtonModule,
         MatButtonToggleModule,
         MatIconModule,
-        RouterLink
+        RouterLink,
     ],
     template: `
         @if (group(); as group) {
             <div class="header-section">
                 <div class="header-section-page-info">
-                    <img width="50" height="50" [src]="getGroupImage(group.imageUrl).src"
-                        [alt]="getGroupImage(group.imageUrl).alt" />
+                    <img
+                        width="50"
+                        height="50"
+                        [src]="getGroupImage(group.imageUrl).src"
+                        [alt]="getGroupImage(group.imageUrl).alt"
+                    />
 
-                    <span class="header-section-page-info-name">{{group.name}}</span>
+                    <span class="header-section-page-info-name">{{
+                        group.name
+                    }}</span>
 
                     <a mat-icon-button [routerLink]="['/group', group.id]">
                         <mat-icon>settings</mat-icon>
@@ -32,105 +43,147 @@ import { MatButtonModule } from "@angular/material/button";
                 <div class="header-section-group-info">
                     <div class="header-section-group-info-total">
                         <span class="header-section-group-info-total-amount">
-                            &#8377; 
-                            {{ 
+                            &#8377;
+                            {{
                                 isExpenseTracker
-                                    ? group.monthTotal[dateUtil.yearMonth(dateUtil.previousMonth())]
+                                    ? group.monthTotal[
+                                          dateUtil.yearMonth(
+                                              dateUtil.previousMonth()
+                                          )
+                                      ]
                                     : group.currentMember.paid
                             }}
                         </span>
-                        <span class="label">{{ isExpenseTracker ? "last month" : "you paid" }}</span>
+                        <span class="label">{{
+                            isExpenseTracker ? "last month" : "you paid"
+                        }}</span>
                     </div>
 
                     <div class="header-section-group-info-month">
                         <span class="header-section-group-info-month-amount">
-                            &#8377; 
-                            {{ 
+                            &#8377;
+                            {{
                                 isExpenseTracker
-                                    ? group.monthTotal[dateUtil.yearMonth()] || 0
+                                    ? group.monthTotal[dateUtil.yearMonth()] ||
+                                      0
                                     : group.groupTotal
                             }}
                         </span>
-                        <span class="label">{{ isExpenseTracker ? "this month" : "total balance" }}</span>
+                        <span class="label">{{
+                            isExpenseTracker ? "this month" : "total balance"
+                        }}</span>
                     </div>
 
                     <div class="header-section-group-info-total">
                         <span class="header-section-group-info-total-amount">
-                            &#8377; {{ isExpenseTracker ? group.groupTotal : group.currentMember.share }}
+                            &#8377;
+                            {{
+                                isExpenseTracker
+                                    ? group.groupTotal
+                                    : group.currentMember.share
+                            }}
                         </span>
-                        <span class="label">{{ isExpenseTracker ? "total" : "your share" }}</span>
+                        <span class="label">{{
+                            isExpenseTracker ? "total" : "your share"
+                        }}</span>
                     </div>
                 </div>
 
                 <div class="header-section-tab">
-                    <mat-button-toggle-group hideSingleSelectionIndicator="true" [value]="page()">
-                        <mat-button-toggle value="expense" [routerLink]="['/group', group.id, 'expenses']">Expense</mat-button-toggle>
+                    <mat-button-toggle-group
+                        hideSingleSelectionIndicator="true"
+                        [value]="page()"
+                    >
+                        <mat-button-toggle
+                            value="expense"
+                            [routerLink]="['/group', group.id, 'expenses']"
+                            >Expense</mat-button-toggle
+                        >
                         @if (!isExpenseTracker) {
-                            <mat-button-toggle value="balance" [routerLink]="['/group', group.id, 'expenses', 'balance']">Balance</mat-button-toggle>
+                            <mat-button-toggle
+                                value="balance"
+                                [routerLink]="[
+                                    '/group',
+                                    group.id,
+                                    'expenses',
+                                    'balance',
+                                ]"
+                                >Balance</mat-button-toggle
+                            >
                         }
-                        <mat-button-toggle value="summary" [routerLink]="['/group', group.id, 'expenses', 'summary']">Summary</mat-button-toggle>
+                        <mat-button-toggle
+                            value="summary"
+                            [routerLink]="[
+                                '/group',
+                                group.id,
+                                'expenses',
+                                'summary',
+                            ]"
+                            >Summary</mat-button-toggle
+                        >
                     </mat-button-toggle-group>
                 </div>
             </div>
         }
     `,
-    styles:[`
-        .header-section {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            justify-content: space-between;
-
-            &-page-info {
+    styles: [
+        `
+            .header-section {
                 display: flex;
-                gap: 16px;
-                justify-content: space-between;
-                text-align: center;
-
-                &-name {
-                    font-size: 1.25rem;
-                    font-weight: 500;
-                }
-            }
-            
-            &-group-info {
-                display: flex;
+                flex-direction: column;
                 gap: 16px;
                 justify-content: space-between;
 
-                &-month {
+                &-page-info {
                     display: flex;
-                    flex-direction: column;
+                    gap: 16px;
+                    justify-content: space-between;
                     text-align: center;
 
-                    &-amount {
-                        font-size: 1.4rem;
+                    &-name {
+                        font-size: 1.25rem;
+                        font-weight: 500;
                     }
                 }
 
-                &-total {
+                &-group-info {
                     display: flex;
-                    flex-direction: column;
+                    gap: 16px;
+                    justify-content: space-between;
+
+                    &-month {
+                        display: flex;
+                        flex-direction: column;
+                        text-align: center;
+
+                        &-amount {
+                            font-size: 1.4rem;
+                        }
+                    }
+
+                    &-total {
+                        display: flex;
+                        flex-direction: column;
+                        text-align: center;
+                    }
+
+                    .label {
+                        font-size: 0.75rem;
+                    }
+                }
+
+                &-tab {
                     text-align: center;
                 }
 
-                .label {
-                    font-size: 0.75rem;
+                .mat-button-toggle-group {
+                    height: 32px;
+                    border-radius: 16px;
+                    align-items: center;
                 }
             }
-
-            &-tab {
-                text-align: center;
-            }
-
-            
-            .mat-button-toggle-group {
-                height: 32px;
-                border-radius: 16px;
-                align-items: center;
-            }
-        }    
-    `]
+        `,
+    ],
 })
 export class GroupExpensesHeaderComponent {
     protected readonly dateUtil = DateUtilities;

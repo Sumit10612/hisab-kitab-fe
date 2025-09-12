@@ -1,11 +1,14 @@
 /* You can add global styles to this file, and also import other style files */
 
-html, body { height: 100%; }
-body { 
+html,
+body {
+    height: 100%;
+}
+body {
     margin: 0;
     user-select: none;
     -webkit-user-select: none;
-	overscroll-behavior-y: contain;
+    overscroll-behavior-y: contain;
 }
 
 mat-form-field {
@@ -35,22 +38,22 @@ mat-form-field {
 }
 
 .emojis {
-	font-size: 20px;
-	text-align: center;
+    font-size: 20px;
+    text-align: center;
 }
 
 ::-webkit-input-placeholder {
-	font-style: italic;
+    font-style: italic;
 }
 
 :-moz-placeholder {
-	font-style: italic;  
+    font-style: italic;
 }
 
 ::-moz-placeholder {
-	font-style: italic;  
+    font-style: italic;
 }
 
-:-ms-input-placeholder {  
-	font-style: italic; 
+:-ms-input-placeholder {
+    font-style: italic;
 }

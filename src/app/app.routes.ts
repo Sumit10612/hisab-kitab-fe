@@ -1,4 +1,8 @@
-import { canActivate, redirectLoggedInTo, redirectUnauthorizedTo } from "@angular/fire/auth-guard";
+import {
+    canActivate,
+    redirectLoggedInTo,
+    redirectUnauthorizedTo,
+} from "@angular/fire/auth-guard";
 import { Routes } from "@angular/router";
 
 import { ExpenseEditorComponent } from "./components/expense-editor.component";
@@ -15,65 +19,65 @@ const redirectUnauthorizedToLogin = () => redirectUnauthorizedTo(["/login"]);
 const redirectLoggedInToHome = () => redirectLoggedInTo(["/home"]);
 
 export const routes: Routes = [
-	{
-		path: "",
-		pathMatch: "full",
-		component: LoginComponent,
-		...canActivate(redirectLoggedInToHome)
-	},
-	{
-		path: "login",
-		component: LoginComponent,
-		...canActivate(redirectLoggedInToHome)
-	},
-	{
-		path: "sign-up",
-		component: SignupComponent,
-		...canActivate(redirectLoggedInToHome)
-	},
-	{
-		path: "home",
-		component: HomeComponent,
-		...canActivate(redirectUnauthorizedToLogin)
-	},
-	{
-		path: "profile",
-		component: ProfileEditorComponent,
-		...canActivate(redirectUnauthorizedToLogin)
-	},
-	{
-		path: "group",
-		component: GroupEditorComponent,
-		...canActivate(redirectUnauthorizedToLogin)
-	},
-	{
-		path: "group/:groupId",
-		component: GroupEditorComponent,
-		...canActivate(redirectUnauthorizedToLogin)
-	},
-	{
-		path: "group/:groupId/expenses",
-		component: GroupExpensesComponent,
-		...canActivate(redirectUnauthorizedToLogin)
-	},
-	{
-		path: "group/:groupId/expenses/summary",
-		component: GroupExpensesSummaryComponent,
-		...canActivate(redirectUnauthorizedToLogin)
-	},
-	{
-		path: "group/:groupId/expenses/balance",
-		component: GroupExpensesBalancesComponent,
-		...canActivate(redirectUnauthorizedToLogin)
-	},
-	{
-		path: "group/:groupId/expense",
-		component: ExpenseEditorComponent,
-		...canActivate(redirectUnauthorizedToLogin)
-	},
-	{
-		path: "group/:groupId/expense/:expenseId",
-		component: ExpenseEditorComponent,
-		...canActivate(redirectUnauthorizedToLogin)
-	}
+    {
+        path: "",
+        pathMatch: "full",
+        component: LoginComponent,
+        ...canActivate(redirectLoggedInToHome),
+    },
+    {
+        path: "login",
+        component: LoginComponent,
+        ...canActivate(redirectLoggedInToHome),
+    },
+    {
+        path: "sign-up",
+        component: SignupComponent,
+        ...canActivate(redirectLoggedInToHome),
+    },
+    {
+        path: "home",
+        component: HomeComponent,
+        ...canActivate(redirectUnauthorizedToLogin),
+    },
+    {
+        path: "profile",
+        component: ProfileEditorComponent,
+        ...canActivate(redirectUnauthorizedToLogin),
+    },
+    {
+        path: "group",
+        component: GroupEditorComponent,
+        ...canActivate(redirectUnauthorizedToLogin),
+    },
+    {
+        path: "group/:groupId",
+        component: GroupEditorComponent,
+        ...canActivate(redirectUnauthorizedToLogin),
+    },
+    {
+        path: "group/:groupId/expenses",
+        component: GroupExpensesComponent,
+        ...canActivate(redirectUnauthorizedToLogin),
+    },
+    {
+        path: "group/:groupId/expenses/summary",
+        component: GroupExpensesSummaryComponent,
+        ...canActivate(redirectUnauthorizedToLogin),
+    },
+    {
+        path: "group/:groupId/expenses/balance",
+        component: GroupExpensesBalancesComponent,
+        ...canActivate(redirectUnauthorizedToLogin),
+    },
+    {
+        path: "group/:groupId/expense",
+        component: ExpenseEditorComponent,
+        ...canActivate(redirectUnauthorizedToLogin),
+    },
+    {
+        path: "group/:groupId/expense/:expenseId",
+        component: ExpenseEditorComponent,
+        ...canActivate(redirectUnauthorizedToLogin),
+    },
 ];

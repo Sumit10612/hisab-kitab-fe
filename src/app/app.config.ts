@@ -19,35 +19,41 @@ import { effects, metaReducers, reducers } from "./store";
 import { AppRouterStateSerializer } from "./store/app.serializer";
 
 const firebaseConfig = {
-	apiKey: "AIzaSyAMBjtKAO5RZXUggmiljSbKh_EQdzoPUBs",
-	authDomain: "hisab-kitab-d6b5d.firebaseapp.com",
-	projectId: "hisab-kitab-d6b5d",
-	storageBucket: "hisab-kitab-d6b5d.appspot.com",
-	messagingSenderId: "300743409801",
-	appId: "1:300743409801:web:c65735e9941625fb7b8658"
+    apiKey: "AIzaSyAMBjtKAO5RZXUggmiljSbKh_EQdzoPUBs",
+    authDomain: "hisab-kitab-d6b5d.firebaseapp.com",
+    projectId: "hisab-kitab-d6b5d",
+    storageBucket: "hisab-kitab-d6b5d.appspot.com",
+    messagingSenderId: "300743409801",
+    appId: "1:300743409801:web:c65735e9941625fb7b8658",
 };
 
-const initializer = (pwaService: PwaService) => () => pwaService.initPwaPrompt();
+const initializer = (pwaService: PwaService) => () =>
+    pwaService.initPwaPrompt();
 
 export const appConfig: ApplicationConfig = {
-	providers: [
-		provideRouter(routes, withComponentInputBinding()),
-		provideAnimationsAsync(),		
-		provideFirebaseApp(() => initializeApp(firebaseConfig)),
-		provideAuth(() => getAuth()),
-		provideFirestore(() => getFirestore()),
-		MatSnackBarModule,
-		MatBottomSheetModule,
-		provideServiceWorker("ngsw-worker.js", {
-			enabled: !isDevMode(),
-			registrationStrategy: "registerWhenStable:30000"
-		}),
-		{ provide: APP_INITIALIZER, useFactory: initializer, deps: [PwaService], multi: true },
-		{ provide: MatDialogRef, useValue: {} },
-		{ provide: MAT_DIALOG_DATA, useValue: {} },
-		provideStore(reducers, { metaReducers }),
-		provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode() }),
-		provideEffects(effects),
-		provideRouterStore({ serializer: AppRouterStateSerializer }),
-	]
+    providers: [
+        provideRouter(routes, withComponentInputBinding()),
+        provideAnimationsAsync(),
+        provideFirebaseApp(() => initializeApp(firebaseConfig)),
+        provideAuth(() => getAuth()),
+        provideFirestore(() => getFirestore()),
+        MatSnackBarModule,
+        MatBottomSheetModule,
+        provideServiceWorker("ngsw-worker.js", {
+            enabled: !isDevMode(),
+            registrationStrategy: "registerWhenStable:30000",
+        }),
+        {
+            provide: APP_INITIALIZER,
+            useFactory: initializer,
+            deps: [PwaService],
+            multi: true,
+        },
+        { provide: MatDialogRef, useValue: {} },
+        { provide: MAT_DIALOG_DATA, useValue: {} },
+        provideStore(reducers, { metaReducers }),
+        provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode() }),
+        provideEffects(effects),
+        provideRouterStore({ serializer: AppRouterStateSerializer }),
+    ],
 };

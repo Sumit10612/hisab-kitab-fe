@@ -13,25 +13,25 @@ import { UserEffects } from "./user/user.effect";
 import { userReducer, UserState } from "./user/user.reducer";
 
 export interface State {
-	user: UserState;
-	group: GroupState;
-	router: RouterState;
-	expense: ExpenseState;
+    user: UserState;
+    group: GroupState;
+    router: RouterState;
+    expense: ExpenseState;
 }
 
 export const effects: (Type<unknown> | Record<string, FunctionalEffect>)[] = [
-	AppEffects,
-	AuthEffects,
-	UserEffects,
-	GroupEffects,
-	ExpenseEffects,
+    AppEffects,
+    AuthEffects,
+    UserEffects,
+    GroupEffects,
+    ExpenseEffects,
 ];
 
 export const reducers: ActionReducerMap<State> = {
-	user: userReducer,
-	group: groupReducer,
-	router: routerReducer,
-	expense: expenseReducer
+    user: userReducer,
+    group: groupReducer,
+    router: routerReducer,
+    expense: expenseReducer,
 };
 
 export const metaReducers: MetaReducer<State>[] = isDevMode() ? [] : [];

@@ -1,31 +1,31 @@
 {
-  "id": "/",
-  "name": "Hisab Kitab: Track your expenses.",
-  "short_name": "Hisab Kitab",
-  "theme_color": "#964b04",
-  "background_color": "#964b04",
-  "display": "standalone",
-  "scope": "./",
-  "start_url": "./?utm_source=pwa",
-  "description": "Track all your expenses at one place.",
-  "screeshots": [
-    {
-      "src": "assets/screenshot_1.png",
-      "sizes": "358x738",
-      "type": "image/png"
-    }
-  ],
-  "icons": [
-    {
-      "src": "assets/icons/icon.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "assets/icons/maskable_icon.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
-  ]
+    "id": "/",
+    "name": "Hisab Kitab: Track your expenses.",
+    "short_name": "Hisab Kitab",
+    "theme_color": "#964b04",
+    "background_color": "#964b04",
+    "display": "standalone",
+    "scope": "./",
+    "start_url": "./?utm_source=pwa",
+    "description": "Track all your expenses at one place.",
+    "screeshots": [
+        {
+            "src": "assets/screenshot_1.png",
+            "sizes": "358x738",
+            "type": "image/png"
+        }
+    ],
+    "icons": [
+        {
+            "src": "assets/icons/icon.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "assets/icons/maskable_icon.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
 }

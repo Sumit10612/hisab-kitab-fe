@@ -1,48 +1,48 @@
 import { Timestamp } from "firebase/firestore";
 
 export enum SplitType {
-	Equally = "eq",
-	ByShare = "share",
-	ByPercentage = "%"
+    Equally = "eq",
+    ByShare = "share",
+    ByPercentage = "%",
 }
 
 export interface FilterExpense {
-	from: Date;
-	to: Date;
+    from: Date;
+    to: Date;
 }
 
 export interface ExpenseBase {
-	id: string;
-	description: string;
-	where?: string;
-	amount: number;
-	category?: number;
-	paidBy: string;
-	usersShare: Record<string, number>;
+    id: string;
+    description: string;
+    where?: string;
+    amount: number;
+    category?: number;
+    paidBy: string;
+    usersShare: Record<string, number>;
 }
 
 export interface Expense extends ExpenseBase {
-	expenseDate: Date;
+    expenseDate: Date;
 }
 
 export interface FirestoreExpense extends ExpenseBase {
-	expenseDate: Timestamp;
-	timestamp: Timestamp;
+    expenseDate: Timestamp;
+    timestamp: Timestamp;
 }
 
 export const toFirestoreModel = (expense: Expense): FirestoreExpense => {
-	const base: ExpenseBase = expense;
-	return {
-		...base,
-		expenseDate: Timestamp.fromDate(expense.expenseDate),
-		timestamp: Timestamp.now()
-	};
+    const base: ExpenseBase = expense;
+    return {
+        ...base,
+        expenseDate: Timestamp.fromDate(expense.expenseDate),
+        timestamp: Timestamp.now(),
+    };
 };
 
 export const fromFirestoreModel = (expense: FirestoreExpense): Expense => {
-	const base = expense;
-	return {
-		...base,
-		expenseDate: expense.expenseDate.toDate()
-	};
+    const base = expense;
+    return {
+        ...base,
+        expenseDate: expense.expenseDate.toDate(),
+    };
 };

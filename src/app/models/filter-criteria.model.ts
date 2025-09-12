@@ -1,11 +1,11 @@
 export interface FilterCriteria {
-	dateOption: DateOption;
-	fromDate: Date;
-	toDate: Date;
+    dateOption: DateOption;
+    fromDate: Date;
+    toDate: Date;
 }
 
 export enum DateOption {
-	Current,
-	Last,
-	Custom
+    Current,
+    Last,
+    Custom,
 }

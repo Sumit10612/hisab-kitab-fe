@@ -17,9 +17,11 @@ import { RouterLink } from "@angular/router";
     template: `
         <mat-toolbar class="toolbar">
             @if (toolbar.config?.back?.visible()) {
-                <button mat-icon-button 
+                <button
+                    mat-icon-button
                     (click)="handleBackEvent()"
-                    [routerLink]="toolbar.config?.back?.redirectTo?.()">
+                    [routerLink]="toolbar.config?.back?.redirectTo?.()"
+                >
                     <mat-icon>arrow_back</mat-icon>
                 </button>
             }
@@ -27,53 +29,61 @@ import { RouterLink } from "@angular/router";
             @if (toolbar.config?.profile?.visible && $user()) {
                 <a routerLink="/profile">
                     <img
-                        width="55" 
+                        width="55"
                         height="55"
                         [src]="getUserImage($user()?.photoUrl).src"
-                        [alt]="getUserImage($user()?.photoUrl).alt" />
+                        [alt]="getUserImage($user()?.photoUrl).alt"
+                    />
                 </a>
             }
 
             @for (actionBtn of toolbar.config?.actionBtns; track $index) {
                 @if (actionBtn.icon) {
-                    <button mat-icon-button
-                            [color]="getColor(actionBtn.type)"
-                            [disabled]="actionBtn.disabled?.()"
-                            [hidden]="!(actionBtn.visible?.() ?? true)"
-                            [routerLink]="actionBtn.redirectTo?.()"
-                            (click)="actionBtn.action?.()">
-                        <mat-icon>{{actionBtn.icon}}</mat-icon> {{actionBtn.label}}
+                    <button
+                        mat-icon-button
+                        [color]="getColor(actionBtn.type)"
+                        [disabled]="actionBtn.disabled?.()"
+                        [hidden]="!(actionBtn.visible?.() ?? true)"
+                        [routerLink]="actionBtn.redirectTo?.()"
+                        (click)="actionBtn.action?.()"
+                    >
+                        <mat-icon>{{ actionBtn.icon }}</mat-icon>
+                        {{ actionBtn.label }}
                     </button>
                 } @else {
-                    <button mat-raised-button
-                            [color]="getColor(actionBtn.type)"
-                            [disabled]="actionBtn.disabled?.()"
-                            [hidden]="!(actionBtn.visible?.() ?? true)"
-                            [routerLink]="actionBtn.redirectTo?.()"
-                            (click)="actionBtn.action?.()">
-                        {{actionBtn.label}}
+                    <button
+                        mat-raised-button
+                        [color]="getColor(actionBtn.type)"
+                        [disabled]="actionBtn.disabled?.()"
+                        [hidden]="!(actionBtn.visible?.() ?? true)"
+                        [routerLink]="actionBtn.redirectTo?.()"
+                        (click)="actionBtn.action?.()"
+                    >
+                        {{ actionBtn.label }}
                     </button>
                 }
             }
         </mat-toolbar>
     `,
-    styles: [`
-        .toolbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-    `]
+    styles: [
+        `
+            .toolbar {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+        `,
+    ],
 })
 export class ToolbarComponent {
     private readonly store = inject(Store);
     private readonly navigation = inject(NavigationService);
-    
+
     protected readonly toolbar = inject(ToolbarConfigurationService);
 
     protected getUserImage = getUserImage;
     protected $user = this.store.selectSignal(UserSelector.select);
-    
+
     protected getColor(type: ToolbarButtonType) {
         switch (type) {
             case ToolbarButtonType.Primary:
@@ -87,10 +97,10 @@ export class ToolbarComponent {
 
     protected handleBackEvent(): void {
         const action = this.toolbar.config?.back?.action;
-        if(action) {
+        if (action) {
             action();
         } else {
-            this.navigation.navigateBack()
+            this.navigation.navigateBack();
         }
     }
 }
