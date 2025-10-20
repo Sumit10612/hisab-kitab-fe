@@ -5,13 +5,14 @@ import { Timestamp } from "firebase/firestore";
 import { GroupInfo } from "../../models/group.model";
 
 import { GroupAction } from "./group.action";
-import { expand } from "rxjs";
+import { FilterCriteria } from "../../models/filter-criteria.model";
 
 export interface GroupState {
     groups: EntityState<GroupInfo>;
     groupCodes: EntityState<{ id: string; code: number }>;
     expandedCateoryId: number | null;
     expandedSubCateoryId: number | null;
+    expenseFilterCriteria: FilterCriteria | null;
 }
 
 const getDate = (e?: Timestamp) => (e ? e.toDate() : new Date(1900, 1));
@@ -39,6 +40,7 @@ const INITIAL_STATE: GroupState = {
     groupCodes: groupCodeAdapter.getInitialState(),
     expandedCateoryId: null,
     expandedSubCateoryId: null,
+    expenseFilterCriteria: null,
 };
 
 export const groupReducer = createReducer<GroupState>(
@@ -71,5 +73,9 @@ export const groupReducer = createReducer<GroupState>(
         ...state,
         expandedSubCateoryId:
             state.expandedSubCateoryId === subCategoryId ? null : subCategoryId,
+    })),
+    on(GroupAction.setExpenseFilterCriteria, (state, { criteria }) => ({
+        ...state,
+        expenseFilterCriteria: criteria,
     })),
 );

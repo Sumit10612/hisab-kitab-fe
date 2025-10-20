@@ -1,6 +1,7 @@
 import { createAction, props } from "@ngrx/store";
 
 import { GroupInfo, MemberRole, UpsertGroup } from "../../models/group.model";
+import { FilterCriteria } from "../../models/filter-criteria.model";
 
 export namespace GroupAction {
     const ACTION_PREFIX = "[Group] -";
@@ -104,5 +105,10 @@ export namespace GroupAction {
     export const setExpandedSubCategoryId = createAction(
         `${ACTION_PREFIX} Set Expanded Sub Category Id`,
         props<{ subCategoryId: number | null }>(),
+    );
+
+    export const setExpenseFilterCriteria = createAction(
+        `${ACTION_PREFIX} Set Expense Filter Criteria`,
+        props<{ criteria: FilterCriteria | null }>(),
     );
 }

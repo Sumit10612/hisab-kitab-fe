@@ -6,8 +6,6 @@ import {
     inject,
     input,
     OnInit,
-    signal,
-    Signal,
 } from "@angular/core";
 import { MatBottomSheet } from "@angular/material/bottom-sheet";
 import { MatButtonModule } from "@angular/material/button";
@@ -58,8 +56,10 @@ import { NotificationService } from "../../services/notification.service";
             <div section="detail">
                 <div class="date-selection-section">
                     <span
-                        >{{ filterCriteria.fromDate | date: "dd/MMM/yy" }} -
-                        {{ filterCriteria.toDate | date: "dd/MMM/yy" }}</span
+                        >{{ $filterCriteria()?.fromDate | date: "dd/MMM/yy" }} -
+                        {{
+                            $filterCriteria()?.toDate | date: "dd/MMM/yy"
+                        }}</span
                     >
                 </div>
 
@@ -258,7 +258,6 @@ export class GroupExpensesSummaryComponent implements OnInit {
     protected expenseTotalByCategory: Record<number, number> = {};
     protected expenseTotalBySubCategory: Record<number, number> = {};
     protected expensesBySubCategory: Record<number, Expense[]> = {};
-    protected filterCriteria: FilterCriteria;
 
     protected readonly groupId = input.required<string>();
     protected readonly $group = computed(() => {
@@ -278,63 +277,72 @@ export class GroupExpensesSummaryComponent implements OnInit {
     protected readonly $expandedSubCategoryId = this.store.selectSignal(
         GroupSelector.selectExpandedSubCategoryId,
     );
+    protected readonly $filterCriteria = this.store.selectSignal(
+        GroupSelector.selectExpenseFilterCriteria,
+    );
 
     private subCategoryCategoryMap: Record<number, number> = {};
 
     constructor() {
         const today = new Date();
-        this.filterCriteria = {
-            dateOption: DateOption.Current,
-            fromDate: DateUtilities.startOfMonth(today),
-            toDate: DateUtilities.endOfMonth(today),
-        };
+        if (!this.$filterCriteria()) {
+            this.store.dispatch(
+                GroupAction.setExpenseFilterCriteria({
+                    criteria: {
+                        dateOption: DateOption.Current,
+                        fromDate: DateUtilities.startOfMonth(today),
+                        toDate: DateUtilities.endOfMonth(today),
+                    },
+                }),
+            );
+        }
 
         const $expenses = this.store.selectSignal(
             ExpenseSelector.selectAllExpenses,
         );
-
+        const $loading = this.store.selectSignal(ExpenseSelector.isLoading);
         effect(
             () => {
-                this.expenseTotalByCategory = {};
-                this.expenseTotalBySubCategory = {};
-                this.expensesBySubCategory = {};
-                this.paidBySummary = {};
-                this.totalAmount = 0;
+                const criteria = this.$filterCriteria();
+                if (criteria) {
+                    this.expenseTotalByCategory = {};
+                    this.expenseTotalBySubCategory = {};
+                    this.expensesBySubCategory = {};
+                    this.paidBySummary = {};
+                    this.totalAmount = 0;
 
-                const expenses = $expenses().filter(
-                    (expense) =>
-                        expense.expenseDate >= this.filterCriteria.fromDate &&
-                        expense.expenseDate <= this.filterCriteria.toDate,
-                );
+                    const expenses = $expenses().filter(
+                        (expense) =>
+                            expense.expenseDate >= criteria.fromDate &&
+                            expense.expenseDate <= criteria.toDate,
+                    );
 
-                const $loading = this.store.selectSignal(
-                    ExpenseSelector.isLoading,
-                );
+                    expenses.forEach((expense) => {
+                        if (expense.category) {
+                            this.expensesBySubCategory[expense.category] ??= [];
+                            this.expensesBySubCategory[expense.category].push(
+                                expense,
+                            );
 
-                expenses.forEach((expense) => {
-                    if (expense.category) {
-                        this.expensesBySubCategory[expense.category] ??= [];
-                        this.expensesBySubCategory[expense.category].push(
-                            expense,
-                        );
+                            const categoryId =
+                                this.subCategoryCategoryMap[expense.category];
+                            this.expenseTotalByCategory[categoryId] ??= 0;
+                            this.expenseTotalByCategory[categoryId] +=
+                                expense.amount;
 
-                        const categoryId =
-                            this.subCategoryCategoryMap[expense.category];
-                        this.expenseTotalByCategory[categoryId] ??= 0;
-                        this.expenseTotalByCategory[categoryId] +=
-                            expense.amount;
+                            this.expenseTotalBySubCategory[expense.category] ??=
+                                0;
+                            this.expenseTotalBySubCategory[expense.category] +=
+                                expense.amount;
+                        }
 
-                        this.expenseTotalBySubCategory[expense.category] ??= 0;
-                        this.expenseTotalBySubCategory[expense.category] +=
-                            expense.amount;
-                    }
-
-                    const memberName =
-                        this.$group()?.members[expense.paidBy].name ?? "";
-                    this.paidBySummary[memberName] ??= 0;
-                    this.paidBySummary[memberName] += expense.amount;
-                    this.totalAmount += expense.amount;
-                });
+                        const memberName =
+                            this.$group()?.members[expense.paidBy].name ?? "";
+                        this.paidBySummary[memberName] ??= 0;
+                        this.paidBySummary[memberName] += expense.amount;
+                        this.totalAmount += expense.amount;
+                    });
+                }
 
                 if ($loading()) {
                     this.notofication.showLoading();
@@ -355,27 +363,9 @@ export class GroupExpensesSummaryComponent implements OnInit {
                     icon: "tune",
                     action: () => {
                         this.bottomSheet
-                            .open(FilterExpenseCriteriaComponent, {
-                                data: {
-                                    criteria: {
-                                        dateOption:
-                                            this.filterCriteria.dateOption,
-                                        fromDate: this.filterCriteria.fromDate,
-                                        toDate: this.filterCriteria.toDate,
-                                    } as FilterCriteria,
-                                },
-                            })
+                            .open(FilterExpenseCriteriaComponent)
                             .afterDismissed()
-                            .subscribe((criteria?: FilterCriteria) => {
-                                if (
-                                    criteria &&
-                                    criteria.dateOption !==
-                                        this.filterCriteria.dateOption
-                                ) {
-                                    this.filterCriteria = criteria;
-                                    this.getExpenses();
-                                }
-                            });
+                            .subscribe(() => this.getExpenses());
                     },
                 },
             ],
@@ -406,20 +396,16 @@ export class GroupExpensesSummaryComponent implements OnInit {
     }
 
     private getExpenses() {
+        if (!this.$filterCriteria()) {
+            return;
+        }
+
         this.store.dispatch(
             ExpenseAction.getByDateRange({
                 groupId: this.groupId(),
-                startDate: this.filterCriteria.fromDate,
-                endDate: this.filterCriteria.toDate,
+                startDate: this.$filterCriteria()!.fromDate,
+                endDate: this.$filterCriteria()!.toDate,
             }),
-        );
-
-        this.store.dispatch(
-            GroupAction.setExpandedCategoryId({ categoryId: null }),
-        );
-
-        this.store.dispatch(
-            GroupAction.setExpandedSubCategoryId({ subCategoryId: null }),
         );
     }
 }

@@ -1,9 +1,6 @@
-import { Component, Inject, inject } from "@angular/core";
+import { Component, effect, inject } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import {
-    MAT_BOTTOM_SHEET_DATA,
-    MatBottomSheetRef,
-} from "@angular/material/bottom-sheet";
+import { MatBottomSheetRef } from "@angular/material/bottom-sheet";
 import { MatButtonModule } from "@angular/material/button";
 import { provideNativeDateAdapter } from "@angular/material/core";
 import { MatDatepickerModule } from "@angular/material/datepicker";
@@ -13,6 +10,9 @@ import { MatRadioModule } from "@angular/material/radio";
 
 import { DateOption, FilterCriteria } from "../../models/filter-criteria.model";
 import { DateUtilities } from "../../utilities/date";
+import { Store } from "@ngrx/store";
+import { GroupSelector } from "../../store/group/group.selector";
+import { GroupAction } from "../../store/group/group.action";
 
 @Component({
     selector: "app-filter-expense-criteria",
@@ -27,62 +27,64 @@ import { DateUtilities } from "../../utilities/date";
     ],
     providers: [provideNativeDateAdapter()],
     template: `
-        <div class="filter-container">
-            <div>
-                <mat-radio-group [(ngModel)]="data.criteria.dateOption">
-                    <mat-radio-button [value]="dateOption.Current"
-                        >This Month</mat-radio-button
-                    >
-                    <mat-radio-button [value]="dateOption.Last"
-                        >Last Month</mat-radio-button
-                    >
-                    <mat-radio-button [value]="dateOption.Custom"
-                        >Custom</mat-radio-button
-                    >
-                </mat-radio-group>
-            </div>
+        @if (criteria) {
+            <div class="filter-container">
+                <div>
+                    <mat-radio-group [(ngModel)]="criteria.dateOption">
+                        <mat-radio-button [value]="dateOption.Current"
+                            >This Month</mat-radio-button
+                        >
+                        <mat-radio-button [value]="dateOption.Last"
+                            >Last Month</mat-radio-button
+                        >
+                        <mat-radio-button [value]="dateOption.Custom"
+                            >Custom</mat-radio-button
+                        >
+                    </mat-radio-group>
+                </div>
 
-            <div>
-                @if (data.criteria.dateOption === dateOption.Custom) {
-                    <mat-form-field>
-                        <input
-                            matInput
-                            [matDatepicker]="fromDp"
-                            [(ngModel)]="data.criteria.fromDate"
-                        />
-                        <mat-datepicker-toggle
-                            matIconSuffix
-                            [for]="fromDp"
-                        ></mat-datepicker-toggle>
-                        <mat-datepicker #fromDp></mat-datepicker>
-                    </mat-form-field>
+                <div>
+                    @if (criteria.dateOption === dateOption.Custom) {
+                        <mat-form-field>
+                            <input
+                                matInput
+                                [matDatepicker]="fromDp"
+                                [(ngModel)]="criteria.fromDate"
+                            />
+                            <mat-datepicker-toggle
+                                matIconSuffix
+                                [for]="fromDp"
+                            ></mat-datepicker-toggle>
+                            <mat-datepicker #fromDp></mat-datepicker>
+                        </mat-form-field>
 
-                    <mat-form-field>
-                        <input
-                            matInput
-                            [matDatepicker]="toDp"
-                            [(ngModel)]="data.criteria.toDate"
-                        />
-                        <mat-datepicker-toggle
-                            matIconSuffix
-                            [for]="toDp"
-                        ></mat-datepicker-toggle>
-                        <mat-datepicker #toDp></mat-datepicker>
-                    </mat-form-field>
-                }
-            </div>
+                        <mat-form-field>
+                            <input
+                                matInput
+                                [matDatepicker]="toDp"
+                                [(ngModel)]="criteria.toDate"
+                            />
+                            <mat-datepicker-toggle
+                                matIconSuffix
+                                [for]="toDp"
+                            ></mat-datepicker-toggle>
+                            <mat-datepicker #toDp></mat-datepicker>
+                        </mat-form-field>
+                    }
+                </div>
 
-            <div class="btn-group">
-                <button
-                    mat-raised-button
-                    class="rounded"
-                    color="primary"
-                    (click)="close()"
-                >
-                    Apply
-                </button>
+                <div class="btn-group">
+                    <button
+                        mat-raised-button
+                        class="rounded"
+                        color="primary"
+                        (click)="close()"
+                    >
+                        Apply
+                    </button>
+                </div>
             </div>
-        </div>
+        }
     `,
     styles: [
         `
@@ -107,31 +109,46 @@ import { DateUtilities } from "../../utilities/date";
     ],
 })
 export class FilterExpenseCriteriaComponent {
+    private readonly store = inject(Store);
     private readonly bottomSheet = inject(
         MatBottomSheetRef<FilterExpenseCriteriaComponent>,
     );
 
     private readonly dateUtil = DateUtilities;
 
+    protected criteria?: FilterCriteria;
+
     dateOption = DateOption;
 
-    constructor(
-        @Inject(MAT_BOTTOM_SHEET_DATA)
-        protected data: {
-            criteria: FilterCriteria;
-        },
-    ) {}
+    constructor() {
+        const criteria = this.store.selectSignal(
+            GroupSelector.selectExpenseFilterCriteria,
+        );
+        effect(() => {
+            if (criteria()) {
+                this.criteria = { ...criteria()! };
+            }
+        });
+    }
 
     close() {
-        if (this.data.criteria.dateOption === DateOption.Current) {
-            this.data.criteria.fromDate = this.dateUtil.startOfMonth();
-            this.data.criteria.toDate = this.dateUtil.endOfMonth();
-        } else if (this.data.criteria.dateOption === DateOption.Last) {
-            const date = this.dateUtil.previousMonth();
-            this.data.criteria.fromDate = this.dateUtil.startOfMonth(date);
-            this.data.criteria.toDate = this.dateUtil.endOfMonth(date);
+        if (!this.criteria) {
+            return;
         }
 
-        this.bottomSheet.dismiss(this.data.criteria);
+        if (this.criteria.dateOption === DateOption.Current) {
+            this.criteria.fromDate = this.dateUtil.startOfMonth();
+            this.criteria.toDate = this.dateUtil.endOfMonth();
+        } else if (this.criteria.dateOption === DateOption.Last) {
+            const date = this.dateUtil.previousMonth();
+            this.criteria.fromDate = this.dateUtil.startOfMonth(date);
+            this.criteria.toDate = this.dateUtil.endOfMonth(date);
+        }
+
+        this.store.dispatch(
+            GroupAction.setExpenseFilterCriteria({ criteria: this.criteria }),
+        );
+
+        this.bottomSheet.dismiss();
     }
 }

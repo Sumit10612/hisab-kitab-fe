@@ -43,4 +43,9 @@ export namespace GroupSelector {
         (state: State) => state.group.expandedSubCateoryId,
         (subCategoryId) => subCategoryId,
     );
+
+    export const selectExpenseFilterCriteria = createSelector(
+        (state: State) => state.group.expenseFilterCriteria,
+        (criteria) => criteria,
+    );
 }
