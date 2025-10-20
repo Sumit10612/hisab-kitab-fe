@@ -9,6 +9,7 @@ import { GroupSelector } from "../../store/group/group.selector";
 import { LayoutComponent } from "../shared/layout.component";
 import { GroupListComponent } from "./group-list.component";
 import { OverviewComponent } from "./overview.component";
+import { GroupAction } from "../../store/group/group.action";
 
 @Component({
     selector: "app-home",
@@ -46,6 +47,8 @@ export class HomeComponent implements OnInit {
 
     ngOnInit(): void {
         this.store.dispatch(ExpenseAction.reset());
+        this.store.dispatch(GroupAction.setExpenseFilterCriteria({ criteria: null }));
+        this.store.dispatch(GroupAction.setExpandedCategoryId({ categoryId: null }));
 
         this.toolbar.configure({
             profile: { visible: () => true },
