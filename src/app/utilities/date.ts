@@ -25,6 +25,6 @@ export namespace DateUtilities {
 
     export const endOfMonth = (date?: Date): Date => {
         date ??= new Date();
-        return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+        return new Date(date.getFullYear(), date.getMonth() + 1, 230, 59, 59, 999);
     };
 }
