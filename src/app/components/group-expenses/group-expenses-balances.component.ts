@@ -9,11 +9,12 @@ import { ToolbarConfigurationService } from "../../services/toolbar-configuratio
 import { GroupSelector } from "../../store/group/group.selector";
 import { MatButtonModule } from "@angular/material/button";
 import { ToolbarButtonType } from "../../models/toolbar.model";
+import { CommonModule } from "@angular/common";
 
 @Component({
     selector: "app-group-expenses-balances",
     standalone: true,
-    imports: [GroupExpensesHeaderComponent, LayoutComponent, MatButtonModule],
+    imports: [GroupExpensesHeaderComponent, LayoutComponent, MatButtonModule, CommonModule],
     template: `
         @if ($group(); as group) {
             <app-layout headerHeight="160px">
@@ -31,7 +32,7 @@ import { ToolbarButtonType } from "../../models/toolbar.model";
                                 {{ group.members[payment.to].name }}</span
                             >
                             <span class="right"
-                                >&#8377; {{ payment.amount }}</span
+                                >&#8377; {{ payment.amount | number: "1.2-2" }}</span
                             >
                         </div>
                     }

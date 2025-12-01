@@ -1,7 +1,6 @@
 import { Component, input } from "@angular/core";
 import {
     getGroupImage,
-    Group,
     GroupInfo,
     GroupType,
 } from "../../models/group.model";
@@ -10,6 +9,7 @@ import { RouterLink } from "@angular/router";
 import { DateUtilities } from "../../utilities/date";
 import { MatButtonToggleModule } from "@angular/material/button-toggle";
 import { MatButtonModule } from "@angular/material/button";
+import { CommonModule } from "@angular/common";
 
 @Component({
     selector: "app-group-expenses-header",
@@ -19,6 +19,7 @@ import { MatButtonModule } from "@angular/material/button";
         MatButtonToggleModule,
         MatIconModule,
         RouterLink,
+        CommonModule,
     ],
     template: `
         @if (group(); as group) {
@@ -81,6 +82,7 @@ import { MatButtonModule } from "@angular/material/button";
                                 isExpenseTracker
                                     ? group.groupTotal
                                     : group.currentMember.share
+                                | number: "1.2"
                             }}
                         </span>
                         <span class="label">{{
