@@ -114,8 +114,6 @@ export class FilterExpenseCriteriaComponent {
         MatBottomSheetRef<FilterExpenseCriteriaComponent>,
     );
 
-    private readonly dateUtil = DateUtilities;
-
     protected criteria?: FilterCriteria;
 
     dateOption = DateOption;
@@ -136,17 +134,29 @@ export class FilterExpenseCriteriaComponent {
             return;
         }
 
+        let fromDate = this.criteria.fromDate;
+        let toDate = this.criteria.toDate;
+
         if (this.criteria.dateOption === DateOption.Current) {
-            this.criteria.fromDate = this.dateUtil.startOfMonth();
-            this.criteria.toDate = this.dateUtil.endOfMonth();
+            fromDate = DateUtilities.startOfMonth();
+            toDate = DateUtilities.endOfMonth();
         } else if (this.criteria.dateOption === DateOption.Last) {
-            const date = this.dateUtil.previousMonth();
-            this.criteria.fromDate = this.dateUtil.startOfMonth(date);
-            this.criteria.toDate = this.dateUtil.endOfMonth(date);
+            const date = DateUtilities.previousMonth();
+            fromDate = DateUtilities.startOfMonth(date);
+            toDate = DateUtilities.endOfMonth(date);
+        } else {
+            fromDate = DateUtilities.startOfDay(fromDate);
+            toDate = DateUtilities.endOfDay(toDate);
         }
 
         this.store.dispatch(
-            GroupAction.setExpenseFilterCriteria({ criteria: this.criteria }),
+            GroupAction.setExpenseFilterCriteria({
+                criteria: {
+                    dateOption: this.criteria.dateOption,
+                    fromDate,
+                    toDate,
+                },
+            }),
         );
 
         this.bottomSheet.dismiss();

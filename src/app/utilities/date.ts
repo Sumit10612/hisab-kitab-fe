@@ -23,8 +23,26 @@ export namespace DateUtilities {
         return new Date(date.getFullYear(), date.getMonth(), 1);
     };
 
+    export const startOfDay = (date?: Date): Date => {
+        date ??= new Date();
+        return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    };
+
+    export const endOfDay = (date?: Date): Date => {
+        date ??= new Date();
+        return new Date(
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate(),
+            23,
+            59,
+            59,
+            999,
+        );
+    };
+
     export const endOfMonth = (date?: Date): Date => {
         date ??= new Date();
-        return new Date(date.getFullYear(), date.getMonth() + 1, 230, 59, 59, 999);
+        return new Date(date.getFullYear(), date.getMonth() + 1, 1);
     };
 }
