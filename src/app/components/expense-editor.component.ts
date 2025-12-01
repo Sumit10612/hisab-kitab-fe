@@ -61,30 +61,8 @@ import { PaidByShareComponent } from "./widgets/paid-by-share.component";
             [pageTitle]="
                 (form.controls.id.value ? 'Update' : 'Add') + ' an expense'
             "
-            [headerHeight]="
-                form.controls.groupType.value === groupType.SpiltExpense
-                    ? '88px'
-                    : '48px'
-            "
+            headerHeight="48px"
         >
-            <div section="header">
-                @if (form.controls.groupType.value === groupType.SpiltExpense) {
-                    <div class="shares-tab">
-                        <mat-button-toggle-group
-                            [(value)]="selectedSplitType"
-                            hideSingleSelectionIndicator="true"
-                            (change)="onSplitTypeChanged($event)"
-                        >
-                            <mat-button-toggle [value]="splitType.Equally"
-                                >Split equally</mat-button-toggle
-                            >
-                            <mat-button-toggle [value]="splitType.ByShare"
-                                >By share</mat-button-toggle
-                            >
-                        </mat-button-toggle-group>
-                    </div>
-                }
-            </div>
             <div section="detail" class="detail-section">
                 <form [formGroup]="form">
                     <div class="row">
@@ -130,6 +108,23 @@ import { PaidByShareComponent } from "./widgets/paid-by-share.component";
                             [formControl]="form.controls.where"
                         />
                     </mat-form-field>
+
+                    @if (form.controls.groupType.value === groupType.SpiltExpense) {
+                        <div class="shares-tab">
+                            <mat-button-toggle-group
+                                [(value)]="selectedSplitType"
+                                hideSingleSelectionIndicator="true"
+                                (change)="onSplitTypeChanged($event)"
+                            >
+                                <mat-button-toggle [value]="splitType.Equally"
+                                    >Split equally</mat-button-toggle
+                                >
+                                <mat-button-toggle [value]="splitType.ByShare"
+                                    >By share</mat-button-toggle
+                                >
+                            </mat-button-toggle-group>
+                        </div>
+                    }
 
                     <div class="row">
                         <mat-form-field appearance="fill" floatLabel="always">
@@ -193,16 +188,13 @@ import { PaidByShareComponent } from "./widgets/paid-by-share.component";
     `,
     styles: [
         `
-            .shares-tab {
-                display: flex;
-                padding-bottom: 24px;
-                justify-content: center;
+            .mat-button-toggle-group {
+                border-radius: 16px;
+                width: 100%;
             }
 
-            .mat-button-toggle-group {
-                height: 32px;
-                border-radius: 16px;
-                align-items: center;
+            .mat-button-toggle {
+                flex: 1;
             }
 
             .detail-section {
@@ -214,6 +206,12 @@ import { PaidByShareComponent } from "./widgets/paid-by-share.component";
 
                 .amount-input {
                     text-align: right;
+                }
+
+                .shares-tab {
+                    display: flex;
+                    padding-bottom: 24px;
+                    justify-content: center;
                 }
 
                 .shares {
