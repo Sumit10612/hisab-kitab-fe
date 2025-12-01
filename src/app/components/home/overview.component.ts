@@ -2,7 +2,7 @@ import { Component, computed, input } from "@angular/core";
 import { MatCardModule } from "@angular/material/card";
 import { MatDividerModule } from "@angular/material/divider";
 import { MatIconModule } from "@angular/material/icon";
-import { round, sumBy } from "lodash-es";
+import { sumBy } from "lodash-es";
 
 import { GroupInfo, GroupType } from "../../models/group.model";
 import { DateUtilities } from "../../utilities/date";
@@ -19,7 +19,10 @@ import { CommonModule } from "@angular/common";
                     <div class="split-expenses">
                         <div class="split-expenses-header">
                             <span class="split-expenses-header-total"
-                                >&#8377; 0</span
+                                >&#8377;
+                                {{
+                                    splitExpenseTotal() | number: "1.0-0"
+                                }}</span
                             >
                             <span class="split-expenses-header-text"
                                 >total balance</span
@@ -138,13 +141,18 @@ export class OverviewComponent {
 
     protected readonly expenseTrackerTotal = computed(() => {
         const currMonth = DateUtilities.yearMonth();
-        return round(
-            sumBy(this.groups(), (group) =>
-                group.groupType !== GroupType.SpiltExpense &&
-                !group.excludeTotal
-                    ? +group.monthTotal[currMonth] || 0
-                    : 0,
-            ),
+        return sumBy(this.groups(), (group) =>
+            group.groupType === GroupType.ExpenseTracker && !group.excludeTotal
+                ? +group.monthTotal[currMonth] || 0
+                : 0,
+        );
+    });
+
+    protected readonly splitExpenseTotal = computed(() => {
+        return sumBy(this.groups(), (group) =>
+            group.groupType === GroupType.SpiltExpense && !group.excludeTotal
+                ? +group.groupTotal || 0
+                : 0,
         );
     });
 }
