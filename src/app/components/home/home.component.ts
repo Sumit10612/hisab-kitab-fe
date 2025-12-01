@@ -47,8 +47,12 @@ export class HomeComponent implements OnInit {
 
     ngOnInit(): void {
         this.store.dispatch(ExpenseAction.reset());
-        this.store.dispatch(GroupAction.setExpenseFilterCriteria({ criteria: null }));
-        this.store.dispatch(GroupAction.setExpandedCategoryId({ categoryId: null }));
+        this.store.dispatch(
+            GroupAction.setExpenseFilterCriteria({ criteria: null }),
+        );
+        this.store.dispatch(
+            GroupAction.setExpandedCategoryId({ categoryId: null }),
+        );
 
         this.toolbar.configure({
             profile: { visible: () => true },

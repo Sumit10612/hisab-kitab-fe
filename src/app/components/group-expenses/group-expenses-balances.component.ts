@@ -14,7 +14,12 @@ import { CommonModule } from "@angular/common";
 @Component({
     selector: "app-group-expenses-balances",
     standalone: true,
-    imports: [GroupExpensesHeaderComponent, LayoutComponent, MatButtonModule, CommonModule],
+    imports: [
+        GroupExpensesHeaderComponent,
+        LayoutComponent,
+        MatButtonModule,
+        CommonModule,
+    ],
     template: `
         @if ($group(); as group) {
             <app-layout headerHeight="160px">
@@ -32,7 +37,8 @@ import { CommonModule } from "@angular/common";
                                 {{ group.members[payment.to].name }}</span
                             >
                             <span class="right"
-                                >&#8377; {{ payment.amount | number: "1.2-2" }}</span
+                                >&#8377;
+                                {{ payment.amount | number: "1.2-2" }}</span
                             >
                         </div>
                     }

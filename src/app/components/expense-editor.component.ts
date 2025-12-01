@@ -109,7 +109,9 @@ import { PaidByShareComponent } from "./widgets/paid-by-share.component";
                         />
                     </mat-form-field>
 
-                    @if (form.controls.groupType.value === groupType.SpiltExpense) {
+                    @if (
+                        form.controls.groupType.value === groupType.SpiltExpense
+                    ) {
                         <div class="shares-tab">
                             <mat-button-toggle-group
                                 [(value)]="selectedSplitType"

@@ -5,11 +5,12 @@ import { round } from "lodash-es";
 
 import { getGroupImage, Group, GroupType } from "../../models/group.model";
 import { DateUtilities } from "../../utilities/date";
+import { CommonModule } from "@angular/common";
 
 @Component({
     selector: "app-group-list",
     standalone: true,
-    imports: [MatDividerModule, RouterLink],
+    imports: [CommonModule, MatDividerModule, RouterLink],
     template: `
         @for (group of groups(); track group.id) {
             <div
@@ -26,7 +27,7 @@ import { DateUtilities } from "../../utilities/date";
                 <span class="group-name">{{ group?.name }}</span>
 
                 <div class="group-total">
-                    <span>&#8377;{{ getTotal(group) }}</span>
+                    <span>&#8377;{{ getTotal(group) | number: "1.0-0" }}</span>
                     <span class="group-total-text">
                         {{
                             group?.groupType === groupType.SpiltExpense

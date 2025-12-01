@@ -6,11 +6,12 @@ import { round, sumBy } from "lodash-es";
 
 import { GroupInfo, GroupType } from "../../models/group.model";
 import { DateUtilities } from "../../utilities/date";
+import { CommonModule } from "@angular/common";
 
 @Component({
     selector: "app-overview",
     standalone: true,
-    imports: [MatCardModule, MatIconModule, MatDividerModule],
+    imports: [CommonModule, MatCardModule, MatIconModule, MatDividerModule],
     template: `
         <div class="overview-widget">
             <mat-card>
@@ -44,7 +45,10 @@ import { DateUtilities } from "../../utilities/date";
                     <div class="expense-tracker">
                         <div class="expense-tracker-header">
                             <span class="expense-tracker-header-total"
-                                >&#8377; {{ expenseTrackerTotal() }}</span
+                                >&#8377;
+                                {{
+                                    expenseTrackerTotal() | number: "1.0-0"
+                                }}</span
                             >
                             <span class="expense-tracker-header-text"
                                 >this month</span

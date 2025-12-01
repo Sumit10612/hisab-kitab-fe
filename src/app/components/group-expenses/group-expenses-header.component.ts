@@ -1,9 +1,5 @@
 import { Component, input } from "@angular/core";
-import {
-    getGroupImage,
-    GroupInfo,
-    GroupType,
-} from "../../models/group.model";
+import { getGroupImage, GroupInfo, GroupType } from "../../models/group.model";
 import { MatIconModule } from "@angular/material/icon";
 import { RouterLink } from "@angular/router";
 import { DateUtilities } from "../../utilities/date";
@@ -46,13 +42,14 @@ import { CommonModule } from "@angular/common";
                         <span class="header-section-group-info-total-amount">
                             &#8377;
                             {{
-                                isExpenseTracker
+                                (isExpenseTracker
                                     ? group.monthTotal[
                                           dateUtil.yearMonth(
                                               dateUtil.previousMonth()
                                           )
                                       ]
                                     : group.currentMember.paid
+                                ) | number: "1.0-0"
                             }}
                         </span>
                         <span class="label">{{
@@ -64,10 +61,11 @@ import { CommonModule } from "@angular/common";
                         <span class="header-section-group-info-month-amount">
                             &#8377;
                             {{
-                                isExpenseTracker
+                                (isExpenseTracker
                                     ? group.monthTotal[dateUtil.yearMonth()] ||
                                       0
                                     : group.groupTotal
+                                ) | number: "1.0-0"
                             }}
                         </span>
                         <span class="label">{{
@@ -79,10 +77,10 @@ import { CommonModule } from "@angular/common";
                         <span class="header-section-group-info-total-amount">
                             &#8377;
                             {{
-                                isExpenseTracker
+                                (isExpenseTracker
                                     ? group.groupTotal
                                     : group.currentMember.share
-                                | number: "1.2"
+                                ) | number: "1.0-0"
                             }}
                         </span>
                         <span class="label">{{
