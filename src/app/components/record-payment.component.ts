@@ -6,6 +6,6 @@ import { provideNativeDateAdapter } from "@angular/material/core";
     imports: [],
     providers: [provideNativeDateAdapter()],
     template: `record payment`,
-    styles: [``]
+    styles: [``],
 })
 export class RecordPaymentComponent {}

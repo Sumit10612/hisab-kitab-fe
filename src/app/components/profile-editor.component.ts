@@ -111,7 +111,7 @@ import { MatButtonModule } from "@angular/material/button";
                 align-items: center;
             }
         `,
-    ]
+    ],
 })
 export class ProfileEditorComponent implements OnInit {
     private readonly fb = inject(NonNullableFormBuilder);

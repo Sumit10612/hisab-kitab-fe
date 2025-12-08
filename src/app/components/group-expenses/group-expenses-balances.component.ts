@@ -61,7 +61,7 @@ import { CommonModule } from "@angular/common";
                 }
             }
         `,
-    ]
+    ],
 })
 export class GroupExpensesBalancesComponent implements OnInit {
     private readonly store = inject(Store);

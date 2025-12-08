@@ -35,7 +35,7 @@ import { ThemeService } from "./services/theme.service";
                 transform: translate(-50%, -50%);
             }
         `,
-    ]
+    ],
 })
 export class AppComponent implements OnInit {
     @HostBinding("class") class: string = "";

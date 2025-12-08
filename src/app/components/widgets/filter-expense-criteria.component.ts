@@ -105,7 +105,7 @@ import { GroupAction } from "../../store/group/group.action";
                 }
             }
         `,
-    ]
+    ],
 })
 export class FilterExpenseCriteriaComponent {
     private readonly store = inject(Store);

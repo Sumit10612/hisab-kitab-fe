@@ -96,7 +96,7 @@ import { Otp } from "../models/otp.model";
                 margin: 0;
             }
         `,
-    ]
+    ],
 })
 export class OtpComponent implements OnInit, AfterViewInit {
     private readonly formBuilder = inject(NonNullableFormBuilder);

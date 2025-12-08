@@ -30,7 +30,7 @@ import { MatDividerModule } from "@angular/material/divider";
                 flex: 1;
             }
         `,
-    ]
+    ],
 })
 export class DividerComponent {
     readonly text = input<string>();

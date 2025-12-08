@@ -33,27 +33,28 @@ import { DialogButtonType, DialogData } from "../../models/dialog.model";
             }
         </mat-dialog-content>
 
-        <mat-dialog-actions *ngIf="data.actionButtons?.length">
-            @for (actionButton of data.actionButtons; track $index) {
-                @if (actionButton.type === buttonType.Close) {
-                    <button mat-raised-button mat-dialog-close>
-                        {{ actionButton.label }}
-                    </button>
+        @if (data.actionButtons?.length) {
+            <mat-dialog-actions>
+                @for (actionButton of data.actionButtons; track $index) {
+                    @if (actionButton.type === buttonType.Close) {
+                        <button mat-raised-button mat-dialog-close>
+                            {{ actionButton.label }}
+                        </button>
+                    }
+                    @if (actionButton.type === buttonType.Primary) {
+                        <button
+                            mat-raised-button
+                            color="primary"
+                            [disabled]="actionButton.disabled?.(data.data)"
+                            (click)="actionButton.action?.(data.data)"
+                            mat-dialog-close
+                        >
+                            {{ actionButton.label }}
+                        </button>
+                    }
                 }
-
-                @if (actionButton.type === buttonType.Primary) {
-                    <button
-                        mat-raised-button
-                        color="primary"
-                        [disabled]="actionButton.disabled?.(data.data)"
-                        (click)="actionButton.action?.(data.data)"
-                        mat-dialog-close
-                    >
-                        {{ actionButton.label }}
-                    </button>
-                }
-            }
-        </mat-dialog-actions>
+            </mat-dialog-actions>
+        }
     `,
     styles: [
         `
@@ -66,7 +67,7 @@ import { DialogButtonType, DialogData } from "../../models/dialog.model";
                 padding: 8px;
             }
         `,
-    ]
+    ],
 })
 export class DialogComponent {
     protected buttonType = DialogButtonType;

@@ -1,4 +1,4 @@
-import firebase from "@angular/fire/auth/firebase";
+import { User as FirebaseUser } from "firebase/auth";
 import { createAction, props } from "@ngrx/store";
 
 import { User } from "../../models/user.model";
@@ -18,7 +18,7 @@ export namespace AuthActions {
 
     export const loginWithGoogleSuccess = createAction(
         `${ACTION_PREFIX} Login With Google Success`,
-        props<{ user: firebase.User | null }>(),
+        props<{ user: FirebaseUser | null }>(),
     );
 
     export const logout = createAction(`${ACTION_PREFIX} Logout`);
@@ -38,7 +38,7 @@ export namespace AuthActions {
 
     export const signupSuccess = createAction(
         `${ACTION_PREFIX} Signup Success`,
-        props<{ user: firebase.User }>(),
+        props<{ user: FirebaseUser }>(),
     );
 
     export const saveUserProfile = createAction(

@@ -133,7 +133,7 @@ import { CommonModule } from "@angular/common";
                 }
             }
         `,
-    ]
+    ],
 })
 export class OverviewComponent {
     readonly groups = input.required<GroupInfo[]>();

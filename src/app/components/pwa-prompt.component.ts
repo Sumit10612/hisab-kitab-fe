@@ -55,7 +55,7 @@ import { MatListModule } from "@angular/material/list";
                 }
             }
         `,
-    ]
+    ],
 })
 export class PwaPromptComponent {
     /* eslint-disable @typescript-eslint/no-explicit-any */

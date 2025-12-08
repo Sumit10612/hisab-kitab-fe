@@ -39,7 +39,7 @@ import { GroupAction } from "../../store/group/group.action";
                 bottom: 4px;
             }
         `,
-    ]
+    ],
 })
 export class HomeComponent implements OnInit {
     private readonly toolbar = inject(ToolbarConfigurationService);

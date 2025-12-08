@@ -203,7 +203,7 @@ import { GroupExpensesHeaderComponent } from "./group-expenses-header.component"
                 font-size: 0.6rem;
             }
         }
-    `
+    `,
 })
 export class GroupExpensesComponent implements OnInit {
     private readonly toolbar = inject(ToolbarConfigurationService);

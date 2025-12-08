@@ -152,7 +152,7 @@ import {
                 }
             }
         `,
-    ]
+    ],
 })
 export class ToolbarComponent {
     private readonly store = inject(Store);

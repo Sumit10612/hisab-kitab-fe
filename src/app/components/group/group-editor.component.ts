@@ -226,7 +226,7 @@ import { MatIconModule } from "@angular/material/icon";
                 font-size: 1.1em;
             }
         `,
-    ]
+    ],
 })
 export class GroupEditorComponent implements OnInit {
     private readonly dialog = inject(DialogService);

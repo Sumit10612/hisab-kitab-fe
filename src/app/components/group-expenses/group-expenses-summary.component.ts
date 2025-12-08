@@ -246,7 +246,7 @@ import { NotificationService } from "../../services/notification.service";
                 }
             }
         `,
-    ]
+    ],
 })
 export class GroupExpensesSummaryComponent implements OnInit {
     private readonly bottomSheet = inject(MatBottomSheet);

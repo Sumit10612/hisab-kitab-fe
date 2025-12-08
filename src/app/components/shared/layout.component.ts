@@ -70,7 +70,7 @@ import { ToolbarComponent } from "./toolbar.component";
                 height: 56px;
             }
         `,
-    ]
+    ],
 })
 export class LayoutComponent {
     readonly pageTitle = input("");

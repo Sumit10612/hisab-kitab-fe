@@ -230,7 +230,7 @@ import {
                 }
             }
         `,
-    ]
+    ],
 })
 export class ExpenseEditorComponent implements OnInit, AfterViewInit {
     private readonly bottomSheet = inject(MatBottomSheet);

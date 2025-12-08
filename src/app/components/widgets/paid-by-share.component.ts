@@ -98,7 +98,7 @@ import { MatCardModule } from "@angular/material/card";
                 }
             }
         `,
-    ]
+    ],
 })
 export class PaidByShareComponent {
     private bottomSheet = inject(MatBottomSheetRef<PaidByShareComponent>);

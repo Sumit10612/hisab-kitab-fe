@@ -182,7 +182,7 @@ import { CommonModule } from "@angular/common";
                 }
             }
         `,
-    ]
+    ],
 })
 export class GroupExpensesHeaderComponent {
     protected readonly dateUtil = DateUtilities;

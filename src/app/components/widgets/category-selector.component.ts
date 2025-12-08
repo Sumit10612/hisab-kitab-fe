@@ -60,7 +60,7 @@ import { DividerComponent } from "../shared/divider.component";
                 }
             }
         `,
-    ]
+    ],
 })
 export class CategorySelectorComponent {
     private bottomSheetRef = inject(

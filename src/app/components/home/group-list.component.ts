@@ -65,7 +65,7 @@ import { CommonModule } from "@angular/common";
                 }
             }
         `,
-    ]
+    ],
 })
 export class GroupListComponent {
     protected readonly getGroupImage = getGroupImage;

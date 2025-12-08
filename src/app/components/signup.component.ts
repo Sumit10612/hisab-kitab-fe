@@ -96,7 +96,7 @@ export function passwordsMatchValidator(): ValidatorFn {
                 align-items: center;
             }
         `,
-    ]
+    ],
 })
 export class SignupComponent {
     private readonly store = inject(Store);

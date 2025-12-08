@@ -1,4 +1,9 @@
-import { ApplicationConfig, isDevMode, inject, provideAppInitializer } from "@angular/core";
+import {
+    ApplicationConfig,
+    isDevMode,
+    inject,
+    provideAppInitializer,
+} from "@angular/core";
 import { initializeApp, provideFirebaseApp } from "@angular/fire/app";
 import { getAuth, provideAuth } from "@angular/fire/auth";
 import { getFirestore, provideFirestore } from "@angular/fire/firestore";
@@ -44,9 +49,9 @@ export const appConfig: ApplicationConfig = {
             registrationStrategy: "registerWhenStable:30000",
         }),
         provideAppInitializer(() => {
-        const initializerFn = (initializer)(inject(PwaService));
-        return initializerFn();
-      }),
+            const initializerFn = initializer(inject(PwaService));
+            return initializerFn();
+        }),
         { provide: MatDialogRef, useValue: {} },
         { provide: MAT_DIALOG_DATA, useValue: {} },
         provideStore(reducers, { metaReducers }),
