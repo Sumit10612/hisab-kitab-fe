@@ -12,7 +12,6 @@ import { DividerComponent } from "../shared/divider.component";
 
 @Component({
     selector: "app-category-selector",
-    standalone: true,
     imports: [
         MatIconModule,
         MatDividerModule,
@@ -61,7 +60,7 @@ import { DividerComponent } from "../shared/divider.component";
                 }
             }
         `,
-    ],
+    ]
 })
 export class CategorySelectorComponent {
     private bottomSheetRef = inject(

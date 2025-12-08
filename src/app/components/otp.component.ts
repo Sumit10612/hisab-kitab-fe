@@ -26,7 +26,6 @@ import { Otp } from "../models/otp.model";
 
 @Component({
     selector: "app-otp-selector",
-    standalone: true,
     imports: [
         ReactiveFormsModule,
         MatButtonModule,
@@ -97,7 +96,7 @@ import { Otp } from "../models/otp.model";
                 margin: 0;
             }
         `,
-    ],
+    ]
 })
 export class OtpComponent implements OnInit, AfterViewInit {
     private readonly formBuilder = inject(NonNullableFormBuilder);

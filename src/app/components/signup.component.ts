@@ -29,7 +29,6 @@ export function passwordsMatchValidator(): ValidatorFn {
 
 @Component({
     selector: "app-signup",
-    standalone: true,
     imports: [
         MatFormFieldModule,
         MatInputModule,
@@ -97,7 +96,7 @@ export function passwordsMatchValidator(): ValidatorFn {
                 align-items: center;
             }
         `,
-    ],
+    ]
 })
 export class SignupComponent {
     private readonly store = inject(Store);

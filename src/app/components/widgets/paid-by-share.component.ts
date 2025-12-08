@@ -12,7 +12,6 @@ import { MatCardModule } from "@angular/material/card";
 
 @Component({
     selector: "app-paid-by-share",
-    standalone: true,
     imports: [FormsModule, MatButtonModule, MatCardModule, MatInputModule],
     template: `
         <h3 class="heading">Shares</h3>
@@ -99,7 +98,7 @@ import { MatCardModule } from "@angular/material/card";
                 }
             }
         `,
-    ],
+    ]
 })
 export class PaidByShareComponent {
     private bottomSheet = inject(MatBottomSheetRef<PaidByShareComponent>);

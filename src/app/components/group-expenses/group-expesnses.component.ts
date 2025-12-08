@@ -33,7 +33,6 @@ import { GroupExpensesHeaderComponent } from "./group-expenses-header.component"
 
 @Component({
     selector: "app-group-expesnses",
-    standalone: true,
     imports: [
         CommonModule,
         DividerComponent,
@@ -204,7 +203,7 @@ import { GroupExpensesHeaderComponent } from "./group-expenses-header.component"
                 font-size: 0.6rem;
             }
         }
-    `,
+    `
 })
 export class GroupExpensesComponent implements OnInit {
     private readonly toolbar = inject(ToolbarConfigurationService);

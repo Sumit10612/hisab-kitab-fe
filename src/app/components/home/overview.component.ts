@@ -10,7 +10,6 @@ import { CommonModule } from "@angular/common";
 
 @Component({
     selector: "app-overview",
-    standalone: true,
     imports: [CommonModule, MatCardModule, MatIconModule, MatDividerModule],
     template: `
         <div class="overview-widget">
@@ -134,7 +133,7 @@ import { CommonModule } from "@angular/common";
                 }
             }
         `,
-    ],
+    ]
 })
 export class OverviewComponent {
     readonly groups = input.required<GroupInfo[]>();

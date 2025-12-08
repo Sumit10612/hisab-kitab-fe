@@ -16,7 +16,6 @@ import { ThemeService } from "./services/theme.service";
 
 @Component({
     selector: "app-root",
-    standalone: true,
     imports: [MatProgressSpinner, RouterOutlet],
     template: `
         <router-outlet></router-outlet>
@@ -36,7 +35,7 @@ import { ThemeService } from "./services/theme.service";
                 transform: translate(-50%, -50%);
             }
         `,
-    ],
+    ]
 })
 export class AppComponent implements OnInit {
     @HostBinding("class") class: string = "";

@@ -4,7 +4,6 @@ import { ToolbarComponent } from "./toolbar.component";
 
 @Component({
     selector: "app-layout",
-    standalone: true,
     imports: [CommonModule, ToolbarComponent],
     template: `
         <div class="header" [ngStyle]="getHeaderHeight">
@@ -71,7 +70,7 @@ import { ToolbarComponent } from "./toolbar.component";
                 height: 56px;
             }
         `,
-    ],
+    ]
 })
 export class LayoutComponent {
     readonly pageTitle = input("");

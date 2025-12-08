@@ -3,10 +3,9 @@ import { provideNativeDateAdapter } from "@angular/material/core";
 
 @Component({
     selector: "app-record-payment",
-    standalone: true,
     imports: [],
     providers: [provideNativeDateAdapter()],
     template: `record payment`,
-    styles: [``],
+    styles: [``]
 })
 export class RecordPaymentComponent {}

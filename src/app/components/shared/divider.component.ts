@@ -3,7 +3,6 @@ import { MatDividerModule } from "@angular/material/divider";
 
 @Component({
     selector: "app-divider",
-    standalone: true,
     imports: [MatDividerModule],
     template: `
         @if (!hidden()) {
@@ -31,7 +30,7 @@ import { MatDividerModule } from "@angular/material/divider";
                 flex: 1;
             }
         `,
-    ],
+    ]
 })
 export class DividerComponent {
     readonly text = input<string>();

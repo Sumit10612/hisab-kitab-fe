@@ -15,7 +15,6 @@ import { AuthActions } from "../store/auth/auth.action";
 
 @Component({
     selector: "app-login",
-    standalone: true,
     imports: [
         MatFormFieldModule,
         MatInputModule,
@@ -249,7 +248,7 @@ import { AuthActions } from "../store/auth/auth.action";
                 opacity: 8%;
             }
         `,
-    ],
+    ]
 })
 export class LoginComponent {
     private readonly notificationService = inject(NotificationService);

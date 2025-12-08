@@ -36,7 +36,6 @@ import { NotificationService } from "../../services/notification.service";
 
 @Component({
     selector: "app-group-expenses-summary",
-    standalone: true,
     imports: [
         CommonModule,
         GroupExpensesHeaderComponent,
@@ -247,7 +246,7 @@ import { NotificationService } from "../../services/notification.service";
                 }
             }
         `,
-    ],
+    ]
 })
 export class GroupExpensesSummaryComponent implements OnInit {
     private readonly bottomSheet = inject(MatBottomSheet);

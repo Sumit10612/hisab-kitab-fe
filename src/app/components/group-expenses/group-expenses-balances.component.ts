@@ -12,7 +12,6 @@ import { CommonModule } from "@angular/common";
 
 @Component({
     selector: "app-group-expenses-balances",
-    standalone: true,
     imports: [
         GroupExpensesHeaderComponent,
         LayoutComponent,
@@ -62,7 +61,7 @@ import { CommonModule } from "@angular/common";
                 }
             }
         `,
-    ],
+    ]
 })
 export class GroupExpensesBalancesComponent implements OnInit {
     private readonly store = inject(Store);

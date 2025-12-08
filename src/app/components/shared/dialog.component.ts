@@ -9,7 +9,6 @@ import { DialogButtonType, DialogData } from "../../models/dialog.model";
 
 @Component({
     selector: "app-dialog",
-    standalone: true,
     imports: [CommonModule, MatDialogModule, MatButtonModule, MatIconModule],
     template: `
         <div class="dialog-header">
@@ -67,7 +66,7 @@ import { DialogButtonType, DialogData } from "../../models/dialog.model";
                 padding: 8px;
             }
         `,
-    ],
+    ]
 })
 export class DialogComponent {
     protected buttonType = DialogButtonType;

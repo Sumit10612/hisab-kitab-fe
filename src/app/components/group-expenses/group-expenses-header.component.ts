@@ -9,7 +9,6 @@ import { CommonModule } from "@angular/common";
 
 @Component({
     selector: "app-group-expenses-header",
-    standalone: true,
     imports: [
         MatButtonModule,
         MatButtonToggleModule,
@@ -183,7 +182,7 @@ import { CommonModule } from "@angular/common";
                 }
             }
         `,
-    ],
+    ]
 })
 export class GroupExpensesHeaderComponent {
     protected readonly dateUtil = DateUtilities;

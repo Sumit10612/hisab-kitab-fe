@@ -9,7 +9,6 @@ import { MatListModule } from "@angular/material/list";
 
 @Component({
     selector: "app-pwa-prompt",
-    standalone: true,
     imports: [MatListModule, MatIconModule, MatButtonModule],
     template: `
         <div class="container">
@@ -56,7 +55,7 @@ import { MatListModule } from "@angular/material/list";
                 }
             }
         `,
-    ],
+    ]
 })
 export class PwaPromptComponent {
     /* eslint-disable @typescript-eslint/no-explicit-any */

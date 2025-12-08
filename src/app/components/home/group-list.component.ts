@@ -9,7 +9,6 @@ import { CommonModule } from "@angular/common";
 
 @Component({
     selector: "app-group-list",
-    standalone: true,
     imports: [CommonModule, MatDividerModule, RouterLink],
     template: `
         @for (group of groups(); track group.id) {
@@ -66,7 +65,7 @@ import { CommonModule } from "@angular/common";
                 }
             }
         `,
-    ],
+    ]
 })
 export class GroupListComponent {
     protected readonly getGroupImage = getGroupImage;

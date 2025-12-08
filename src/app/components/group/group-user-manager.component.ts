@@ -25,7 +25,6 @@ import { MAT_BOTTOM_SHEET_DATA } from "@angular/material/bottom-sheet";
 
 @Component({
     selector: "app-group-user-manager",
-    standalone: true,
     imports: [
         FormsModule,
         MatButtonModule,
@@ -199,7 +198,7 @@ import { MAT_BOTTOM_SHEET_DATA } from "@angular/material/bottom-sheet";
                 }
             }
         `,
-    ],
+    ]
 })
 export class GroupUserManagerComponent {
     private readonly dialog = inject(DialogService);

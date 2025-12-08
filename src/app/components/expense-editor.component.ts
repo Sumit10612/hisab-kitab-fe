@@ -45,7 +45,6 @@ import {
 
 @Component({
     selector: "app-add-expense",
-    standalone: true,
     imports: [
         CommonModule,
         MatCardModule,
@@ -231,7 +230,7 @@ import {
                 }
             }
         `,
-    ],
+    ]
 })
 export class ExpenseEditorComponent implements OnInit, AfterViewInit {
     private readonly bottomSheet = inject(MatBottomSheet);

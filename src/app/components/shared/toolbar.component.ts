@@ -15,7 +15,6 @@ import {
 
 @Component({
     selector: "app-toolbar",
-    standalone: true,
     imports: [MatToolbarModule, MatIconModule, MatButtonModule, RouterLink],
     template: `
         <mat-toolbar class="toolbar">
@@ -153,7 +152,7 @@ import {
                 }
             }
         `,
-    ],
+    ]
 })
 export class ToolbarComponent {
     private readonly store = inject(Store);

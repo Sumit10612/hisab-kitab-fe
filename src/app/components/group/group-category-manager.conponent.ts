@@ -38,7 +38,6 @@ import { MatMenuModule } from "@angular/material/menu";
 
 @Component({
     selector: "app-group-category-manager",
-    standalone: true,
     imports: [
         AsyncPipe,
         MatCardModule,
@@ -268,7 +267,7 @@ import { MatMenuModule } from "@angular/material/menu";
                 padding: 0;
             }
         `,
-    ],
+    ]
 })
 export class GroupCategoryManagerComponent implements OnInit {
     private readonly dialog = inject(DialogService);
