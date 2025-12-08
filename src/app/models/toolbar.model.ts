@@ -1,7 +1,6 @@
 export interface ToolbarConfiguration {
     back?: ToolbarButton;
     profile?: ToolbarButton;
-
     actionBtns?: ToolbarActionButton[];
 }
 
@@ -12,15 +11,21 @@ export interface ToolbarButton {
 }
 
 export interface ToolbarActionButton extends ToolbarButton {
-    type: ToolbarButtonType;
-    label?: string;
+    position: ToolbarButtonPosition;
+    color: () => ToolbarButtonColor;
+    label?: () => string;
     icon?: string;
     disabled?: () => boolean;
     visible?: () => boolean;
 }
 
-export enum ToolbarButtonType {
+export enum ToolbarButtonColor {
     Primary,
     Secondary,
     Warn,
+}
+
+export enum ToolbarButtonPosition {
+    Center,
+    Right,
 }

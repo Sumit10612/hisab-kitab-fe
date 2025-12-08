@@ -5,7 +5,10 @@ import { RouterLink } from "@angular/router";
 import { Store } from "@ngrx/store";
 
 import { GroupType } from "../../models/group.model";
-import { ToolbarButtonType } from "../../models/toolbar.model";
+import {
+    ToolbarButtonColor,
+    ToolbarButtonPosition,
+} from "../../models/toolbar.model";
 import { ToolbarConfigurationService } from "../../services/toolbar-configuration.service";
 import { ExpenseSelector } from "../../store/expense/expense.selector";
 import { GroupSelector } from "../../store/group/group.selector";
@@ -249,10 +252,21 @@ export class GroupExpensesComponent implements OnInit {
             back: { visible: () => true },
             actionBtns: [
                 {
-                    type: ToolbarButtonType.Primary,
-                    label: "Add expense",
+                    position: ToolbarButtonPosition.Center,
+                    color: () => ToolbarButtonColor.Primary,
+                    icon: "receipt",
                     disabled: () => !this.groupId(),
                     redirectTo: () => ["/group", this.groupId(), "expense"],
+                },
+                {
+                    position: ToolbarButtonPosition.Right,
+                    color: () => ToolbarButtonColor.Primary,
+                    icon: "payments",
+                    visible: () =>
+                        this.$group()?.groupType === GroupType.SpiltExpense &&
+                        false,
+                    disabled: () => !this.groupId(),
+                    redirectTo: () => ["/group", this.groupId(), "payment"],
                 },
             ],
         });

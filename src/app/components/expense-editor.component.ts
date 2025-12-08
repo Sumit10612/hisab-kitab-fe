@@ -30,7 +30,6 @@ import { uniq, values } from "lodash-es";
 import { DEFAULT_CATEGORY, SubCategory } from "../models/category.model";
 import { Expense, SplitType } from "../models/expense.model";
 import { GroupType } from "../models/group.model";
-import { ToolbarButtonType } from "../models/toolbar.model";
 import { ToolbarConfigurationService } from "../services/toolbar-configuration.service";
 import { ExpenseAction } from "../store/expense/expense.action";
 import { ExpenseSelector } from "../store/expense/expense.selector";
@@ -39,6 +38,10 @@ import { GroupSelector } from "../store/group/group.selector";
 import { LayoutComponent } from "./shared/layout.component";
 import { CategorySelectorComponent } from "./widgets/category-selector.component";
 import { PaidByShareComponent } from "./widgets/paid-by-share.component";
+import {
+    ToolbarButtonColor,
+    ToolbarButtonPosition,
+} from "../models/toolbar.model";
 
 @Component({
     selector: "app-add-expense",
@@ -305,8 +308,9 @@ export class ExpenseEditorComponent implements OnInit, AfterViewInit {
             back: { visible: () => true },
             actionBtns: [
                 {
-                    type: ToolbarButtonType.Warn,
-                    label: "Delete",
+                    position: ToolbarButtonPosition.Center,
+                    color: () => ToolbarButtonColor.Warn,
+                    label: () => "Delete",
                     visible: () => !!this.form.controls.id.value,
                     action: () => {
                         const { id, groupId } = this.form.value;
@@ -318,8 +322,10 @@ export class ExpenseEditorComponent implements OnInit, AfterViewInit {
                     },
                 },
                 {
-                    type: ToolbarButtonType.Primary,
-                    label: this.form.controls.id.value ? "Update" : "Submit",
+                    position: ToolbarButtonPosition.Right,
+                    color: () => ToolbarButtonColor.Primary,
+                    label: () =>
+                        this.form.controls.id.value ? "Update" : "Submit",
                     disabled: () => this.form.invalid || !this.form.dirty,
                     action: () => this.submit(),
                 },

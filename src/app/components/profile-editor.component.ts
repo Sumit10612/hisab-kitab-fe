@@ -9,7 +9,10 @@ import { MatInputModule } from "@angular/material/input";
 import { MatRadioChange, MatRadioModule } from "@angular/material/radio";
 import { Store } from "@ngrx/store";
 
-import { ToolbarButtonType } from "../models/toolbar.model";
+import {
+    ToolbarButtonColor,
+    ToolbarButtonPosition,
+} from "../models/toolbar.model";
 import { AVATARS, User } from "../models/user.model";
 import { ToolbarConfigurationService } from "../services/toolbar-configuration.service";
 import { AuthActions } from "../store/auth/auth.action";
@@ -17,6 +20,7 @@ import { UserActions } from "../store/user/user.action";
 import { UserSelector } from "../store/user/user.selector";
 
 import { LayoutComponent } from "./shared/layout.component";
+import { MatButtonModule } from "@angular/material/button";
 
 @Component({
     selector: "app-profile-editor",
@@ -27,6 +31,7 @@ import { LayoutComponent } from "./shared/layout.component";
         MatFormFieldModule,
         MatRadioModule,
         ReactiveFormsModule,
+        MatButtonModule,
     ],
     template: `
         @if ($user(); as user) {
@@ -138,15 +143,18 @@ export class ProfileEditorComponent implements OnInit {
             back: { visible: () => true },
             actionBtns: [
                 {
-                    type: ToolbarButtonType.Warn,
-                    label: "Logout",
-                    action: () => this.store.dispatch(AuthActions.logout()),
-                },
-                {
-                    type: ToolbarButtonType.Primary,
-                    label: "Update",
-                    disabled: () => !this.form.dirty || !this.form.valid,
+                    color: () =>
+                        this.form.dirty
+                            ? ToolbarButtonColor.Primary
+                            : ToolbarButtonColor.Warn,
+                    position: ToolbarButtonPosition.Right,
+                    label: () => (this.form.dirty ? "Update" : "Logout"),
                     action: () => {
+                        if (!this.form.dirty) {
+                            this.store.dispatch(AuthActions.logout());
+                            return;
+                        }
+
                         const { ...data } = this.form.value;
                         this.store.dispatch(
                             UserActions.update({ user: { ...data } as User }),

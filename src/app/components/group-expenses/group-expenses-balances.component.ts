@@ -8,7 +8,6 @@ import { Store } from "@ngrx/store";
 import { ToolbarConfigurationService } from "../../services/toolbar-configuration.service";
 import { GroupSelector } from "../../store/group/group.selector";
 import { MatButtonModule } from "@angular/material/button";
-import { ToolbarButtonType } from "../../models/toolbar.model";
 import { CommonModule } from "@angular/common";
 
 @Component({
@@ -77,12 +76,12 @@ export class GroupExpensesBalancesComponent implements OnInit {
     ngOnInit(): void {
         this.toolbar.configure({
             back: { visible: () => true },
-            actionBtns: [
-                {
-                    type: ToolbarButtonType.Primary,
-                    label: "Settle",
-                },
-            ],
+            // actionBtns: [
+            //     {
+            //         type: ToolbarButtonType.Primary,
+            //         label: "Settle",
+            //     },
+            // ],
         });
     }
 

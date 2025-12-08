@@ -14,6 +14,7 @@ import { ProfileEditorComponent } from "./components/profile-editor.component";
 import { SignupComponent } from "./components/signup.component";
 import { GroupExpensesSummaryComponent } from "./components/group-expenses/group-expenses-summary.component";
 import { GroupExpensesBalancesComponent } from "./components/group-expenses/group-expenses-balances.component";
+import { RecordPaymentComponent } from "./components/record-payment.component";
 
 const redirectUnauthorizedToLogin = () => redirectUnauthorizedTo(["/login"]);
 const redirectLoggedInToHome = () => redirectLoggedInTo(["/home"]);
@@ -58,6 +59,11 @@ export const routes: Routes = [
     {
         path: "group/:groupId/expenses",
         component: GroupExpensesComponent,
+        ...canActivate(redirectUnauthorizedToLogin),
+    },
+    {
+        path: "group/:groupId/payment",
+        component: RecordPaymentComponent,
         ...canActivate(redirectUnauthorizedToLogin),
     },
     {

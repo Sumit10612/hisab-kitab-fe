@@ -1,7 +1,10 @@
 import { Component, inject, OnInit } from "@angular/core";
 import { Store } from "@ngrx/store";
 
-import { ToolbarButtonType } from "../../models/toolbar.model";
+import {
+    ToolbarButtonColor,
+    ToolbarButtonPosition,
+} from "../../models/toolbar.model";
 import { ToolbarConfigurationService } from "../../services/toolbar-configuration.service";
 import { ExpenseAction } from "../../store/expense/expense.action";
 import { GroupSelector } from "../../store/group/group.selector";
@@ -58,9 +61,10 @@ export class HomeComponent implements OnInit {
             profile: { visible: () => true },
             actionBtns: [
                 {
-                    type: ToolbarButtonType.Primary,
-                    label: "Add Group",
+                    color: () => ToolbarButtonColor.Warn,
+                    icon: "group_add",
                     redirectTo: () => "/group",
+                    position: ToolbarButtonPosition.Center,
                 },
             ],
         });

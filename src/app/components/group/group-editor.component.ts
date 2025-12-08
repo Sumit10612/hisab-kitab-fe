@@ -26,7 +26,10 @@ import {
     UpsertGroup,
 } from "../../models/group.model";
 import { Otp } from "../../models/otp.model";
-import { ToolbarButtonType } from "../../models/toolbar.model";
+import {
+    ToolbarButtonColor,
+    ToolbarButtonPosition,
+} from "../../models/toolbar.model";
 import { DialogService } from "../../services/dialog.service";
 import { ToolbarConfigurationService } from "../../services/toolbar-configuration.service";
 import { GroupAction } from "../../store/group/group.action";
@@ -274,12 +277,16 @@ export class GroupEditorComponent implements OnInit {
             back: { visible: () => true },
             actionBtns: [
                 {
-                    type: ToolbarButtonType.Primary,
-                    label: "Update",
+                    position: ToolbarButtonPosition.Right,
+                    color: () => ToolbarButtonColor.Primary,
+                    label: () => (this.isEdit ? "Update" : "Create"),
                     disabled: () => !this.form.dirty || !this.form.valid,
-                    visible: () => this.isEdit && this.isAdmin,
+                    visible: () => (this.isEdit ? this.isAdmin : true),
                     action: () => {
-                        if (this.upsertGroup) {
+                        if (!this.upsertGroup) {
+                            return;
+                        }
+                        if (this.isEdit) {
                             this.store.dispatch(
                                 GroupAction.update({
                                     id: this.form.controls.id.value,
@@ -287,16 +294,7 @@ export class GroupEditorComponent implements OnInit {
                                 }),
                             );
                             this.form.markAsPristine();
-                        }
-                    },
-                },
-                {
-                    type: ToolbarButtonType.Primary,
-                    label: "Create",
-                    disabled: () => !this.form.dirty || !this.form.valid,
-                    visible: () => !this.isEdit,
-                    action: () => {
-                        if (this.upsertGroup) {
+                        } else {
                             this.store.dispatch(
                                 GroupAction.create({
                                     upsertGroup: this.upsertGroup,
