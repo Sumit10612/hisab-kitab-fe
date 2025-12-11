@@ -1,6 +1,7 @@
 import {
     Component,
     computed,
+    effect,
     inject,
     input,
     OnInit,
@@ -62,7 +63,7 @@ import { MatIconModule } from "@angular/material/icon";
     template: `
         <app-layout
             headerHeight="224px"
-            [pageTitle]="isEdit ? 'Settings' : 'Create a group'"
+            [pageTitle]="groupId() ? 'Settings' : 'Create a group'"
         >
             <div section="header">
                 <mat-form-field>
@@ -70,7 +71,7 @@ import { MatIconModule } from "@angular/material/icon";
                     <input
                         matInput
                         [formControl]="form.controls.name"
-                        [readonly]="isEdit && !isAdmin"
+                        [readonly]="groupId() && !isAdmin"
                     />
                 </mat-form-field>
                 <div class="image-container">
@@ -95,7 +96,7 @@ import { MatIconModule } from "@angular/material/icon";
                     labelPosition="after"
                     name="groupType"
                     [formControl]="form.controls.groupType"
-                    [hidden]="isEdit"
+                    [hidden]="groupId()"
                 >
                     <mat-radio-button [value]="groupType.ExpenseTracker"
                         >Track Expenses</mat-radio-button
@@ -108,7 +109,7 @@ import { MatIconModule } from "@angular/material/icon";
                 @if (
                     form.controls.groupType.value ===
                         groupType.ExpenseTracker &&
-                    (!isEdit || isAdmin)
+                    (!groupId() || isAdmin)
                 ) {
                     <mat-slide-toggle
                         [formControl]="form.controls.excludeTotal"
@@ -117,15 +118,15 @@ import { MatIconModule } from "@angular/material/icon";
                     </mat-slide-toggle>
                 }
 
-                @if ($group(); as group) {
+                @if (groupId()) {
                     <div class="row">
-                        <mat-card (click)="manageMembers(group.id)">
+                        <mat-card (click)="manageMembers(groupId())">
                             <mat-card-content>
                                 <span>Members</span>
                                 <mat-icon>keyboard_arrow_right</mat-icon>
                             </mat-card-content>
                         </mat-card>
-                        <mat-card (click)="manageCategories(group.id)">
+                        <mat-card (click)="manageCategories(groupId())">
                             <mat-card-content>
                                 <span>Categories</span>
                                 <mat-icon>keyboard_arrow_right</mat-icon>
@@ -240,7 +241,6 @@ export class GroupEditorComponent implements OnInit {
         { read: TemplateRef },
     );
 
-    protected isEdit = false;
     protected selectedIndex: number | undefined;
     protected groupType = GroupType;
     protected readonly groupImages = GROUP_IMAGES;
@@ -255,19 +255,22 @@ export class GroupEditorComponent implements OnInit {
         UserSelector.select,
     );
     protected readonly $group = computed(() => {
-        const group = this.store.selectSignal(
+        return this.store.selectSignal(
             GroupSelector.selectGroup(this.groupId()),
         )();
-        if (group) {
-            this.isEdit = true;
-            this.form.patchValue({ ...group });
-            this.selectedIndex = this.groupImages.findIndex(
-                (g) => g.alt === group?.imageUrl,
-            );
-        }
-
-        return group;
     });
+
+    constructor() {
+        effect(() => {
+            const group = this.$group();
+            if (group) {
+                this.form.patchValue({ ...group });
+                this.selectedIndex = this.groupImages.findIndex(
+                    (g) => g.alt === group.imageUrl,
+                );
+            }
+        });
+    }
 
     protected readonly groupId = input.required<string>();
 
@@ -278,14 +281,14 @@ export class GroupEditorComponent implements OnInit {
                 {
                     position: ToolbarButtonPosition.Right,
                     color: () => ToolbarButtonColor.Primary,
-                    label: () => (this.isEdit ? "Update" : "Create"),
+                    label: () => (this.groupId() ? "Update" : "Create"),
                     disabled: () => !this.form.dirty || !this.form.valid,
-                    visible: () => (this.isEdit ? this.isAdmin : true),
+                    visible: () => (this.groupId() ? this.isAdmin : true),
                     action: () => {
                         if (!this.upsertGroup) {
                             return;
                         }
-                        if (this.isEdit) {
+                        if (this.groupId()) {
                             this.store.dispatch(
                                 GroupAction.update({
                                     id: this.form.controls.id.value,
@@ -324,13 +327,13 @@ export class GroupEditorComponent implements OnInit {
         return { name, imageUrl, groupType, excludeTotal };
     }
 
-    protected selectImage(index: number) {
+    protected selectImage(index: number): void {
         this.selectedIndex = index;
         this.form.controls.imageUrl.setValue(this.groupImages[index].alt);
         this.form.markAsDirty();
     }
 
-    protected openJoinGroupDialog() {
+    protected openJoinGroupDialog(): void {
         this.dialog.open<DialogData<Otp>>({
             data: {
                 template: this.joinGroupDialogTemplate(),
@@ -348,8 +351,9 @@ export class GroupEditorComponent implements OnInit {
                             data.code3 == null ||
                             data.code4 == null,
                         action: (data) => {
+                            if (!data) return;
                             const code =
-                                +`${data?.code1}${data?.code2}${data?.code3}${data?.code4}`;
+                                +`${data.code1}${data.code2}${data.code3}${data.code4}`;
                             this.store.dispatch(
                                 GroupAction.addMember({ code }),
                             );
@@ -358,19 +362,6 @@ export class GroupEditorComponent implements OnInit {
                 ],
             },
         });
-    }
-
-    protected create() {
-        const { name, imageUrl, groupType, excludeTotal } = this.form.value;
-        if (!name || !imageUrl) {
-            return;
-        }
-
-        this.store.dispatch(
-            GroupAction.create({
-                upsertGroup: { name, imageUrl, groupType, excludeTotal },
-            }),
-        );
     }
 
     protected manageMembers(id: string): void {
@@ -385,7 +376,7 @@ export class GroupEditorComponent implements OnInit {
         });
     }
 
-    protected leaveGroup() {
+    protected leaveGroup(): void {
         this.dialog.open({
             data: {
                 message: "Are you sure want to leave this group?",
@@ -400,7 +391,7 @@ export class GroupEditorComponent implements OnInit {
                         action: () =>
                             this.store.dispatch(
                                 GroupAction.removeMember({
-                                    id: this.form.controls.id.value,
+                                    id: this.groupId(),
                                 }),
                             ),
                     },
@@ -409,7 +400,7 @@ export class GroupEditorComponent implements OnInit {
         });
     }
 
-    protected deleteGroup() {
+    protected deleteGroup(): void {
         this.dialog.open({
             data: {
                 message: "Are you sure want to delete this group?",
@@ -424,7 +415,7 @@ export class GroupEditorComponent implements OnInit {
                         action: () =>
                             this.store.dispatch(
                                 GroupAction.deleteGroup({
-                                    id: this.form.controls.id.value,
+                                    id: this.groupId(),
                                 }),
                             ),
                     },

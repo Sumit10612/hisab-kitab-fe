@@ -55,6 +55,12 @@ $dark-text-color: #333;
 
 @include mat.all-component-themes($light-theme);
 
+// Light mode default styles
+body {
+    background-color: white;
+    color: $dark-text-color;
+}
+
 // Dark mode
 .dark-theme {
     @include mat.all-component-colors($dark-theme);
