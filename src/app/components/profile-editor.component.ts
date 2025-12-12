@@ -9,10 +9,6 @@ import { MatInputModule } from "@angular/material/input";
 import { MatRadioChange, MatRadioModule } from "@angular/material/radio";
 import { Store } from "@ngrx/store";
 
-import {
-    ToolbarButtonColor,
-    ToolbarButtonPosition,
-} from "../models/toolbar.model";
 import { AVATARS, User } from "../models/user.model";
 import { ToolbarConfigurationService } from "../services/toolbar-configuration.service";
 import { AuthActions } from "../store/auth/auth.action";
@@ -142,18 +138,18 @@ export class ProfileEditorComponent implements OnInit {
             back: { visible: () => true },
             actionBtns: [
                 {
-                    color: () =>
-                        this.form.dirty
-                            ? ToolbarButtonColor.Primary
-                            : ToolbarButtonColor.Warn,
-                    position: ToolbarButtonPosition.Right,
-                    label: () => (this.form.dirty ? "Update" : "Logout"),
+                    color: "warn",
+                    position: "right",
+                    label: "Logout",
+                    visible: () => !this.form.dirty,
+                    action: () => this.store.dispatch(AuthActions.logout()),
+                },
+                {
+                    color: "primary",
+                    position: "right",
+                    label: "Update",
+                    visible: () => this.form.dirty,
                     action: () => {
-                        if (!this.form.dirty) {
-                            this.store.dispatch(AuthActions.logout());
-                            return;
-                        }
-
                         const { ...data } = this.form.value;
                         this.store.dispatch(
                             UserActions.update({ user: { ...data } as User }),

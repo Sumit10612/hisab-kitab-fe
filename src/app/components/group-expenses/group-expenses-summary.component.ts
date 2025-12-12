@@ -20,10 +20,6 @@ import { Store } from "@ngrx/store";
 import { GroupSelector } from "../../store/group/group.selector";
 import { LayoutComponent } from "../shared/layout.component";
 import { ToolbarConfigurationService } from "../../services/toolbar-configuration.service";
-import {
-    ToolbarButtonColor,
-    ToolbarButtonPosition,
-} from "../../models/toolbar.model";
 import { GroupExpensesHeaderComponent } from "./group-expenses-header.component";
 import { Expense } from "../../models/expense.model";
 import { ExpenseAction } from "../../store/expense/expense.action";
@@ -361,8 +357,8 @@ export class GroupExpensesSummaryComponent implements OnInit {
             back: { visible: () => true },
             actionBtns: [
                 {
-                    position: ToolbarButtonPosition.Right,
-                    color: () => ToolbarButtonColor.Secondary,
+                    position: "right",
+                    color: "secondary",
                     icon: "tune",
                     action: () => {
                         this.bottomSheet

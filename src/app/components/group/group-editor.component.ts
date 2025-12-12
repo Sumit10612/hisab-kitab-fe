@@ -27,10 +27,6 @@ import {
     UpsertGroup,
 } from "../../models/group.model";
 import { Otp } from "../../models/otp.model";
-import {
-    ToolbarButtonColor,
-    ToolbarButtonPosition,
-} from "../../models/toolbar.model";
 import { DialogService } from "../../services/dialog.service";
 import { ToolbarConfigurationService } from "../../services/toolbar-configuration.service";
 import { GroupAction } from "../../store/group/group.action";
@@ -279,30 +275,39 @@ export class GroupEditorComponent implements OnInit {
             back: { visible: () => true },
             actionBtns: [
                 {
-                    position: ToolbarButtonPosition.Right,
-                    color: () => ToolbarButtonColor.Primary,
-                    label: () => (this.groupId() ? "Update" : "Create"),
+                    position: "right",
+                    color: "primary",
+                    label: "Create",
+                    visible: () => !this.groupId(),
                     disabled: () => !this.form.dirty || !this.form.valid,
-                    visible: () => (this.groupId() ? this.isAdmin : true),
                     action: () => {
                         if (!this.upsertGroup) {
                             return;
                         }
-                        if (this.groupId()) {
-                            this.store.dispatch(
-                                GroupAction.update({
-                                    id: this.form.controls.id.value,
-                                    upsertGroup: this.upsertGroup,
-                                }),
-                            );
-                            this.form.markAsPristine();
-                        } else {
-                            this.store.dispatch(
-                                GroupAction.create({
-                                    upsertGroup: this.upsertGroup,
-                                }),
-                            );
+                        this.store.dispatch(
+                            GroupAction.create({
+                                upsertGroup: this.upsertGroup,
+                            }),
+                        );
+                    },
+                },
+                {
+                    position: "right",
+                    color: "primary",
+                    label: "Update",
+                    disabled: () => !this.form.dirty || !this.form.valid,
+                    visible: () => this.isAdmin,
+                    action: () => {
+                        if (!this.upsertGroup) {
+                            return;
                         }
+                        this.store.dispatch(
+                            GroupAction.update({
+                                id: this.form.controls.id.value,
+                                upsertGroup: this.upsertGroup,
+                            }),
+                        );
+                        this.form.markAsPristine();
                     },
                 },
             ],

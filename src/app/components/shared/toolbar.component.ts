@@ -8,10 +8,6 @@ import { Store } from "@ngrx/store";
 import { UserSelector } from "../../store/user/user.selector";
 import { getUserImage } from "../../models/user.model";
 import { RouterLink } from "@angular/router";
-import {
-    ToolbarButtonColor,
-    ToolbarButtonPosition,
-} from "../../models/toolbar.model";
 
 @Component({
     selector: "app-toolbar",
@@ -44,8 +40,7 @@ import {
             <div class="toolbar-section toolbar-center">
                 @for (btn of toolbar.config?.actionBtns; track $index) {
                     @if (
-                        btn.position === ToolbarButtonPosition.Center &&
-                        (btn.visible?.() ?? true)
+                        btn.position === "center" && (btn.visible?.() ?? true)
                     ) {
                         @if (btn.icon) {
                             <button
@@ -60,12 +55,12 @@ import {
                         } @else {
                             <button
                                 mat-raised-button
-                                [color]="getColor(btn.color())"
+                                [color]="btn.color"
                                 [disabled]="btn.disabled?.()"
                                 [routerLink]="btn.redirectTo?.()"
                                 (click)="btn.action?.()"
                             >
-                                {{ btn.label?.() }}
+                                {{ btn.label }}
                             </button>
                         }
                     }
@@ -75,13 +70,12 @@ import {
             <div class="toolbar-section toolbar-right">
                 @for (btn of toolbar.config?.actionBtns; track $index) {
                     @if (
-                        btn.position === ToolbarButtonPosition.Right &&
-                        (btn.visible?.() ?? true)
+                        btn.position === "right" && (btn.visible?.() ?? true)
                     ) {
                         @if (btn.icon) {
                             <button
                                 mat-mini-fab
-                                [color]="getColor(btn.color())"
+                                [color]="btn.color"
                                 [disabled]="btn.disabled?.()"
                                 [routerLink]="btn.redirectTo?.()"
                                 (click)="btn.action?.()"
@@ -91,12 +85,12 @@ import {
                         } @else {
                             <button
                                 mat-raised-button
-                                [color]="getColor(btn.color())"
+                                [color]="btn.color"
                                 [disabled]="btn.disabled?.()"
                                 [routerLink]="btn.redirectTo?.()"
                                 (click)="btn.action?.()"
                             >
-                                {{ btn.label?.() }}
+                                {{ btn.label }}
                             </button>
                         }
                     }
@@ -162,19 +156,6 @@ export class ToolbarComponent {
 
     protected getUserImage = getUserImage;
     protected $user = this.store.selectSignal(UserSelector.select);
-    protected ToolbarButtonPosition = ToolbarButtonPosition;
-    protected ToolbarButtonColor = ToolbarButtonColor;
-
-    protected getColor(type: ToolbarButtonColor) {
-        switch (type) {
-            case ToolbarButtonColor.Primary:
-                return "primary";
-            case ToolbarButtonColor.Warn:
-                return "warn";
-            default:
-                return "";
-        }
-    }
 
     protected handleBackEvent(): void {
         const action = this.toolbar.config?.back?.action;

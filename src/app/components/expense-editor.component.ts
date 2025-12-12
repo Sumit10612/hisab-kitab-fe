@@ -38,10 +38,7 @@ import { GroupSelector } from "../store/group/group.selector";
 import { LayoutComponent } from "./shared/layout.component";
 import { CategorySelectorComponent } from "./widgets/category-selector.component";
 import { PaidByShareComponent } from "./widgets/paid-by-share.component";
-import {
-    ToolbarButtonColor,
-    ToolbarButtonPosition,
-} from "../models/toolbar.model";
+import { MatButtonModule } from "@angular/material/button";
 
 @Component({
     selector: "app-add-expense",
@@ -56,15 +53,19 @@ import {
         MatDatepickerModule,
         MatButtonToggleModule,
         LayoutComponent,
+        MatButtonModule,
     ],
     providers: [provideNativeDateAdapter()],
     template: `
-        <app-layout
-            [pageTitle]="
-                (form.controls.id.value ? 'Update' : 'Add') + ' an expense'
-            "
-            headerHeight="48px"
-        >
+        <app-layout headerHeight="48px">
+            <div section="header" class="header-section">
+                <h2>{{ expenseId() ? "Update" : "Add" }} Expense</h2>
+                @if (expenseId()) {
+                    <button mat-mini-fab color="secondary" (click)="delete()">
+                        <mat-icon color="warn">delete</mat-icon>
+                    </button>
+                }
+            </div>
             <div section="detail" class="detail-section">
                 <form [formGroup]="form">
                     <div class="row">
@@ -201,6 +202,23 @@ import {
                 flex: 1;
             }
 
+            .header-section {
+                display: grid;
+                grid-template-columns: 1fr auto 1fr;
+                align-items: center;
+
+                h2 {
+                    grid-column: 2;
+                    margin: 0;
+                }
+
+                button {
+                    grid-column: 3;
+                    justify-self: end;
+                    z-index: 10;
+                }
+            }
+
             .detail-section {
                 .row {
                     display: grid;
@@ -307,24 +325,18 @@ export class ExpenseEditorComponent implements OnInit, AfterViewInit {
             back: { visible: () => true },
             actionBtns: [
                 {
-                    position: ToolbarButtonPosition.Center,
-                    color: () => ToolbarButtonColor.Warn,
-                    label: () => "Delete",
-                    visible: () => !!this.form.controls.id.value,
-                    action: () => {
-                        const { id, groupId } = this.form.value;
-                        if (id && groupId) {
-                            this.store.dispatch(
-                                ExpenseAction.remove({ groupId, id }),
-                            );
-                        }
-                    },
+                    position: "right",
+                    color: "primary",
+                    label: "Submit",
+                    visible: () => !this.expenseId(),
+                    disabled: () => this.form.invalid || !this.form.dirty,
+                    action: () => this.submit(),
                 },
                 {
-                    position: ToolbarButtonPosition.Right,
-                    color: () => ToolbarButtonColor.Primary,
-                    label: () =>
-                        this.form.controls.id.value ? "Update" : "Submit",
+                    position: "right",
+                    color: "primary",
+                    visible: () => !!this.expenseId(),
+                    label: "Update",
                     disabled: () => this.form.invalid || !this.form.dirty,
                     action: () => this.submit(),
                 },
@@ -417,6 +429,13 @@ export class ExpenseEditorComponent implements OnInit, AfterViewInit {
             this.store.dispatch(ExpenseAction.update({ groupId, id, expense }));
         } else {
             this.store.dispatch(ExpenseAction.add({ groupId, expense }));
+        }
+    }
+
+    protected delete(): void {
+        const { id, groupId } = this.form.value;
+        if (id && groupId) {
+            this.store.dispatch(ExpenseAction.remove({ groupId, id }));
         }
     }
 }
