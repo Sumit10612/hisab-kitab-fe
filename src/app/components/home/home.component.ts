@@ -27,21 +27,14 @@ import { GroupAction } from "../../store/group/group.action";
             </app-layout>
         }
     `,
-    styles: [
-        `
-            .create-group-button {
-                position: absolute;
-                right: 4px;
-                bottom: 4px;
-            }
-        `,
-    ],
 })
 export class HomeComponent implements OnInit {
     private readonly toolbar = inject(ToolbarConfigurationService);
     private readonly store = inject(Store);
 
-    protected $groups = this.store.selectSignal(GroupSelector.selectAll);
+    protected readonly $groups = this.store.selectSignal(
+        GroupSelector.selectAll,
+    );
 
     ngOnInit(): void {
         this.store.dispatch(ExpenseAction.reset());

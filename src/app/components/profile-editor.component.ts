@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit } from "@angular/core";
+import { Component, computed, effect, inject, OnInit } from "@angular/core";
 import {
     NonNullableFormBuilder,
     ReactiveFormsModule,
@@ -112,26 +112,32 @@ import { MatButtonModule } from "@angular/material/button";
 export class ProfileEditorComponent implements OnInit {
     private readonly fb = inject(NonNullableFormBuilder);
     private readonly toolbar = inject(ToolbarConfigurationService);
-    private store = inject(Store);
+    private readonly store = inject(Store);
 
-    protected form = this.fb.group({
+    protected readonly form = this.fb.group({
         uid: ["", [Validators.required]],
         name: ["", [Validators.required]],
         email: ["", [Validators.required]],
         photoUrl: ["", [Validators.required]],
     });
-    protected avatars = AVATARS;
+    protected readonly avatars = AVATARS;
     protected selectedIndex: number | undefined;
 
-    protected readonly $user = computed(() => {
-        const user = this.store.selectSignal(UserSelector.select)();
-        this.form.patchValue({ ...user });
-        this.selectedIndex = this.avatars.findIndex(
-            (avatar) => avatar.alt === user?.photoUrl,
-        );
+    protected readonly $user = computed(() =>
+        this.store.selectSignal(UserSelector.select)(),
+    );
 
-        return user;
-    });
+    constructor() {
+        effect(() => {
+            const user = this.$user();
+            if (user) {
+                this.form.patchValue({ ...user });
+                this.selectedIndex = this.avatars.findIndex(
+                    (avatar) => avatar.alt === user.photoUrl,
+                );
+            }
+        });
+    }
 
     ngOnInit(): void {
         this.toolbar.configure({
@@ -150,9 +156,8 @@ export class ProfileEditorComponent implements OnInit {
                     label: "Update",
                     visible: () => this.form.dirty,
                     action: () => {
-                        const { ...data } = this.form.value;
                         this.store.dispatch(
-                            UserActions.update({ user: { ...data } as User }),
+                            UserActions.update({ user: this.form.value as User }),
                         );
                         this.form.markAsPristine();
                     },
@@ -161,13 +166,13 @@ export class ProfileEditorComponent implements OnInit {
         });
     }
 
-    selectImage(index: number) {
+    protected selectImage(index: number): void {
         this.selectedIndex = index;
         this.form.controls.photoUrl.setValue(this.avatars[index].alt);
         this.form.markAsDirty();
     }
 
-    onThemeChange($event: MatRadioChange) {
+    protected onThemeChange($event: MatRadioChange): void {
         const user = this.$user();
         if (user) {
             const preferences = {
