@@ -395,15 +395,27 @@ export class GroupExpensesSummaryComponent implements OnInit {
     }
 
     private getExpenses() {
-        if (!this.$filterCriteria()) {
+        const criteria = this.$filterCriteria();
+        if (!criteria) {
+            return;
+        }
+
+        const fetchedRange = this.store.selectSignal(
+            ExpenseSelector.selectFetchedRange,
+        )();
+        const isAlreadyFetched =
+            fetchedRange &&
+            criteria.fromDate >= fetchedRange.from &&
+            criteria.toDate <= fetchedRange.to;
+        if (isAlreadyFetched) {
             return;
         }
 
         this.store.dispatch(
             ExpenseAction.getByDateRange({
                 groupId: this.groupId(),
-                startDate: this.$filterCriteria()!.fromDate,
-                endDate: this.$filterCriteria()!.toDate,
+                startDate: criteria.fromDate,
+                endDate: criteria.toDate,
             }),
         );
     }
