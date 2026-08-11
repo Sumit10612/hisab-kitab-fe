@@ -97,6 +97,19 @@ export namespace GroupAction {
         `${ACTION_PREFIX} Add Category Success`,
     );
 
+    export const deleteSubCategory = createAction(
+        `${ACTION_PREFIX} Delete Sub Category`,
+        props<{
+            groupId: string;
+            categoryId: number;
+            subCategoryId: number;
+            remapToSubCategoryId: number;
+        }>(),
+    );
+    export const deleteSubCategorySuccess = createAction(
+        `${ACTION_PREFIX} Delete Sub Category Success`,
+    );
+
     export const setExpandedCategoryId = createAction(
         `${ACTION_PREFIX} Set Expanded Category Id`,
         props<{ categoryId: number | null }>(),

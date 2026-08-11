@@ -328,4 +328,33 @@ export class GroupEffects {
             ),
         );
     });
+
+    deleteSubCategory$ = createEffect(() => {
+        return this.action$.pipe(
+            ofType(GroupAction.deleteSubCategory),
+            switchMap(
+                async ({
+                    groupId,
+                    categoryId,
+                    subCategoryId,
+                    remapToSubCategoryId,
+                }) => {
+                    this.notification.showLoading();
+                    try {
+                        await this.groupService.deleteSubCategoryFromGroup(
+                            groupId,
+                            categoryId,
+                            subCategoryId,
+                            remapToSubCategoryId,
+                        );
+                        return GroupAction.deleteSubCategorySuccess();
+                    } catch (error) {
+                        return AppActions.handleError({ error });
+                    } finally {
+                        this.notification.hideLoading();
+                    }
+                },
+            ),
+        );
+    });
 }

@@ -276,6 +276,52 @@ export class GroupService {
         return group.id;
     }
 
+    async deleteSubCategoryFromGroup(
+        groupId: string,
+        categoryId: number,
+        subCategoryId: number,
+        remapToSubCategoryId: number,
+    ): Promise<void> {
+        const groupRef = doc(this.firestore, GROUP_COLLECTION_NAME, groupId);
+        const groupSnapshot = await getDoc(groupRef);
+        const group = throwIfNotFound(groupSnapshot).data() as Group;
+        group.categories ??= [];
+        const category = group.categories.find((c) => c.id === categoryId);
+        if (category) {
+            category.subCategories = category.subCategories.filter(
+                (sc) => sc.id !== subCategoryId,
+            );
+        }
+
+        const expensesRef = collection(
+            this.firestore,
+            GROUP_COLLECTION_NAME,
+            groupId,
+            "expenses",
+        );
+        const expensesToRemap = await getDocs(
+            query(expensesRef, where("category", "==", subCategoryId)),
+        );
+
+        await updateDoc(groupRef, { categories: group.categories });
+
+        for (
+            let i = 0;
+            i < expensesToRemap.docs.length;
+            i += BATCH_DELETE_LIMIT
+        ) {
+            const batch = writeBatch(this.firestore);
+            expensesToRemap.docs
+                .slice(i, i + BATCH_DELETE_LIMIT)
+                .forEach((expenseDoc) =>
+                    batch.update(expenseDoc.ref, {
+                        category: remapToSubCategoryId,
+                    }),
+                );
+            await batch.commit();
+        }
+    }
+
     private isCurrentUserAuthorizedToUpdate(
         userId: string | null,
         group: Group,
