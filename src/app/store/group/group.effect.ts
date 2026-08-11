@@ -2,7 +2,7 @@ import { computed, inject, Injectable } from "@angular/core";
 import { Actions, createEffect, ofType } from "@ngrx/effects";
 import { Store } from "@ngrx/store";
 import { pick, random, round, sample, times, values } from "lodash-es";
-import { map, mergeMap, switchMap, tap } from "rxjs";
+import { map, switchMap, tap } from "rxjs";
 
 import { DEFAULT_CATEGORY } from "../../models/category.model";
 import {
@@ -40,7 +40,7 @@ export class GroupEffects {
     query$ = createEffect(() => {
         return this.action$.pipe(
             ofType(GroupAction.query),
-            mergeMap(({ userId }) =>
+            switchMap(({ userId }) =>
                 this.groupService.query$(userId).pipe(
                     map((changeDoc) => {
                         const members = Object.fromEntries(
