@@ -4,9 +4,17 @@ import {
     inject,
     provideAppInitializer,
 } from "@angular/core";
-import { initializeApp, provideFirebaseApp } from "@angular/fire/app";
+import {
+    FirebaseApp,
+    initializeApp,
+    provideFirebaseApp,
+} from "@angular/fire/app";
 import { getAuth, provideAuth } from "@angular/fire/auth";
-import { getFirestore, provideFirestore } from "@angular/fire/firestore";
+import { initializeFirestore, provideFirestore } from "@angular/fire/firestore";
+import {
+    persistentLocalCache,
+    persistentMultipleTabManager,
+} from "firebase/firestore";
 import { MatBottomSheetModule } from "@angular/material/bottom-sheet";
 import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
 import { MatSnackBarModule } from "@angular/material/snack-bar";
@@ -41,7 +49,13 @@ export const appConfig: ApplicationConfig = {
         provideAnimationsAsync(),
         provideFirebaseApp(() => initializeApp(firebaseConfig)),
         provideAuth(() => getAuth()),
-        provideFirestore(() => getFirestore()),
+        provideFirestore(() =>
+            initializeFirestore(inject(FirebaseApp), {
+                localCache: persistentLocalCache({
+                    tabManager: persistentMultipleTabManager(),
+                }),
+            }),
+        ),
         MatSnackBarModule,
         MatBottomSheetModule,
         provideServiceWorker("ngsw-worker.js", {

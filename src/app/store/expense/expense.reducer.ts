@@ -5,9 +5,15 @@ import { Expense } from "../../models/expense.model";
 
 import { ExpenseAction } from "./expense.action";
 
+export interface FetchedRange {
+    from: Date;
+    to: Date;
+}
+
 export interface ExpenseState {
     loading: boolean;
     expenses: EntityState<Expense>;
+    fetchedRange: FetchedRange | null;
 }
 
 export const expenseAdapter = createEntityAdapter<Expense>({
@@ -23,6 +29,7 @@ export const expenseAdapter = createEntityAdapter<Expense>({
 const INITIAL_STATE: ExpenseState = {
     loading: false,
     expenses: expenseAdapter.getInitialState(),
+    fetchedRange: null,
 };
 
 export const expenseReducer = createReducer<ExpenseState>(
@@ -37,11 +44,19 @@ export const expenseReducer = createReducer<ExpenseState>(
     ),
     on(
         ExpenseAction.getNextSuccess,
-        ExpenseAction.getByDateRangeSuccess,
         (state, { expenses }): ExpenseState => ({
             ...state,
             expenses: expenseAdapter.upsertMany(expenses, state.expenses),
             loading: false,
+        }),
+    ),
+    on(
+        ExpenseAction.getByDateRangeSuccess,
+        (state, { expenses, startDate, endDate }): ExpenseState => ({
+            ...state,
+            expenses: expenseAdapter.upsertMany(expenses, state.expenses),
+            loading: false,
+            fetchedRange: { from: startDate, to: endDate },
         }),
     ),
     on(ExpenseAction.addSuccess, (state, { expense }) => ({
@@ -62,5 +77,6 @@ export const expenseReducer = createReducer<ExpenseState>(
     on(ExpenseAction.reset, (state) => ({
         ...state,
         expenses: expenseAdapter.getInitialState(),
+        fetchedRange: null,
     })),
 );

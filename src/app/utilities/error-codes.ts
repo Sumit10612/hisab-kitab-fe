@@ -5,4 +5,5 @@ export class ErrorCode {
         "USER_DOESNOT_BELONG_TO_GROUP";
     public static readonly NO_OTHER_ADMIN_FOUND = "NO_OTHER_ADMIN_FOUND";
     public static readonly INVALID_PERMISSION = "INVALID_PERMISSION";
+    public static readonly CODE_GENERATION_FAILED = "CODE_GENERATION_FAILED";
 }

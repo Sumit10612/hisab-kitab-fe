@@ -29,7 +29,7 @@ export namespace ExpenseAction {
 
     export const getByDateRangeSuccess = createAction(
         `${ACTION_PREFIX} Get By Date Range Success`,
-        props<{ expenses: Expense[] }>(),
+        props<{ expenses: Expense[]; startDate: Date; endDate: Date }>(),
     );
 
     export const add = createAction(

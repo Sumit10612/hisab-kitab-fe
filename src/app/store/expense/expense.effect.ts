@@ -43,7 +43,11 @@ export class ExpenseEffects {
                         startDate,
                         endDate,
                     );
-                    return ExpenseAction.getByDateRangeSuccess({ expenses });
+                    return ExpenseAction.getByDateRangeSuccess({
+                        expenses,
+                        startDate,
+                        endDate,
+                    });
                 } catch (error) {
                     return AppActions.handleError({ error });
                 }

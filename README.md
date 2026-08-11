@@ -1,27 +1,95 @@
-# HisabKitabFe
+# Hisab Kitab
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 17.3.5.
+Hisab Kitab ("account of accounts") is a Splitwise-style expense-sharing web app. Users create groups, log shared expenses, split them equally / by share / by percentage, and track who owes whom — with per-group balances and monthly summaries.
 
-## Development server
+Built with Angular 20, NgRx, and Firebase (Auth + Firestore), and installable as a PWA.
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+## Features
 
-## Code scaffolding
+- **Auth** — email/password sign-up & login, OTP verification, guarded routes via `@angular/fire/auth-guard`
+- **Groups** — create/edit groups, manage members and per-group expense categories, custom group images
+- **Expenses** — add/edit expenses with category, payer, and flexible splitting (`Equally`, `ByShare`, `ByPercentage`)
+- **Balances & summaries** — group balance view, expense summary, monthly totals, filter by date range
+- **Payments** — record settlement payments between members
+- **PWA** — installable, offline-capable via Angular Service Worker
+- **Theming** — light/dark theme support
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+## Tech stack
 
-## Build
+| Layer      | Technology                                                             |
+| ---------- | ----------------------------------------------------------------------- |
+| Framework  | Angular 20 (standalone components)                                     |
+| State      | NgRx (`store`, `effects`, `entity`, `router-store`, `store-devtools`)   |
+| Backend    | Firebase (Authentication, Firestore) via `@angular/fire` / `rxfire`     |
+| UI         | Angular Material, Angular CDK                                          |
+| PWA        | `@angular/service-worker`                                              |
+| Hosting    | Firebase Hosting                                                       |
+| Tooling    | ESLint, Prettier, Karma/Jasmine                                        |
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+## Project structure
 
-## Running unit tests
+```
+src/app/
+├── components/
+│   ├── group/            group create/edit, category & member management
+│   ├── group-expenses/   expense list, header, summary, balances
+│   ├── home/              home dashboard, group list, overview
+│   ├── shared/            layout, toolbar, dialog, directives
+│   └── widgets/           category selector, expense filters, paid-by-share
+├── models/                Expense, Group, Category, User, Dialog, etc.
+├── services/               dialog, navigation, notification, pwa, theme, toolbar
+├── store/                  NgRx feature stores: auth, expense, group, user
+└── utilities/
+```
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+## Getting started
 
-## Running end-to-end tests
+### Prerequisites
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+- Node.js and npm
+- Angular CLI (`npm install -g @angular/cli`)
+- A Firebase project (Auth + Firestore enabled) if you want to run against your own backend — configure it in `src/app/app.config.ts`
 
-## Further help
+### Install
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+```bash
+npm install
+```
+
+### Development server
+
+```bash
+npm start
+```
+
+Navigate to `http://localhost:4200/`. The app reloads automatically on source changes.
+
+### Build
+
+```bash
+npm run build          # development build
+npm run build:prod     # production build, output in dist/hisab-kitab-fe
+```
+
+### Tests
+
+```bash
+npm test
+```
+
+Runs unit tests via Karma/Jasmine.
+
+### Lint
+
+```bash
+npm run lint
+```
+
+## Deployment
+
+The app is configured for Firebase Hosting (`firebase.json`), serving `dist/hisab-kitab-fe/browser`, with Firestore rules in `firestore.rules`. Deploy with the Firebase CLI:
+
+```bash
+npm run build:prod
+firebase deploy
+```
