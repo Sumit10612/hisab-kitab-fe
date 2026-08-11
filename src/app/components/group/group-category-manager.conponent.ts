@@ -97,6 +97,17 @@ import { MatMenuModule } from "@angular/material/menu";
                                             #subCategoryContextMenu="matMenu"
                                         >
                                             <button mat-menu-item>Edit</button>
+                                            <button
+                                                mat-menu-item
+                                                (click)="
+                                                    openDeleteSubCategoryDialog(
+                                                        category,
+                                                        subCategory
+                                                    )
+                                                "
+                                            >
+                                                Delete
+                                            </button>
                                         </mat-menu>
                                     </div>
                                     <app-divider></app-divider>
@@ -221,6 +232,64 @@ import { MatMenuModule } from "@angular/material/menu";
                 </div>
             </form>
         </ng-template>
+
+        <ng-template #deleteSubCategoryDialog>
+            <h2 class="title">Delete sub-category</h2>
+            @if (availableRemapSubCategories().length) {
+                <form
+                    [formGroup]="remapForm"
+                    (ngSubmit)="confirmDeleteSubCategory()"
+                >
+                    <p>
+                        Move existing expenses from "{{
+                            subCategoryToDelete?.subCategoryName
+                        }}" to:
+                    </p>
+                    <mat-form-field>
+                        <mat-label>Sub Category</mat-label>
+                        <mat-select formControlName="remapToSubCategoryId">
+                            @for (
+                                item of availableRemapSubCategories();
+                                track item.subCategory.id
+                            ) {
+                                <mat-option [value]="item.subCategory.id">
+                                    {{ item.category.name }} /
+                                    {{ item.subCategory.icon }}
+                                    {{ item.subCategory.name }}
+                                </mat-option>
+                            }
+                        </mat-select>
+                    </mat-form-field>
+
+                    <div class="action-buttons">
+                        <button
+                            mat-raised-button
+                            (click)="closeDeleteSubCategoryDialog()"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            mat-raised-button
+                            color="warn"
+                            [disabled]="remapForm.invalid"
+                        >
+                            Delete
+                        </button>
+                    </div>
+                </form>
+            } @else {
+                <p>Add another sub-category before deleting this one.</p>
+                <div class="action-buttons">
+                    <button
+                        mat-raised-button
+                        (click)="closeDeleteSubCategoryDialog()"
+                    >
+                        Close
+                    </button>
+                </div>
+            }
+        </ng-template>
     `,
     styles: [
         `
@@ -285,6 +354,16 @@ export class GroupCategoryManagerComponent implements OnInit {
         },
     );
 
+    private deleteSubCategoryDialog:
+        | MatDialogRef<DialogComponent, unknown>
+        | undefined;
+    private readonly deleteSubCategoryDialogTemplate = viewChild(
+        "deleteSubCategoryDialog",
+        {
+            read: TemplateRef,
+        },
+    );
+
     protected filteredCategories: Observable<Category[]> | undefined;
     protected showAddCategoryOption = false;
     protected filteredSubCategories: Observable<SubCategory[]> | undefined;
@@ -295,6 +374,16 @@ export class GroupCategoryManagerComponent implements OnInit {
         subCategoryId: [undefined as number | undefined],
         subCategoryName: ["", Validators.required],
         icon: ["", Validators.required],
+    });
+
+    protected subCategoryToDelete:
+        | { categoryId: number; subCategoryId: number; subCategoryName: string }
+        | undefined;
+    protected remapForm = this.fb.group({
+        remapToSubCategoryId: [
+            undefined as number | undefined,
+            Validators.required,
+        ],
     });
     protected readonly $group = this.store.selectSignal(
         GroupSelector.selectGroup(this.data),
@@ -410,5 +499,68 @@ export class GroupCategoryManagerComponent implements OnInit {
     protected closeAddCategoryDialog(): void {
         this.form.reset();
         this.addCategoryDialog?.close();
+    }
+
+    protected openDeleteSubCategoryDialog(
+        category: Category,
+        subCategory: SubCategory,
+    ): void {
+        this.subCategoryToDelete = {
+            categoryId: category.id,
+            subCategoryId: subCategory.id,
+            subCategoryName: subCategory.name,
+        };
+        this.remapForm.reset();
+        this.deleteSubCategoryDialog = this.dialog.open({
+            data: {
+                template: this.deleteSubCategoryDialogTemplate(),
+            },
+            disableClose: true,
+        });
+    }
+
+    protected availableRemapSubCategories(): {
+        category: Category;
+        subCategory: SubCategory;
+    }[] {
+        const group = this.$group();
+        if (!this.subCategoryToDelete || !group) {
+            return [];
+        }
+
+        return group.categories.flatMap((category) =>
+            category.subCategories
+                .filter(
+                    (subCategory) =>
+                        subCategory.id !==
+                        this.subCategoryToDelete?.subCategoryId,
+                )
+                .map((subCategory) => ({ category, subCategory })),
+        );
+    }
+
+    protected confirmDeleteSubCategory(): void {
+        const remapToSubCategoryId =
+            this.remapForm.controls.remapToSubCategoryId.value;
+        if (!this.subCategoryToDelete || !remapToSubCategoryId) {
+            return;
+        }
+
+        this.store.dispatch(
+            GroupAction.deleteSubCategory({
+                groupId: this.data,
+                categoryId: this.subCategoryToDelete.categoryId,
+                subCategoryId: this.subCategoryToDelete.subCategoryId,
+                remapToSubCategoryId,
+            }),
+        );
+
+        this.closeDeleteSubCategoryDialog();
+    }
+
+    protected closeDeleteSubCategoryDialog(): void {
+        this.remapForm.reset();
+        this.subCategoryToDelete = undefined;
+        this.deleteSubCategoryDialog?.close();
     }
 }
