@@ -39,6 +39,9 @@ import { GroupAction } from "../../store/group/group.action";
                         <mat-radio-button [value]="dateOption.Custom"
                             >Custom</mat-radio-button
                         >
+                        <mat-radio-button [value]="dateOption.All"
+                            >All</mat-radio-button
+                        >
                     </mat-radio-group>
                 </div>
 
@@ -143,6 +146,9 @@ export class FilterExpenseCriteriaComponent {
             const date = DateUtilities.previousMonth();
             fromDate = DateUtilities.startOfMonth(date);
             toDate = DateUtilities.endOfMonth(date);
+        } else if (this.criteria.dateOption === DateOption.All) {
+            fromDate = new Date(1900, 0, 1);
+            toDate = DateUtilities.endOfDay();
         } else {
             fromDate = DateUtilities.startOfDay(fromDate);
             toDate = DateUtilities.endOfDay(toDate);

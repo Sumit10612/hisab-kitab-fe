@@ -8,4 +8,5 @@ export enum DateOption {
     Current,
     Last,
     Custom,
+    All,
 }
