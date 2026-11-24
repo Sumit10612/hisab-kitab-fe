@@ -11,6 +11,12 @@ import {
     GroupType,
     MemberRole,
 } from "../../models/group.model";
+import {
+    DEFAULT_ASSET_CLASSES,
+    INVESTMENT_GROUP_IMAGE,
+    INVESTMENT_GROUP_NAME,
+    investmentGroupId,
+} from "../../models/investment.model";
 import { NavigationService } from "../../services/navigation.service";
 import { NotificationService } from "../../services/notification.service";
 import { ErrorCode } from "../../utilities/error-codes";
@@ -126,6 +132,44 @@ export class GroupEffects {
                     return AppActions.handleError({ error });
                 } finally {
                     this.notification.hideLoading();
+                }
+            }),
+        );
+    });
+
+    createInvestmentGroup$ = createEffect(() => {
+        return this.action$.pipe(
+            ofType(GroupAction.createInvestmentGroup),
+            switchMap(async () => {
+                try {
+                    const user = this.$user();
+                    await this.groupService.createIfNotExists(
+                        investmentGroupId(user.uid),
+                        {
+                            name: INVESTMENT_GROUP_NAME,
+                            imageUrl: INVESTMENT_GROUP_IMAGE,
+                            groupType: GroupType.Investment,
+                            excludeTotal: true,
+                            groupTotal: 0,
+                            monthTotal: {},
+                            memberIds: [user.uid],
+                            members: {
+                                [user.uid]: {
+                                    id: user.uid,
+                                    name: user.name,
+                                    role: MemberRole.admin,
+                                    paid: 0,
+                                    share: 0,
+                                    isVirtual: false,
+                                },
+                            },
+                            categories: DEFAULT_ASSET_CLASSES,
+                        } as Group,
+                    );
+
+                    return GroupAction.createInvestmentGroupSuccess();
+                } catch (error) {
+                    return AppActions.handleError({ error });
                 }
             }),
         );

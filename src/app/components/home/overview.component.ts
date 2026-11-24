@@ -12,51 +12,64 @@ import { CommonModule } from "@angular/common";
     selector: "app-overview",
     imports: [CommonModule, MatCardModule, MatIconModule, MatDividerModule],
     template: `
-        <div class="overview-widget">
+        <div
+            class="overview-widget"
+            [class.investment]="mode() === 'investment'"
+        >
             <mat-card>
                 <mat-card-content>
-                    <div class="split-expenses">
-                        <div class="split-expenses-header">
-                            <span class="split-expenses-header-total"
+                    @if (mode() === "investment") {
+                        <div class="invested">
+                            <span class="invested-total"
                                 >&#8377;
-                                {{
-                                    splitExpenseTotal() | number: "1.0-0"
-                                }}</span
+                                {{ investedTotal() | number: "1.0-0" }}</span
                             >
-                            <span class="split-expenses-header-text"
-                                >total balance</span
-                            >
+                            <span class="invested-text">total invested</span>
                         </div>
-                        <mat-divider></mat-divider>
-                        <div class="split-expenses-detail">
-                            <div>
-                                <span class="split-expenses-detail-owe"
-                                    >&#8377; 0</span
+                    } @else {
+                        <div class="split-expenses">
+                            <div class="split-expenses-header">
+                                <span class="split-expenses-header-total"
+                                    >&#8377;
+                                    {{
+                                        splitExpenseTotal() | number: "1.0-0"
+                                    }}</span
                                 >
-                                <span>you owe</span>
-                            </div>
-                            <div>
-                                <span class="split-expenses-detail-owed"
-                                    >&#8377; 0</span
+                                <span class="split-expenses-header-text"
+                                    >total balance</span
                                 >
-                                <span>you are owed</span>
+                            </div>
+                            <mat-divider></mat-divider>
+                            <div class="split-expenses-detail">
+                                <div>
+                                    <span class="split-expenses-detail-owe"
+                                        >&#8377; 0</span
+                                    >
+                                    <span>you owe</span>
+                                </div>
+                                <div>
+                                    <span class="split-expenses-detail-owed"
+                                        >&#8377; 0</span
+                                    >
+                                    <span>you are owed</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <mat-divider vertical></mat-divider>
-                    <div class="expense-tracker">
-                        <div class="expense-tracker-header">
-                            <span class="expense-tracker-header-total"
-                                >&#8377;
-                                {{
-                                    expenseTrackerTotal() | number: "1.0-0"
-                                }}</span
-                            >
-                            <span class="expense-tracker-header-text"
-                                >this month</span
-                            >
+                        <mat-divider vertical></mat-divider>
+                        <div class="expense-tracker">
+                            <div class="expense-tracker-header">
+                                <span class="expense-tracker-header-total"
+                                    >&#8377;
+                                    {{
+                                        expenseTrackerTotal() | number: "1.0-0"
+                                    }}</span
+                                >
+                                <span class="expense-tracker-header-text"
+                                    >this month</span
+                                >
+                            </div>
                         </div>
-                    </div>
+                    }
                 </mat-card-content>
             </mat-card>
         </div>
@@ -73,6 +86,21 @@ import { CommonModule } from "@angular/common";
                     .mat-mdc-card-content {
                         display: flex;
                         justify-content: space-between;
+                    }
+                }
+
+                &.investment {
+                    height: 136px;
+
+                    .mat-mdc-card {
+                        height: 100%;
+                        box-sizing: border-box;
+                    }
+
+                    .mat-mdc-card-content {
+                        height: 100%;
+                        padding: 0;
+                        align-items: center;
                     }
                 }
             }
@@ -132,11 +160,26 @@ import { CommonModule } from "@angular/common";
                     }
                 }
             }
+            .invested {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 4px;
+                width: 100%;
+
+                &-total {
+                    font-size: 1.8rem;
+                    font-weight: 500;
+                }
+            }
         `,
     ],
 })
 export class OverviewComponent {
-    readonly groups = input.required<GroupInfo[]>();
+    readonly groups = input<GroupInfo[]>([]);
+    readonly mode = input<"groups" | "investment">("groups");
+    readonly investedTotal = input(0);
 
     protected readonly expenseTrackerTotal = computed(() => {
         const currMonth = DateUtilities.yearMonth();

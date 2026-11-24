@@ -1,7 +1,7 @@
 import { createSelector, MemoizedSelector } from "@ngrx/store";
 
 import { State } from "..";
-import { Group, GroupInfo } from "../../models/group.model";
+import { Group, GroupInfo, GroupType } from "../../models/group.model";
 
 import { groupAdapter, groupCodeAdapter } from "./group.reducer";
 
@@ -16,6 +16,11 @@ export namespace GroupSelector {
     export const selectAll = createSelector(
         groupAdapterSelectors.selectAll,
         (entities) => entities,
+    );
+
+    export const selectInvestmentGroup = createSelector(
+        groupAdapterSelectors.selectAll,
+        (groups) => groups.find((g) => g.groupType === GroupType.Investment),
     );
 
     export const selectGroup: (

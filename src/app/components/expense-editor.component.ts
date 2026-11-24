@@ -35,6 +35,7 @@ import { ExpenseAction } from "../store/expense/expense.action";
 import { ExpenseSelector } from "../store/expense/expense.selector";
 import { GroupSelector } from "../store/group/group.selector";
 
+import { DisableControlDirective } from "./shared/disable-control.directive";
 import { LayoutComponent } from "./shared/layout.component";
 import { CategorySelectorComponent } from "./widgets/category-selector.component";
 import { PaidByShareComponent } from "./widgets/paid-by-share.component";
@@ -54,12 +55,16 @@ import { MatButtonModule } from "@angular/material/button";
         MatButtonToggleModule,
         LayoutComponent,
         MatButtonModule,
+        DisableControlDirective,
     ],
     providers: [provideNativeDateAdapter()],
     template: `
         <app-layout headerHeight="48px">
             <div section="header" class="header-section">
-                <h2>{{ expenseId() ? "Update" : "Add" }} Expense</h2>
+                <h2>
+                    {{ expenseId() ? "Update" : "Add" }}
+                    {{ isInvestment ? "Investment" : "Expense" }}
+                </h2>
                 @if (expenseId()) {
                     <button mat-mini-fab color="secondary" (click)="delete()">
                         <mat-icon color="warn">delete</mat-icon>
@@ -70,8 +75,13 @@ import { MatButtonModule } from "@angular/material/button";
                 <form [formGroup]="form">
                     <div class="row">
                         <mat-form-field>
-                            <mat-label>Paid by</mat-label>
-                            <mat-select [formControl]="form.controls.paidBy">
+                            <mat-label>{{
+                                isInvestment ? "Invested by" : "Paid by"
+                            }}</mat-label>
+                            <mat-select
+                                [formControl]="form.controls.paidBy"
+                                [appDisableControl]="isInvestment"
+                            >
                                 @for (
                                     member of $group()?.activeMembers;
                                     track member.id
@@ -99,7 +109,11 @@ import { MatButtonModule } from "@angular/material/button";
                     <mat-form-field>
                         <input
                             matInput
-                            placeholder="What is this expense for?"
+                            [placeholder]="
+                                isInvestment
+                                    ? 'What did you invest in?'
+                                    : 'What is this expense for?'
+                            "
                             [formControl]="form.controls.description"
                             #focusInput
                         />
@@ -107,7 +121,11 @@ import { MatButtonModule } from "@angular/material/button";
                     <mat-form-field>
                         <input
                             matInput
-                            placeholder="Where did you pay this?"
+                            [placeholder]="
+                                isInvestment
+                                    ? 'Where did you invest this?'
+                                    : 'Where did you pay this?'
+                            "
                             [formControl]="form.controls.where"
                         />
                     </mat-form-field>
@@ -131,7 +149,29 @@ import { MatButtonModule } from "@angular/material/button";
                         </div>
                     }
 
-                    <div class="row">
+                    @if (isInvestment) {
+                        <mat-form-field>
+                            <mat-label>Asset class</mat-label>
+                            <mat-select
+                                [formControl]="form.controls.assetClass"
+                                (selectionChange)="
+                                    onAssetClassChange($event.value)
+                                "
+                            >
+                                @for (
+                                    category of $group()?.categories;
+                                    track category.id
+                                ) {
+                                    <mat-option [value]="category.id">
+                                        {{ category.subCategories[0]?.icon }}
+                                        {{ category.name }}
+                                    </mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                    }
+
+                    <div class="row" [class.single]="isInvestment">
                         <mat-form-field appearance="fill" floatLabel="always">
                             <mat-label>Amount</mat-label>
                             <span matTextPrefix>&#8377;</span>
@@ -149,19 +189,23 @@ import { MatButtonModule } from "@angular/material/button";
                                 (keyup)="onSplitTypeChanged()"
                             />
                         </mat-form-field>
-                        <mat-form-field>
-                            <mat-label>Category</mat-label>
-                            <input
-                                matInput
-                                [formControl]="form.controls.category"
-                                (click)="openCategorySheet()"
-                                (keyup)="openCategorySheet()"
-                                readonly
-                            />
-                            <mat-icon matSuffix (click)="openCategorySheet()"
-                                >arrow_drop_down</mat-icon
-                            >
-                        </mat-form-field>
+                        @if (!isInvestment) {
+                            <mat-form-field>
+                                <mat-label>Category</mat-label>
+                                <input
+                                    matInput
+                                    [formControl]="form.controls.category"
+                                    (click)="openCategorySheet()"
+                                    (keyup)="openCategorySheet()"
+                                    readonly
+                                />
+                                <mat-icon
+                                    matSuffix
+                                    (click)="openCategorySheet()"
+                                    >arrow_drop_down</mat-icon
+                                >
+                            </mat-form-field>
+                        }
                     </div>
                 </form>
 
@@ -224,6 +268,10 @@ import { MatButtonModule } from "@angular/material/button";
                     display: grid;
                     grid-template-columns: 1fr 1fr;
                     grid-gap: 16px;
+
+                    &.single {
+                        grid-template-columns: 1fr;
+                    }
                 }
 
                 .amount-input {
@@ -273,6 +321,7 @@ export class ExpenseEditorComponent implements OnInit, AfterViewInit {
             validators: [Validators.required],
         }),
         category: this.selectedSubCategory?.name,
+        assetClass: this.formBuilder.control<number | null>(null),
         paidBy: ["", Validators.required],
         expenseDate: [new Date(), Validators.required],
     });
@@ -286,6 +335,10 @@ export class ExpenseEditorComponent implements OnInit, AfterViewInit {
     protected readonly $group = computed(() =>
         this.store.selectSignal(GroupSelector.selectGroup(this.groupId()))(),
     );
+
+    protected get isInvestment(): boolean {
+        return this.form.controls.groupType.value === GroupType.Investment;
+    }
 
     constructor() {
         effect(
@@ -301,10 +354,26 @@ export class ExpenseEditorComponent implements OnInit, AfterViewInit {
                     this.selectedSubCategory = subCategory;
                 }
 
+                // investments pick an asset class (a category) instead of a sub category
+                let assetClass = group?.categories.find((category) =>
+                    category.subCategories.some(
+                        (subCat) => subCat.id === this.selectedSubCategory.id,
+                    ),
+                );
+                if (
+                    group?.groupType === GroupType.Investment &&
+                    !assetClass &&
+                    group.categories.length
+                ) {
+                    assetClass = group.categories[0];
+                    this.selectedSubCategory = assetClass.subCategories[0];
+                }
+
                 this.userShare = expense?.usersShare ?? {};
                 this.form.patchValue({
                     ...expense,
                     category: this.selectedSubCategory.name,
+                    assetClass: assetClass?.id ?? null,
                     paidBy: expense ? expense.paidBy : group?.currentMember.id,
                     groupId: group?.id,
                     groupType: group?.groupType,
@@ -389,6 +458,16 @@ export class ExpenseEditorComponent implements OnInit, AfterViewInit {
         }
     }
 
+    onAssetClassChange(categoryId: number) {
+        const subCategory = this.$group()?.categories.find(
+            (category) => category.id === categoryId,
+        )?.subCategories[0];
+        if (subCategory) {
+            this.selectedSubCategory = subCategory;
+            this.form.controls.category.setValue(subCategory.name);
+        }
+    }
+
     openCategorySheet() {
         this.bottomSheet
             .open(CategorySelectorComponent, {
@@ -404,7 +483,7 @@ export class ExpenseEditorComponent implements OnInit, AfterViewInit {
 
     submit() {
         const { id, groupId, description, where, amount, expenseDate, paidBy } =
-            this.form.value;
+            this.form.getRawValue();
         if (
             !this.form.valid ||
             !groupId ||

@@ -59,6 +59,7 @@ import { ToolbarComponent } from "./toolbar.component";
             }
 
             .detail {
+                box-sizing: border-box;
                 overflow-y: auto;
                 padding: 16px;
             }
@@ -90,7 +91,7 @@ export class LayoutComponent {
 
     protected get getDetailHeight() {
         return {
-            height: `calc(100vh - 56px - 32px - ${this.headerHeight()})`,
+            height: `calc(100vh - 56px - 16px - ${this.headerHeight()})`,
         };
     }
 
