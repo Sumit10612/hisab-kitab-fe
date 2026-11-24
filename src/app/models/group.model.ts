@@ -6,6 +6,7 @@ import { Image } from "./image.model";
 export enum GroupType {
     ExpenseTracker,
     SpiltExpense,
+    Investment,
 }
 
 export interface UpsertGroup {

@@ -73,6 +73,19 @@ export class GroupService {
         return sanpshot.id;
     }
 
+    createIfNotExists(id: string, group: Group): Promise<void> {
+        const ref = doc(this.firestore, GROUP_COLLECTION_NAME, id);
+        return runTransaction(this.firestore, async (transaction) => {
+            const snapshot = await transaction.get(ref);
+            if (!snapshot.exists()) {
+                transaction.set(ref, {
+                    ...group,
+                    modifiedAt: Timestamp.fromDate(new Date()),
+                });
+            }
+        });
+    }
+
     update(id: string, group: UpsertGroup): Promise<void> {
         const ref = doc(this.firestore, GROUP_COLLECTION_NAME, id);
         return updateDoc(ref, {

@@ -31,6 +31,13 @@ export namespace GroupAction {
         `${ACTION_PREFIX} Create Success`,
     );
 
+    export const createInvestmentGroup = createAction(
+        `${ACTION_PREFIX} Create Investment Group`,
+    );
+    export const createInvestmentGroupSuccess = createAction(
+        `${ACTION_PREFIX} Create Investment Group Success`,
+    );
+
     export const update = createAction(
         `${ACTION_PREFIX} Update`,
         props<{ id: string; upsertGroup: UpsertGroup }>(),
