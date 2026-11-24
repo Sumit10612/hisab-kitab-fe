@@ -8,7 +8,7 @@ import { ToolbarConfigurationService } from "../../services/toolbar-configuratio
 import { ExpenseAction } from "../../store/expense/expense.action";
 import { GroupSelector } from "../../store/group/group.selector";
 
-import { InvestmentClassesComponent } from "../investment/investment-classes.component";
+import { InvestmentGroupComponent } from "../investment/investment-group.component";
 import { InvestmentSettingsComponent } from "../investment/investment-settings.component";
 import { LayoutComponent } from "../shared/layout.component";
 import { GroupListComponent } from "./group-list.component";
@@ -23,7 +23,7 @@ let lastSelectedTab = 0;
     selector: "app-home",
     imports: [
         GroupListComponent,
-        InvestmentClassesComponent,
+        InvestmentGroupComponent,
         LayoutComponent,
         MatTabsModule,
         OverviewComponent,
@@ -53,9 +53,9 @@ let lastSelectedTab = 0;
                         </mat-tab>
                         <mat-tab label="My Investments">
                             <ng-template matTabContent>
-                                <app-investment-classes
+                                <app-investment-group
                                     [group]="$investmentGroup()"
-                                ></app-investment-classes>
+                                ></app-investment-group>
                             </ng-template>
                         </mat-tab>
                     </mat-tab-group>

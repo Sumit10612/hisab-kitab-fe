@@ -12,15 +12,17 @@ import { MatBottomSheet } from "@angular/material/bottom-sheet";
 import { MatIconModule } from "@angular/material/icon";
 import { RouterLink } from "@angular/router";
 import { Store } from "@ngrx/store";
+import { groupBy } from "lodash-es";
 
 import { ToolbarConfigurationService } from "../../services/toolbar-configuration.service";
 import { ExpenseAction } from "../../store/expense/expense.action";
 import { ExpenseSelector } from "../../store/expense/expense.selector";
 import { GroupSelector } from "../../store/group/group.selector";
+import { DateUtilities } from "../../utilities/date";
 import { DividerComponent } from "../shared/divider.component";
 import { LayoutComponent } from "../shared/layout.component";
 
-import { ALL_TIME_FROM, ALL_TIME_TO } from "./investment-classes.component";
+import { ALL_TIME_FROM, ALL_TIME_TO } from "./investment-group.component";
 import { InvestmentSettingsComponent } from "./investment-settings.component";
 
 @Component({
@@ -34,55 +36,78 @@ import { InvestmentSettingsComponent } from "./investment-settings.component";
     ],
     template: `
         @if ($assetClass(); as assetClass) {
-            <app-layout headerHeight="96px">
+            <app-layout headerHeight="120px">
                 <div section="header" class="header">
-                    <span class="header-icon">{{ assetClass.icon }}</span>
-                    <h2>{{ assetClass.name }}</h2>
-                    <span class="header-total">
-                        &#8377;{{ $net() | number: "1.0-0" }} invested
+                    <span class="header-title">
+                        <span class="header-icon">{{ assetClass.icon }}</span>
+                        <span class="header-name">{{ assetClass.name }}</span>
                     </span>
+                    <span class="header-total">
+                        <span class="header-currency">&#8377;</span>
+                        {{ $net() | number: "1.0-0" }}
+                    </span>
+                    <span class="header-label">total invested</span>
                 </div>
 
-                <div section="detail" class="detail">
-                    @for (item of $items(); track item.id) {
-                        <a
-                            class="item"
-                            [routerLink]="[
-                                '/group',
-                                groupId(),
-                                'expense',
-                                item.id,
-                            ]"
-                        >
-                            <span class="item-date">
-                                <span class="item-date-month">{{
-                                    item.expenseDate | date: "MMM" | uppercase
-                                }}</span>
-                                <span class="item-date-date">{{
-                                    item.expenseDate | date: "dd"
-                                }}</span>
-                                <span class="item-date-year">{{
-                                    item.expenseDate | date: "yyyy"
-                                }}</span>
-                            </span>
-                            <span class="item-desc">
-                                <span>{{ item.description }}</span>
-                            </span>
-                            <span
-                                class="item-amount"
-                                [class.withdrawn]="item.amount < 0"
-                            >
-                                <mat-icon class="item-amount-icon">{{
-                                    item.amount < 0
-                                        ? "arrow_downward"
-                                        : "arrow_upward"
-                                }}</mat-icon>
-                                &#8377;{{ abs(item.amount) | number: "1.0-2" }}
-                            </span>
-                        </a>
-                        @if ($index !== $items().length - 1) {
-                            <app-divider></app-divider>
-                        }
+                <div section="detail">
+                    @for (
+                        kvp of $itemsByMonth() | keyvalue: noSort;
+                        track kvp.key
+                    ) {
+                        <div class="expense-record-container">
+                            <div class="month-group">
+                                {{ kvp.key | date: "MMMM yyyy" | uppercase }}
+                            </div>
+                            @for (item of kvp.value; track item.id) {
+                                <a
+                                    class="expense-record"
+                                    [routerLink]="[
+                                        '/group',
+                                        groupId(),
+                                        'expense',
+                                        item.id,
+                                    ]"
+                                >
+                                    <span class="expense-date">
+                                        <span class="expense-date-month">{{
+                                            item.expenseDate
+                                                | date: "MMM"
+                                                | uppercase
+                                        }}</span>
+                                        <span class="expense-date-date">{{
+                                            item.expenseDate | date: "dd"
+                                        }}</span>
+                                    </span>
+                                    <mat-icon
+                                        class="expense-trend"
+                                        [class.withdrawn]="item.amount < 0"
+                                        >{{
+                                            item.amount < 0
+                                                ? "arrow_circle_down"
+                                                : "arrow_circle_up"
+                                        }}</mat-icon
+                                    >
+                                    <span class="expense-desc">
+                                        <span>{{ item.description }}</span>
+                                        @if (item.where) {
+                                            <span class="expense-desc-where"
+                                                >{{ item.where }}</span
+                                            >
+                                        }
+                                    </span>
+                                    <span class="expense-amount">
+                                        &#8377;
+                                        {{
+                                            item.amount
+                                                | number: "1.0-2"
+                                        }}
+                                    </span>
+                                </a>
+                                @if ($index !== kvp.value.length - 1) {
+                                    <app-divider></app-divider>
+                                }
+                            }
+                        </div>
                     } @empty {
                         <div class="empty">
                             No investments yet. Tap + to add one.
@@ -98,71 +123,98 @@ import { InvestmentSettingsComponent } from "./investment-settings.component";
                 display: flex;
                 flex-direction: column;
                 align-items: center;
+                justify-content: center;
+                gap: 2px;
 
-                &-icon {
-                    font-size: 1.8rem;
+                &-title {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    opacity: 0.8;
                 }
 
-                h2 {
-                    margin: 0;
+                &-icon {
+                    font-size: 1.1rem;
+                }
+
+                &-name {
+                    font-size: 1rem;
+                    font-weight: 500;
                 }
 
                 &-total {
-                    font-size: 0.8rem;
-                    opacity: 0.8;
+                    font-size: 2.4rem;
+                    font-weight: 600;
+                    line-height: 1.2;
+                }
+
+                &-currency {
+                    font-size: 1.4rem;
+                    font-weight: 400;
+                    opacity: 0.7;
+                }
+
+                &-label {
+                    font-size: 0.7rem;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                    opacity: 0.6;
                 }
             }
 
-            .detail {
-                display: block;
-                padding: 8px;
-            }
+            .expense-record-container {
+                margin-bottom: 16px;
 
-            .item {
-                display: grid;
-                grid-template-columns: 0.6fr 2.4fr 1.4fr;
-                gap: 8px;
-                align-items: center;
-                text-decoration: none;
-                color: inherit;
-                padding: 4px 8px;
-
-                &-date {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-
-                    &-month,
-                    &-year {
-                        font-size: 0.6rem;
-                    }
-
-                    &-date {
-                        font-size: 1.1rem;
-                    }
+                .month-group {
+                    font-weight: 500;
+                    font-size: 0.9rem;
+                    margin: 8px 0;
                 }
 
-                &-desc {
-                    display: flex;
-                    flex-direction: column;
+                > mat-divider {
+                    margin: 4px 16px;
                 }
 
-                &-amount {
-                    display: flex;
+                .expense-record {
+                    text-decoration: none;
+                    color: inherit;
+                    display: grid;
+                    grid-template-columns: 0.5fr 0.5fr 2.75fr 1.25fr;
+                    grid-gap: 8px;
+                    width: 100%;
+                    margin: 0 8px;
                     align-items: center;
-                    justify-content: flex-end;
-                    font-size: inherit;
-                    color: green;
 
-                    &.withdrawn {
-                        color: red;
+                    .expense-date {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+
+                        &-month {
+                            font-size: 0.6rem;
+                        }
+
+                        &-date {
+                            font-size: 1.1rem;
+                        }
                     }
 
-                    &-icon {
-                        font-size: 1.2em;
-                        width: 1em;
-                        height: 1em;
-                        margin-right: 2px;
+                    .expense-trend {
+                        justify-self: center;
+                        color: green;
+
+                        &.withdrawn {
+                            color: red;
+                        }
+                    }
+
+                    .expense-desc {
+                        display: flex;
+                        flex-direction: column;
+
+                        &-where {
+                            font-size: 0.6rem;
+                        }
                     }
                 }
             }
@@ -180,8 +232,6 @@ export class InvestmentListComponent implements OnInit {
     private readonly store = inject(Store);
     private readonly toolbar = inject(ToolbarConfigurationService);
     private readonly bottomSheet = inject(MatBottomSheet);
-
-    protected readonly abs = Math.abs;
 
     protected readonly groupId = input.required<string>();
     protected readonly categoryId = input.required<number, string>({
@@ -220,6 +270,14 @@ export class InvestmentListComponent implements OnInit {
     protected readonly $net = computed(() =>
         this.$items().reduce((sum, i) => sum + i.amount, 0),
     );
+
+    protected readonly $itemsByMonth = computed(() =>
+        groupBy(this.$items(), (i) => DateUtilities.yearMonth(i.expenseDate)),
+    );
+
+    protected noSort(): number {
+        return 0;
+    }
 
     constructor() {
         effect(() => {

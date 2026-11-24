@@ -2,6 +2,7 @@ import {
     ApplicationConfig,
     isDevMode,
     inject,
+    LOCALE_ID,
     provideAppInitializer,
 } from "@angular/core";
 import {
@@ -45,6 +46,7 @@ const initializer = (pwaService: PwaService) => () =>
 
 export const appConfig: ApplicationConfig = {
     providers: [
+        { provide: LOCALE_ID, useValue: "en-IN" },
         provideRouter(routes, withComponentInputBinding()),
         provideAnimationsAsync(),
         provideFirebaseApp(() => initializeApp(firebaseConfig)),
